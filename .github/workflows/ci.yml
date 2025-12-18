@@ -40,6 +40,51 @@ jobs:
       - name: Check file size limit
         run: python scripts/check_file_size.py
 
+  # Check for changelog fragments in PRs (similar to changesets check)
+  changelog:
+    name: Changelog Fragment Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install scriv
+        run: pip install "scriv[toml]"
+
+      - name: Check for changelog fragments
+        run: |
+          # Get list of fragment files (excluding README and template)
+          FRAGMENTS=$(find changelog.d -name "*.md" ! -name "README.md" ! -name "*.j2" 2>/dev/null | wc -l)
+
+          # Get changed files in PR
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+
+          # Check if any source files changed (excluding docs and config)
+          SOURCE_CHANGED=$(echo "$CHANGED_FILES" | grep -E "^(src/|tests/|scripts/)" | wc -l)
+
+          if [ "$SOURCE_CHANGED" -gt 0 ] && [ "$FRAGMENTS" -eq 0 ]; then
+            echo "::warning::No changelog fragment found. Please run 'scriv create' and document your changes."
+            echo ""
+            echo "To create a changelog fragment:"
+            echo "  pip install 'scriv[toml]'"
+            echo "  scriv create"
+            echo ""
+            echo "This is similar to adding a changeset in JavaScript projects."
+            echo "See changelog.d/README.md for more information."
+            # Note: This is a warning, not a failure, to allow flexibility
+            # Change 'exit 0' to 'exit 1' to make it required
+            exit 0
+          fi
+
+          echo "✓ Changelog check passed"
+
   test:
     name: Test (Python 3.13)
     runs-on: ubuntu-latest

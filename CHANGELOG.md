@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+<!-- scriv-insert-here -->
+
+## [0.1.0] - 2025-01-XX
 
 ### Added
 
@@ -15,12 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Code quality tools (ruff, mypy)
 - Pre-commit hooks configuration
 - GitHub Actions CI/CD pipeline
-- Cross-platform testing (Linux, macOS, Windows)
-- Multi-version Python support (3.9-3.13)
-
-## [0.1.0] - 2025-01-XX
-
-### Added
-
-- Initial release
+- Scriv for changelog management (similar to Changesets)
+- Release automation (PyPI + GitHub releases)
 - Template structure for AI-driven Python development

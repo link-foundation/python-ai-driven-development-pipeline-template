@@ -25,6 +25,17 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "pre-commit>=4.0.0",
+    "scriv[toml]>=1.7.0",
+]
+
 [project.urls]
 Homepage = "https://github.com/link-foundation/python-ai-driven-development-pipeline-template"
 Repository = "https://github.com/link-foundation/python-ai-driven-development-pipeline-template"
@@ -118,3 +129,31 @@ exclude_lines = [
     "raise NotImplementedError",
     "if TYPE_CHECKING:",
 ]
+
+# Scriv configuration for changelog management
+# Similar to @changesets/cli but for Python projects
+[tool.scriv]
+# Fragment format (markdown for better GitHub compatibility)
+format = "md"
+# Fragment directory
+fragment_directory = "changelog.d"
+# Changelog file
+output_file = "CHANGELOG.md"
+# Categories for changelog entries
+categories = [
+    "Removed",
+    "Added",
+    "Changed",
+    "Deprecated",
+    "Fixed",
+    "Security",
+]
+# Version header format
+entry_title_template = "## [{{ version }}] - {{ date.strftime('%Y-%m-%d') }}"
+# Insert marker (where new entries go)
+insert_marker = "<!-- scriv-insert-here -->"
+# Main branch name
+main_branches = ["main"]
+# New fragment template
+new_fragment_template = """file:changelog.d/fragment_template.md.j2
+"""

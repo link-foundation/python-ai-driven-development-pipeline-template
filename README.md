@@ -12,8 +12,9 @@ A comprehensive template for AI-driven Python development with full CI/CD pipeli
 - **Comprehensive testing**: pytest with async support and coverage reporting
 - **Code quality**: Ruff (linting + formatting) + mypy (type checking)
 - **Pre-commit hooks**: Automated code quality checks before commits
-- **CI/CD pipeline**: GitHub Actions with matrix testing across multiple OS and Python versions
-- **Cross-platform**: Tested on Ubuntu, macOS, and Windows
+- **CI/CD pipeline**: GitHub Actions CI/CD with Python 3.13
+- **Changelog management**: Scriv for conflict-free changelog (like Changesets in JS)
+- **Release automation**: Automatic PyPI publishing and GitHub releases
 
 ## Quick Start
 
@@ -86,11 +87,19 @@ ruff check . && ruff format --check . && mypy src/ && python scripts/check_file_
 .
 ├── .github/
 │   └── workflows/
-│       └── ci.yml              # CI/CD pipeline configuration
+│       ├── ci.yml              # CI/CD pipeline configuration
+│       └── release.yml         # Release automation (PyPI + GitHub)
+├── changelog.d/                # Changelog fragments (like .changeset/)
+│   ├── README.md               # Fragment instructions
+│   └── *.md                    # Individual changelog entries
 ├── examples/
 │   └── basic_usage.py          # Usage examples
 ├── scripts/
-│   └── check_file_size.py      # File size validation script
+│   ├── check_file_size.py      # File size validation script
+│   ├── bump_version.py         # Version bumping utility
+│   ├── version_and_commit.py   # CI/CD version management
+│   ├── publish_to_pypi.py      # PyPI publishing script
+│   └── create_github_release.py # GitHub release creation
 ├── src/
 │   └── my_package/
 │       ├── __init__.py         # Package entry point
@@ -145,17 +154,42 @@ Automated checks run before each commit:
 
 This ensures code quality is maintained throughout development.
 
+### Changelog Management (Scriv)
+
+This template uses [Scriv](https://scriv.readthedocs.io/) for changelog management, which works similarly to [Changesets](https://github.com/changesets/changesets) in JavaScript projects:
+
+- **Fragment-based**: Each PR adds a changelog fragment to `changelog.d/`
+- **Conflict-free**: Multiple PRs can add fragments without merge conflicts
+- **Auto-collection**: Fragments are automatically merged during release
+- **Category-based**: Supports Added, Changed, Deprecated, Removed, Fixed, Security
+
+```bash
+# Create a changelog fragment (similar to `npx changeset`)
+scriv create
+
+# View pending fragments
+ls changelog.d/*.md
+```
+
 ### CI/CD Pipeline
 
 The GitHub Actions workflow provides:
 
 1. **Linting**: Ruff linting, formatting, and mypy type checking
-2. **Testing**: Matrix testing across:
-   - 3 operating systems (Ubuntu, macOS, Windows)
-   - 5 Python versions (3.9, 3.10, 3.11, 3.12, 3.13)
-   - Total: 15 test combinations
-3. **Building**: Package building and validation
-4. **Coverage**: Automatic upload to Codecov
+2. **Changelog check**: Warns if PRs are missing changelog fragments
+3. **Testing**: Python 3.13 test suite
+4. **Building**: Package building and validation
+5. **Coverage**: Automatic upload to Codecov
+
+### Release Automation
+
+The release workflow (`release.yml`) provides:
+
+1. **Auto-release on push**: Detects version changes and publishes automatically
+2. **Manual release**: Trigger releases via workflow_dispatch
+3. **Fragment collection**: Automatically collects changelog fragments
+4. **PyPI publishing**: OIDC trusted publishing (no tokens needed)
+5. **GitHub releases**: Automatic creation with CHANGELOG content
 
 ## Configuration
 
@@ -213,6 +247,8 @@ Configured in `pyproject.toml` under `[tool.pytest.ini_options]`:
 | `mypy src/`                    | Type check code                          |
 | `python scripts/check_file_size.py` | Check file size limits             |
 | `pre-commit run --all-files`   | Run all pre-commit hooks                 |
+| `scriv create`                 | Create a changelog fragment              |
+| `scriv collect --version X.Y.Z`| Collect fragments into CHANGELOG.md      |
 
 ## Example Usage
 
@@ -272,3 +308,4 @@ Inspired by [js-ai-driven-development-pipeline-template](https://github.com/link
 - [Ruff Documentation](https://docs.astral.sh/ruff/)
 - [mypy Documentation](https://mypy.readthedocs.io/)
 - [Pre-commit Documentation](https://pre-commit.com/)
+- [Scriv Documentation](https://scriv.readthedocs.io/)

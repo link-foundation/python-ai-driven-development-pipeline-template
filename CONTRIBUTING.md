@@ -74,7 +74,28 @@ Thank you for your interest in contributing! This document provides guidelines a
    pytest --cov=src --cov-report=term --cov-report=html
    ```
 
-5. **Commit your changes**
+5. **Add a changelog fragment**
+
+   For any user-facing changes, create a changelog fragment:
+
+   ```bash
+   # Create a new changelog fragment (similar to `npx changeset` in JS)
+   scriv create
+   ```
+
+   This will create a new file in `changelog.d/`. Edit it to document your changes:
+
+   ```markdown
+   ### Added
+   - Description of new feature
+
+   ### Fixed
+   - Description of bug fix
+   ```
+
+   **Why fragments?** This prevents merge conflicts in CHANGELOG.md when multiple PRs are open simultaneously (same as Changesets in JavaScript).
+
+6. **Commit your changes**
 
    ```bash
    git add .
@@ -83,7 +104,7 @@ Thank you for your interest in contributing! This document provides guidelines a
 
    Pre-commit hooks will automatically run and check your code.
 
-6. **Push and create a Pull Request**
+7. **Push and create a Pull Request**
 
    ```bash
    git push origin feature/my-feature
@@ -158,17 +179,56 @@ class TestMyFeature:
 
 1. Ensure all tests pass locally
 2. Update documentation if needed
-3. Add an entry to CHANGELOG.md under "Unreleased"
+3. Add a changelog fragment with `scriv create` (see step 5 in Development Workflow)
 4. Ensure the PR description clearly describes the changes
 5. Link any related issues in the PR description
 6. Wait for CI checks to pass
 7. Address any review feedback
+
+## Changelog Management
+
+This project uses [Scriv](https://scriv.readthedocs.io/) for changelog management, which works similarly to [Changesets](https://github.com/changesets/changesets) in JavaScript projects.
+
+### Creating a Fragment
+
+```bash
+# Install scriv (included in dev dependencies)
+pip install -e ".[dev]"
+
+# Create a new fragment
+scriv create
+```
+
+### Fragment Categories
+
+Use these categories in your fragments:
+
+- **Added**: New features
+- **Changed**: Changes to existing functionality
+- **Deprecated**: Features that will be removed in future
+- **Removed**: Features that were removed
+- **Fixed**: Bug fixes
+- **Security**: Security-related changes
+
+### During Release
+
+Fragments are automatically collected into CHANGELOG.md during the release process. The release workflow:
+
+1. Collects all fragments with `scriv collect`
+2. Updates CHANGELOG.md with the new version entry
+3. Removes processed fragment files
+4. Bumps the version in pyproject.toml
+5. Creates a git tag and GitHub release
+6. Publishes to PyPI
 
 ## Project Structure
 
 ```
 .
 ├── .github/workflows/    # GitHub Actions CI/CD
+├── changelog.d/          # Changelog fragments (like .changeset/)
+│   ├── README.md         # Fragment instructions
+│   └── *.md              # Individual changelog fragments
 ├── examples/             # Usage examples
 ├── scripts/              # Utility scripts
 ├── src/my_package/       # Source code
