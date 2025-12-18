@@ -22,6 +22,9 @@ on:
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
+  # REQUIRED CI CHECKS - All must pass before release
+  # These jobs ensure code quality and tests pass before any release
+
   # Linting and formatting
   lint:
     name: Lint and Format Check
@@ -71,7 +74,7 @@ jobs:
       - name: Run tests
         run: pytest
 
-  # Build package
+  # Build package - only runs if lint and test pass
   build:
     name: Build Package
     runs-on: ubuntu-latest
@@ -101,10 +104,12 @@ jobs:
           name: dist
           path: dist/
 
+  # RELEASE JOBS - Only run after all CI checks pass
+
   # Automatic release on push to main (if version changed)
   auto-release:
     name: Auto Release
-    needs: [build]
+    needs: [lint, test, build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
@@ -161,9 +166,10 @@ jobs:
             --version "${{ steps.version_check.outputs.current_version }}" \
             --repository "${{ github.repository }}"
 
-  # Manual release via workflow_dispatch
+  # Manual release via workflow_dispatch - only after CI passes
   manual-release:
     name: Manual Release
+    needs: [lint, test, build]
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:

@@ -185,11 +185,14 @@ The GitHub Actions workflow provides:
 
 The release workflow (`release.yml`) provides:
 
-1. **Auto-release on push**: Detects version changes and publishes automatically
-2. **Manual release**: Trigger releases via workflow_dispatch
-3. **Fragment collection**: Automatically collects changelog fragments
-4. **PyPI publishing**: OIDC trusted publishing (no tokens needed)
-5. **GitHub releases**: Automatic creation with CHANGELOG content
+1. **Integrated CI checks**: Runs lint, test, and build before any release
+2. **Auto-release on push**: Detects version changes and publishes automatically
+3. **Manual release**: Trigger releases via workflow_dispatch
+4. **Fragment collection**: Automatically collects changelog fragments
+5. **PyPI publishing**: OIDC trusted publishing (no tokens needed)
+6. **GitHub releases**: Automatic creation with CHANGELOG content
+
+**Important**: All releases require passing CI checks (lint + test + build). No release will ever happen without passing tests, ensuring code quality and stability.
 
 ## Configuration
 
