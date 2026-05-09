@@ -3,10 +3,12 @@
 Create a GitHub release from CHANGELOG.md content.
 
 Usage:
-    python scripts/create_github_release.py --version VERSION --repository REPO
+    python scripts/create_github_release.py --version VERSION --repository REPO \
+        [--tag-prefix PREFIX] [--language LANGUAGE]
 
 Example:
-    python scripts/create_github_release.py --version 1.2.3 --repository owner/repo
+    python scripts/create_github_release.py --version 1.2.3 --repository owner/repo \
+        --tag-prefix python_v --language Python
 
 Environment variables:
     GH_TOKEN or GITHUB_TOKEN: GitHub token for authentication
@@ -71,14 +73,30 @@ def extract_changelog_entry(changelog_path: Path, version: str) -> str:
     return entry if entry else f"Release {version}"
 
 
+def append_pypi_badge_if_missing(release_notes: str, version: str) -> str:
+    """Append a PyPI version badge unless a shields.io badge is already present."""
+    if "img.shields.io" in release_notes.lower():
+        return release_notes
+
+    badge = f"![PyPI](https://img.shields.io/badge/pypi-{version}-blue.svg)"
+    return f"{release_notes.rstrip()}\n\n{badge}"
+
+
 def create_release(
-    version: str, repository: str, release_notes: str, prerelease: bool = False
+    version: str,
+    repository: str,
+    release_notes: str,
+    prerelease: bool = False,
+    tag_prefix: str = "v",
+    language: str = "Python",
 ) -> None:
     """Create a GitHub release using gh CLI."""
-    tag = f"v{version}"
+    tag = f"{tag_prefix}{version}"
+    title = f"[{language}] {version}"
 
     print(f"\nCreating GitHub release for {tag}...")
     print(f"Repository: {repository}")
+    print(f"Title: {title}")
     print(f"Prerelease: {prerelease}")
     print(f"\nRelease notes:\n{release_notes}\n")
 
@@ -90,7 +108,7 @@ def create_release(
         "--repo",
         repository,
         "--title",
-        tag,
+        title,
         "--notes",
         release_notes,
     ]
@@ -124,6 +142,16 @@ def main() -> int:
         action="store_true",
         help="Mark as prerelease",
     )
+    parser.add_argument(
+        "--tag-prefix",
+        default="v",
+        help='Tag prefix for the release (default "v")',
+    )
+    parser.add_argument(
+        "--language",
+        default="Python",
+        help='Language label for the release title (default "Python")',
+    )
 
     args = parser.parse_args()
 
@@ -150,11 +178,17 @@ def main() -> int:
     changelog_path = project_root / "CHANGELOG.md"
 
     try:
-        # Extract changelog entry
         release_notes = extract_changelog_entry(changelog_path, args.version)
+        release_notes = append_pypi_badge_if_missing(release_notes, args.version)
 
-        # Create release
-        create_release(args.version, args.repository, release_notes, args.prerelease)
+        create_release(
+            args.version,
+            args.repository,
+            release_notes,
+            args.prerelease,
+            args.tag_prefix,
+            args.language,
+        )
 
         return 0
 
