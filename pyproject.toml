@@ -35,6 +35,11 @@ dev = [
     "pre-commit>=4.0.0",
     "scriv[toml]>=1.7.0",
 ]
+docs = [
+    "sphinx>=7.4",
+    "furo>=2024.8.6",
+    "myst-parser>=3.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/link-foundation/python-ai-driven-development-pipeline-template"

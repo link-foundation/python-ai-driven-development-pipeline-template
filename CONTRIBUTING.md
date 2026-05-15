@@ -74,6 +74,14 @@ Thank you for your interest in contributing! This document provides guidelines a
    pytest --cov=src --cov-report=term --cov-report=html
    ```
 
+   If you changed public APIs or docstrings, build the documentation locally to
+   make sure Sphinx still renders without warnings:
+
+   ```bash
+   pip install -e ".[docs]"
+   sphinx-build -W --keep-going -b html docs _site
+   ```
+
 5. **Add a changelog fragment**
 
    For any user-facing changes, create a changelog fragment:

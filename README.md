@@ -15,6 +15,7 @@ A comprehensive template for AI-driven Python development with full CI/CD pipeli
 - **CI/CD pipeline**: GitHub Actions CI/CD with Python 3.13
 - **Changelog management**: Scriv for conflict-free changelog (like Changesets in JS)
 - **Release automation**: Automatic PyPI publishing and GitHub releases
+- **API documentation**: Sphinx + GitHub Pages deploy on push to `main`
 
 ## Quick Start
 
@@ -87,11 +88,16 @@ ruff check . && ruff format --check . && mypy src/ && python scripts/check_file_
 .
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml              # CI/CD pipeline configuration
-│       └── release.yml         # Release automation (PyPI + GitHub)
+│       ├── docs.yml            # Sphinx build + GitHub Pages deploy
+│       └── release.yml         # CI checks + release automation (PyPI + GitHub)
 ├── changelog.d/                # Changelog fragments (like .changeset/)
 │   ├── README.md               # Fragment instructions
 │   └── *.md                    # Individual changelog entries
+├── docs/                       # Sphinx documentation source
+│   ├── conf.py                 # Sphinx configuration
+│   ├── index.md                # Documentation landing page
+│   ├── api.md                  # Auto-generated API reference
+│   └── requirements.txt        # Documentation build dependencies
 ├── examples/
 │   └── basic_usage.py          # Usage examples
 ├── scripts/
@@ -180,6 +186,42 @@ The GitHub Actions workflow provides:
 3. **Testing**: Python 3.13 test suite
 4. **Building**: Package building and validation
 5. **Coverage**: Automatic upload to Codecov
+
+### API Documentation
+
+API documentation is built with [Sphinx](https://www.sphinx-doc.org/) and deployed
+to GitHub Pages on every push to `main`. Pull requests build the docs (without
+deploying) to catch regressions before they merge.
+
+```bash
+# Install docs dependencies
+pip install -e ".[docs]"
+
+# Build locally (output goes to _site/)
+sphinx-build -W --keep-going -b html docs _site
+
+# Preview in a browser
+python -m http.server --directory _site 8000
+```
+
+The Sphinx config in `docs/conf.py` autodiscovers `src/my_package` via
+`sphinx.ext.autodoc` + `sphinx.ext.autosummary` and renders Google-style
+docstrings with `sphinx.ext.napoleon`. When you bootstrap a new repository from
+this template, update `project`, `author`, and the autosummary target in
+`docs/conf.py` and `docs/api.md` to point at your package.
+
+#### Deploying API documentation
+
+The `Docs` workflow (`.github/workflows/docs.yml`) builds on every push and
+pull request, and deploys to GitHub Pages only on `push` to `main` (matching
+the JS and Rust template patterns; see
+[link-foundation/relative-meta-logic#170](https://github.com/link-foundation/relative-meta-logic/pull/170)
+for the bug this guards against).
+
+**One-time setup per repository**: open `Settings → Pages` and set
+`Source = GitHub Actions`. Without this, the first deploy run fails on
+`actions/deploy-pages` with `Get Pages site failed`. This cannot be configured
+from a workflow.
 
 ### Release Automation
 
