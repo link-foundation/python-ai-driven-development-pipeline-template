@@ -38,6 +38,12 @@ def assert_action_pin_count(
     assert len(re.findall(pattern, workflow)) == count
 
 
+def assert_action_pin_absent(workflow: str, action: str, version: str) -> None:
+    """Assert an outdated action reference is not used."""
+    pattern = rf"uses:\s+{re.escape(action)}@{re.escape(version)}\b"
+    assert not re.search(pattern, workflow)
+
+
 def test_release_workflow_keeps_main_releases_running() -> None:
     """Main release runs must not be cancelled by follow-up pushes."""
     workflow = read_workflow("release.yml")
@@ -65,17 +71,27 @@ def test_release_workflow_jobs_have_explicit_timeouts() -> None:
         assert f"timeout-minutes: {timeout}" in block
 
 
-def test_workflow_action_versions_are_current() -> None:
-    """Workflow actions should use the current major versions."""
+def test_release_workflow_action_versions_are_current() -> None:
+    """Release workflow actions should use the current major versions."""
     release_workflow = read_workflow("release.yml")
-    docs_workflow = read_workflow("docs.yml")
 
     assert_action_pin_count(release_workflow, "actions/checkout", "v6", 7)
     assert_action_pin_count(release_workflow, "actions/upload-artifact", "v7", 1)
     assert_action_pin_count(release_workflow, "actions/download-artifact", "v7", 1)
+
+
+def test_docs_workflow_action_versions_are_current() -> None:
+    """Docs workflow actions should stay aligned with the current Pages stack."""
+    docs_workflow = read_workflow("docs.yml")
 
     assert_action_pin_count(docs_workflow, "actions/checkout", "v6", 1)
     assert_action_pin_count(docs_workflow, "actions/upload-artifact", "v7", 1)
     assert_action_pin_count(docs_workflow, "actions/configure-pages", "v6", 1)
     assert_action_pin_count(docs_workflow, "actions/upload-pages-artifact", "v5", 1)
     assert_action_pin_count(docs_workflow, "actions/deploy-pages", "v5", 1)
+
+    assert_action_pin_absent(docs_workflow, "actions/checkout", "v4")
+    assert_action_pin_absent(docs_workflow, "actions/upload-artifact", "v4")
+    assert_action_pin_absent(docs_workflow, "actions/configure-pages", "v5")
+    assert_action_pin_absent(docs_workflow, "actions/upload-pages-artifact", "v3")
+    assert_action_pin_absent(docs_workflow, "actions/deploy-pages", "v4")
