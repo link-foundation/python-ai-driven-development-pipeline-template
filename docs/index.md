@@ -12,6 +12,7 @@ with your project name, author, and the autodoc target package.
 :caption: Contents
 
 api
+preview-regeneration
 ```
 
 ## Indices
