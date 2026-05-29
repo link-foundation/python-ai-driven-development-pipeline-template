@@ -223,6 +223,15 @@ for the bug this guards against).
 `actions/deploy-pages` with `Get Pages site failed`. This cannot be configured
 from a workflow.
 
+### Preview regeneration parity
+
+[Issue #9](https://github.com/link-foundation/python-ai-driven-development-pipeline-template/issues/9)
+tracks parity with the browser preview-regeneration pattern from the JavaScript
+template. This Python template does not ship a browser-rendered example app, so
+it intentionally does not install Playwright or add a screenshot workflow yet.
+When such a surface is added, use the Python porting checklist in
+[`docs/preview-regeneration.md`](docs/preview-regeneration.md).
+
 ### Release Automation
 
 The release workflow (`release.yml`) provides:
