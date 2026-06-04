@@ -22,6 +22,10 @@ import sys
 from pathlib import Path
 
 
+MAX_RELEASE_NOTES_BYTES = 60_000
+ENCODING = "utf-8"
+
+
 def run_command(cmd: list[str], check: bool = True) -> subprocess.CompletedProcess:
     """Run a command and handle errors."""
     print(f"Running: {' '.join(cmd)}")
@@ -82,6 +86,53 @@ def append_pypi_badge_if_missing(release_notes: str, version: str) -> str:
     return f"{release_notes.rstrip()}\n\n{badge}"
 
 
+def release_notes_size(release_notes: str) -> int:
+    """Return the UTF-8 byte size of release notes."""
+    return len(release_notes.encode(ENCODING))
+
+
+def truncate_to_bytes(text: str, max_bytes: int) -> str:
+    """Truncate text to a UTF-8 byte limit without splitting a character."""
+    encoded = text.encode(ENCODING)
+    if len(encoded) <= max_bytes:
+        return text
+
+    return encoded[:max_bytes].decode(ENCODING, errors="ignore")
+
+
+def build_changelog_url(repository: str, tag: str) -> str:
+    """Build a link to the changelog file at the release tag."""
+    return f"https://github.com/{repository}/blob/{tag}/CHANGELOG.md"
+
+
+def cap_release_notes(
+    release_notes: str,
+    repository: str,
+    tag: str,
+    max_bytes: int = MAX_RELEASE_NOTES_BYTES,
+) -> str:
+    """Cap release notes to a conservative byte limit and link the full changelog."""
+    if release_notes_size(release_notes) <= max_bytes:
+        return release_notes
+
+    notice = (
+        "\n\n---\n\n"
+        "Release notes were truncated because the changelog entry is too large "
+        "for GitHub Releases. See the full tagged CHANGELOG.md: "
+        f"{build_changelog_url(repository, tag)}"
+    )
+    notice_size = release_notes_size(notice)
+
+    if notice_size >= max_bytes:
+        return truncate_to_bytes(notice.lstrip(), max_bytes).rstrip()
+
+    preserved_notes = truncate_to_bytes(
+        release_notes.rstrip(),
+        max_bytes - notice_size,
+    ).rstrip()
+    return f"{preserved_notes}{notice}"
+
+
 def create_release(
     version: str,
     repository: str,
@@ -93,11 +144,19 @@ def create_release(
     """Create a GitHub release using gh CLI."""
     tag = f"{tag_prefix}{version}"
     title = f"[{language}] {version}"
+    original_notes_size = release_notes_size(release_notes)
+    release_notes = cap_release_notes(release_notes, repository, tag)
+    capped_notes_size = release_notes_size(release_notes)
 
     print(f"\nCreating GitHub release for {tag}...")
     print(f"Repository: {repository}")
     print(f"Title: {title}")
     print(f"Prerelease: {prerelease}")
+    if capped_notes_size < original_notes_size:
+        print(
+            "Release notes truncated from "
+            f"{original_notes_size} to {capped_notes_size} bytes",
+        )
     print(f"\nRelease notes:\n{release_notes}\n")
 
     cmd = [
