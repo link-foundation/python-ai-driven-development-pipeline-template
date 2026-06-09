@@ -80,6 +80,47 @@ def test_release_workflow_action_versions_are_current() -> None:
     assert_action_pin_count(release_workflow, "actions/download-artifact", "v7", 1)
 
 
+STATUS_CHECK_FUNCTIONS = ("always()", "!cancelled()", "!failure()", "success()")
+
+
+def job_condition(workflow: str, job_name: str) -> str:
+    """Return the ``if:`` condition text for a workflow job."""
+    block = workflow_job_block(workflow, job_name)
+    match = re.search(r"^    if:(.*?)(?=^    [a-z])", block, re.DOTALL | re.MULTILINE)
+    assert match, f"job {job_name!r} has no if condition"
+    return match.group(1)
+
+
+def test_dispatch_dependent_jobs_use_status_check_function() -> None:
+    """Jobs that depend on skippable jobs must override the default status gate.
+
+    ``detect-changes`` is skipped for ``workflow_dispatch``. GitHub Actions skips
+    a job whose dependency was skipped unless the dependent ``if`` condition
+    includes a status-check function (``always()``, ``!cancelled()``, ...).
+    Without it, a manual release silently skips lint/test and then the release
+    itself even though it appears successful.
+    """
+    workflow = read_workflow("release.yml")
+
+    for job_name in ("lint", "test", "manual-release"):
+        condition = job_condition(workflow, job_name)
+        assert any(fn in condition for fn in STATUS_CHECK_FUNCTIONS), (
+            f"job {job_name!r} depends on a skippable job but its if condition "
+            f"does not start with a status-check function: {condition!r}"
+        )
+
+
+def test_manual_release_requires_required_checks_to_succeed() -> None:
+    """Manual release must only run after lint, test, and build succeed."""
+    workflow = read_workflow("release.yml")
+    condition = job_condition(workflow, "manual-release")
+
+    assert "needs.lint.result == 'success'" in condition
+    assert "needs.test.result == 'success'" in condition
+    assert "needs.build.result == 'success'" in condition
+    assert "github.event_name == 'workflow_dispatch'" in condition
+
+
 def test_docs_workflow_action_versions_are_current() -> None:
     """Docs workflow actions should stay aligned with the current Pages stack."""
     docs_workflow = read_workflow("docs.yml")

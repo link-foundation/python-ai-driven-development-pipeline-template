@@ -68,14 +68,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [detect-changes]
+    # always() && !cancelled() lets this job evaluate even though detect-changes
+    # is skipped for workflow_dispatch; without it, the skipped dependency would
+    # propagate and skip lint despite the workflow_dispatch condition below.
     if: |
-      github.event_name == 'push' ||
-      github.event_name == 'workflow_dispatch' ||
-      needs.detect-changes.outputs.py-changed == 'true' ||
-      needs.detect-changes.outputs.tests-changed == 'true' ||
-      needs.detect-changes.outputs.docs-changed == 'true' ||
-      needs.detect-changes.outputs.package-changed == 'true' ||
-      needs.detect-changes.outputs.workflow-changed == 'true'
+      always() && !cancelled() && (
+        github.event_name == 'push' ||
+        github.event_name == 'workflow_dispatch' ||
+        needs.detect-changes.outputs.py-changed == 'true' ||
+        needs.detect-changes.outputs.tests-changed == 'true' ||
+        needs.detect-changes.outputs.docs-changed == 'true' ||
+        needs.detect-changes.outputs.package-changed == 'true' ||
+        needs.detect-changes.outputs.workflow-changed == 'true'
+      )
     steps:
       - uses: actions/checkout@v6
 
@@ -108,13 +113,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: [detect-changes]
+    # always() && !cancelled() lets this job evaluate even though detect-changes
+    # is skipped for workflow_dispatch; without it, the skipped dependency would
+    # propagate and skip test despite the workflow_dispatch condition below.
     if: |
-      github.event_name == 'push' ||
-      github.event_name == 'workflow_dispatch' ||
-      needs.detect-changes.outputs.py-changed == 'true' ||
-      needs.detect-changes.outputs.tests-changed == 'true' ||
-      needs.detect-changes.outputs.package-changed == 'true' ||
-      needs.detect-changes.outputs.workflow-changed == 'true'
+      always() && !cancelled() && (
+        github.event_name == 'push' ||
+        github.event_name == 'workflow_dispatch' ||
+        needs.detect-changes.outputs.py-changed == 'true' ||
+        needs.detect-changes.outputs.tests-changed == 'true' ||
+        needs.detect-changes.outputs.package-changed == 'true' ||
+        needs.detect-changes.outputs.workflow-changed == 'true'
+      )
     steps:
       - uses: actions/checkout@v6
 
@@ -294,7 +304,15 @@ jobs:
   manual-release:
     name: Manual Release
     needs: [lint, test, build]
-    if: github.event_name == 'workflow_dispatch'
+    # always() && !cancelled() prevents the skipped detect-changes dependency from
+    # propagating through lint/test/build and silently skipping the release.
+    # The explicit result checks ensure release only proceeds after CI passes.
+    if: |
+      always() && !cancelled() &&
+      github.event_name == 'workflow_dispatch' &&
+      needs.lint.result == 'success' &&
+      needs.test.result == 'success' &&
+      needs.build.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
