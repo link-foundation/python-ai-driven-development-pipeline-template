@@ -241,7 +241,9 @@ The release workflow (`release.yml`) provides:
 3. **Manual release**: Trigger releases via workflow_dispatch
 4. **Fragment collection**: Automatically collects changelog fragments
 5. **PyPI publishing**: OIDC trusted publishing (no tokens needed)
-6. **GitHub releases**: Automatic creation with CHANGELOG content
+6. **Published package smoke test**: Installs the just-published PyPI package
+   into a clean virtualenv and verifies imports/console scripts
+7. **GitHub releases**: Automatic creation with CHANGELOG content
 
 **Important**: All releases require passing CI checks (lint + test + build). No release will ever happen without passing tests, ensuring code quality and stability.
 
