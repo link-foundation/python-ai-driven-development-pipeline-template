@@ -75,6 +75,15 @@ def get_current_version(pyproject_path: Path) -> str:
     return match.group(1)
 
 
+def get_repo_root() -> Path:
+    """Return the current git repository root."""
+    output = run_command(
+        ["git", "rev-parse", "--show-toplevel"],
+        capture=True,
+    ).stdout.strip()
+    return Path(output)
+
+
 def configure_git() -> None:
     """Configure git for automated commits."""
     print("Configuring git...")
@@ -86,7 +95,10 @@ def configure_git() -> None:
     )
 
 
-def check_remote_changes(pyproject_path: Path) -> tuple[bool, str]:
+def check_remote_changes(
+    pyproject_path: Path,
+    pyproject_git_path: str,
+) -> tuple[bool, str]:
     """
     Check if remote main has advanced (handles re-runs).
     Returns (already_released, remote_version).
@@ -111,7 +123,7 @@ def check_remote_changes(pyproject_path: Path) -> tuple[bool, str]:
 
         # Get remote version
         remote_content = run_command(
-            ["git", "show", "origin/main:pyproject.toml"],
+            ["git", "show", f"origin/main:{pyproject_git_path}"],
             capture=True,
         ).stdout
 
@@ -157,9 +169,11 @@ def main() -> int:
     args = parser.parse_args()
 
     # Determine project root
-    script_dir = Path(__file__).parent
+    script_dir = Path(__file__).resolve().parent
     project_root = script_dir.parent
     pyproject_path = project_root / "pyproject.toml"
+    repo_root = get_repo_root()
+    pyproject_git_path = pyproject_path.relative_to(repo_root).as_posix()
 
     if not pyproject_path.exists():
         print(f"Error: {pyproject_path} not found", file=sys.stderr)
@@ -170,7 +184,10 @@ def main() -> int:
         configure_git()
 
         # Check for remote changes
-        already_released, remote_version = check_remote_changes(pyproject_path)
+        already_released, remote_version = check_remote_changes(
+            pyproject_path,
+            pyproject_git_path,
+        )
 
         if already_released:
             print("Version bump already completed in previous run")
@@ -187,7 +204,7 @@ def main() -> int:
         print(f"\nBumping version ({args.bump_type})...")
         bump_cmd = [
             sys.executable,
-            "scripts/bump_version.py",
+            str(project_root / "scripts" / "bump_version.py"),
             args.bump_type,
         ]
         if args.description:

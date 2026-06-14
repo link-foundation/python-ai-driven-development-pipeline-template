@@ -3,12 +3,10 @@
 Create a GitHub release from CHANGELOG.md content.
 
 Usage:
-    python scripts/create_github_release.py --version VERSION --repository REPO \
-        [--tag-prefix PREFIX] [--language LANGUAGE]
+    python scripts/create_github_release.py --version VERSION --repository REPO
 
 Example:
-    python scripts/create_github_release.py --version 1.2.3 --repository owner/repo \
-        --tag-prefix python_v --language Python
+    python scripts/create_github_release.py --version 1.2.3 --repository owner/repo
 
 Environment variables:
     GH_TOKEN or GITHUB_TOKEN: GitHub token for authentication
@@ -20,6 +18,20 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from release_naming import (  # noqa: E402
+    PYPROJECT_FILE,
+    PythonLayout,
+    build_pypi_badge,
+    build_release_tag,
+    build_release_title,
+    detect_python_layout,
+    normalize_version,
+)
 
 
 MAX_RELEASE_NOTES_BYTES = 60_000
@@ -77,12 +89,16 @@ def extract_changelog_entry(changelog_path: Path, version: str) -> str:
     return entry if entry else f"Release {version}"
 
 
-def append_pypi_badge_if_missing(release_notes: str, version: str) -> str:
-    """Append a PyPI version badge unless a shields.io badge is already present."""
+def append_pypi_badge_if_missing(
+    release_notes: str,
+    distribution_name: str,
+    version: str,
+) -> str:
+    """Append a linked PyPI version badge unless a shields.io badge exists."""
     if "img.shields.io" in release_notes.lower():
         return release_notes
 
-    badge = f"![PyPI](https://img.shields.io/badge/pypi-{version}-blue.svg)"
+    badge = build_pypi_badge(distribution_name, version)
     return f"{release_notes.rstrip()}\n\n{badge}"
 
 
@@ -138,12 +154,12 @@ def create_release(
     repository: str,
     release_notes: str,
     prerelease: bool = False,
-    tag_prefix: str = "v",
-    language: str = "Python",
+    distribution_name: str = "my-package",
+    multi_language: bool = False,
 ) -> None:
     """Create a GitHub release using gh CLI."""
-    tag = f"{tag_prefix}{version}"
-    title = f"[{language}] {version}"
+    tag = build_release_tag(version, multi_language)
+    title = build_release_title(version, distribution_name, multi_language)
     original_notes_size = release_notes_size(release_notes)
     release_notes = cap_release_notes(release_notes, repository, tag)
     capped_notes_size = release_notes_size(release_notes)
@@ -179,6 +195,31 @@ def create_release(
     print(f"\n✅ GitHub release {tag} created successfully!")
 
 
+def get_pyproject_value(pyproject_path: Path, key: str) -> str:
+    """Extract a top-level string value from pyproject.toml."""
+    content = pyproject_path.read_text(encoding=ENCODING)
+    match = re.search(
+        rf"^{re.escape(key)}\s*=\s*[\"']([^\"']+)[\"']",
+        content,
+        re.MULTILINE,
+    )
+    if not match:
+        msg = f"Could not find {key!r} in {pyproject_path}"
+        raise ValueError(msg)
+    return match.group(1)
+
+
+def resolve_python_layout(repository_root: Path) -> PythonLayout:
+    """Detect layout from the repository root, falling back to this script's root."""
+    try:
+        return detect_python_layout(repository_root)
+    except FileNotFoundError:
+        script_root = SCRIPT_DIR.parent
+        if (script_root / PYPROJECT_FILE).is_file():
+            return PythonLayout(root=script_root, multi_language=False)
+        raise
+
+
 def main() -> int:
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -202,14 +243,9 @@ def main() -> int:
         help="Mark as prerelease",
     )
     parser.add_argument(
-        "--tag-prefix",
-        default="v",
-        help='Tag prefix for the release (default "v")',
-    )
-    parser.add_argument(
-        "--language",
-        default="Python",
-        help='Language label for the release title (default "Python")',
+        "--repository-root",
+        default=".",
+        help="Repository root used for Python layout auto-detection",
     )
 
     args = parser.parse_args()
@@ -231,22 +267,29 @@ def main() -> int:
         )
         return 1
 
-    # Determine project root
-    script_dir = Path(__file__).parent
-    project_root = script_dir.parent
+    # Determine Python project root and package metadata.
+    layout = resolve_python_layout(Path(args.repository_root))
+    project_root = layout.root
+    pyproject_path = project_root / PYPROJECT_FILE
     changelog_path = project_root / "CHANGELOG.md"
 
     try:
-        release_notes = extract_changelog_entry(changelog_path, args.version)
-        release_notes = append_pypi_badge_if_missing(release_notes, args.version)
+        bare_version = normalize_version(args.version)
+        distribution_name = get_pyproject_value(pyproject_path, "name")
+        release_notes = extract_changelog_entry(changelog_path, bare_version)
+        release_notes = append_pypi_badge_if_missing(
+            release_notes,
+            distribution_name,
+            bare_version,
+        )
 
         create_release(
-            args.version,
+            bare_version,
             args.repository,
             release_notes,
             args.prerelease,
-            args.tag_prefix,
-            args.language,
+            distribution_name,
+            layout.multi_language,
         )
 
         return 0

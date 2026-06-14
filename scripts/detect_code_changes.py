@@ -123,7 +123,16 @@ def is_excluded_from_code_changes(file_path: str) -> bool:
         return True
 
     # Exclude specific folders from code changes
-    excluded_folders = ["changelog.d/", "docs/", "experiments/", "examples/"]
+    excluded_folders = [
+        "changelog.d/",
+        "docs/",
+        "experiments/",
+        "examples/",
+        "python/changelog.d/",
+        "python/docs/",
+        "python/experiments/",
+        "python/examples/",
+    ]
 
     for folder in excluded_folders:
         if file_path.startswith(folder):
@@ -151,11 +160,15 @@ def detect_changes() -> None:
     set_output("py-changed", "true" if py_changed else "false")
 
     # Detect tests/ changes
-    tests_changed = any(f.startswith("tests/") for f in changed_files)
+    tests_changed = any(
+        f.startswith("tests/") or f.startswith("python/tests/") for f in changed_files
+    )
     set_output("tests-changed", "true" if tests_changed else "false")
 
     # Detect pyproject.toml changes
-    package_changed = "pyproject.toml" in changed_files
+    package_changed = any(
+        f in {"pyproject.toml", "python/pyproject.toml"} for f in changed_files
+    )
     set_output("package-changed", "true" if package_changed else "false")
 
     # Detect documentation changes (any .md file)
