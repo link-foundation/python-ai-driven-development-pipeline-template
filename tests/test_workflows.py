@@ -121,6 +121,27 @@ def test_manual_release_requires_required_checks_to_succeed() -> None:
     assert "github.event_name == 'workflow_dispatch'" in condition
 
 
+def test_release_jobs_smoke_test_published_package_before_github_release() -> None:
+    """Published packages must be installed and exercised before announcing release."""
+    workflow = read_workflow("release.yml")
+
+    expected_version_outputs = {
+        "auto-release": "steps.version_check.outputs.current_version",
+        "manual-release": "steps.version.outputs.new_version",
+    }
+
+    for job_name, version_output in expected_version_outputs.items():
+        block = workflow_job_block(workflow, job_name)
+        assert "- name: Smoke test published package" in block
+        assert "python scripts/smoke_test_published_package.py" in block
+        assert f'--version "${{{{ {version_output} }}}}"' in block
+
+        publish_index = block.index("- name: Publish to PyPI")
+        smoke_index = block.index("- name: Smoke test published package")
+        release_index = block.index("- name: Create GitHub Release")
+        assert publish_index < smoke_index < release_index
+
+
 def test_docs_workflow_action_versions_are_current() -> None:
     """Docs workflow actions should stay aligned with the current Pages stack."""
     docs_workflow = read_workflow("docs.yml")

@@ -291,6 +291,12 @@ jobs:
         if: steps.version_check.outputs.should_release == 'true'
         uses: pypa/gh-action-pypi-publish@release/v1
 
+      - name: Smoke test published package
+        if: steps.version_check.outputs.should_release == 'true'
+        run: |
+          python scripts/smoke_test_published_package.py \
+            --version "${{ steps.version_check.outputs.current_version }}"
+
       - name: Create GitHub Release
         if: steps.version_check.outputs.should_release == 'true'
         env:
@@ -368,6 +374,12 @@ jobs:
       - name: Publish to PyPI
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
         uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Smoke test published package
+        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
+        run: |
+          python scripts/smoke_test_published_package.py \
+            --version "${{ steps.version.outputs.new_version }}"
 
       - name: Create GitHub Release
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
