@@ -80,6 +80,39 @@ def test_release_workflow_action_versions_are_current() -> None:
     assert_action_pin_count(release_workflow, "actions/download-artifact", "v7", 1)
 
 
+def test_release_workflow_auto_detects_python_layout() -> None:
+    """Release workflow should support root and python/ package layouts."""
+    workflow = read_workflow("release.yml")
+
+    assert "if [ -f pyproject.toml ]; then" in workflow
+    assert "elif [ -f python/pyproject.toml ]; then" in workflow
+    assert "root=python" in workflow
+    assert "multi_language=true" in workflow
+
+
+def test_release_workflow_namespaces_multi_language_python_tags() -> None:
+    """Multi-language releases should use py_v tags and plain root releases keep v."""
+    workflow = read_workflow("release.yml")
+    auto_release = workflow_job_block(workflow, "auto-release")
+
+    assert 'TAG="py_v$CURRENT_VERSION"' in auto_release
+    assert 'TAG="v$CURRENT_VERSION"' in auto_release
+    assert 'git rev-parse "$TAG"' in auto_release
+
+
+def test_release_workflow_runs_python_steps_from_detected_root() -> None:
+    """Package build and release commands should run against the detected root."""
+    workflow = read_workflow("release.yml")
+
+    assert 'cd "${{ steps.python_layout.outputs.root }}"' in workflow
+    assert "path: ${{ steps.python_layout.outputs.dist_dir }}" in workflow
+    assert "packages-dir: ${{ steps.python_layout.outputs.dist_dir }}" in workflow
+    assert (
+        'python "${{ steps.python_layout.outputs.root }}/scripts/create_github_release.py"'
+        in workflow
+    )
+
+
 STATUS_CHECK_FUNCTIONS = ("always()", "!cancelled()", "!failure()", "success()")
 
 

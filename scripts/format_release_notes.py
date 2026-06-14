@@ -23,7 +23,19 @@ import argparse
 import re
 import subprocess
 import sys
+from pathlib import Path
 from typing import Optional
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from release_naming import (  # noqa: E402
+    PYPROJECT_FILE,
+    build_pypi_badge,
+    detect_python_layout,
+    normalize_version,
+)
 
 
 def run_gh_command(args: list[str]) -> tuple[bool, str]:
@@ -90,10 +102,7 @@ def format_release_body(
     formatted_parts = []
 
     # Add PyPI badge
-    pypi_badge = (
-        f"[![PyPI version](https://img.shields.io/pypi/v/{package_name}.svg)]"
-        f"(https://pypi.org/project/{package_name}/)"
-    )
+    pypi_badge = build_pypi_badge(package_name, version)
     formatted_parts.append(pypi_badge)
     formatted_parts.append("")
 
@@ -112,7 +121,8 @@ def format_release_body(
     cleaned_body = cleaned_body.replace('\\"', '"')
 
     # Remove duplicate version headers if present
-    version_pattern = rf"^#+\s*v?{re.escape(version)}\s*$"
+    bare_version = normalize_version(version)
+    version_pattern = rf"^#+\s*v?{re.escape(bare_version)}\s*$"
     cleaned_body = re.sub(version_pattern, "", cleaned_body, flags=re.MULTILINE)
 
     # Clean up excessive whitespace
@@ -149,11 +159,12 @@ def update_release(repository: str, release_id: str, new_body: str) -> bool:
 def get_package_name() -> str:
     """Get the package name from pyproject.toml."""
     try:
-        with open("pyproject.toml") as f:
-            content = f.read()
-            match = re.search(r'^name\s*=\s*["\']([^"\']+)["\']', content, re.MULTILINE)
-            if match:
-                return match.group(1)
+        layout = detect_python_layout()
+        pyproject_path = layout.root / PYPROJECT_FILE
+        content = pyproject_path.read_text(encoding="utf-8")
+        match = re.search(r'^name\s*=\s*["\']([^"\']+)["\']', content, re.MULTILINE)
+        if match:
+            return match.group(1)
     except FileNotFoundError:
         pass
 
