@@ -2,12 +2,14 @@ name: Docs
 
 # Builds Sphinx documentation on every push and PR that touches docs/, src/, or
 # this workflow. On pushes to main the rendered site is published to GitHub
-# Pages. PRs only build to verify the docs still compile.
+# Pages only after deployment is explicitly enabled. PRs only build to verify
+# the docs still compile.
 #
 # One-time setup: in the repository's Settings -> Pages, set Source to
-# "GitHub Actions". Without this, the first run of the deploy job fails on
-# actions/deploy-pages with "Get Pages site failed". This cannot be configured
-# from a workflow. See README.md "Deploying API documentation".
+# "GitHub Actions", then set the DEPLOY_GITHUB_PAGES repository variable to
+# "true". Without the variable, deployment is skipped with a notice. Without
+# Pages configured, actions/deploy-pages fails with "Get Pages site failed".
+# See README.md "Deploying API documentation".
 
 on:
   push:
@@ -64,12 +66,16 @@ jobs:
           path: _site
           if-no-files-found: error
 
+      - name: Report skipped GitHub Pages deployment
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_GITHUB_PAGES != 'true'
+        run: echo "::notice::Skipping GitHub Pages deployment. To enable publishing, set Settings -> Pages -> Source = GitHub Actions, then add repository variable DEPLOY_GITHUB_PAGES=true."
+
       - name: Configure GitHub Pages
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_GITHUB_PAGES == 'true'
         uses: actions/configure-pages@v6
 
       - name: Upload GitHub Pages artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_GITHUB_PAGES == 'true'
         uses: actions/upload-pages-artifact@v5
         with:
           path: _site
@@ -77,7 +83,7 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
     needs: [build]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_GITHUB_PAGES == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:

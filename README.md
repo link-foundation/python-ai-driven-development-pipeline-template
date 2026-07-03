@@ -15,7 +15,7 @@ A comprehensive template for AI-driven Python development with full CI/CD pipeli
 - **CI/CD pipeline**: GitHub Actions CI/CD with Python 3.13
 - **Changelog management**: Scriv for conflict-free changelog (like Changesets in JS)
 - **Release automation**: Automatic PyPI publishing and GitHub releases
-- **API documentation**: Sphinx + GitHub Pages deploy on push to `main`
+- **API documentation**: Sphinx + opt-in GitHub Pages deploy on push to `main`
 
 ## Quick Start
 
@@ -88,7 +88,7 @@ ruff check . && ruff format --check . && mypy src/ && python scripts/check_file_
 .
 ├── .github/
 │   └── workflows/
-│       ├── docs.yml            # Sphinx build + GitHub Pages deploy
+│       ├── docs.yml            # Sphinx build + opt-in GitHub Pages deploy
 │       └── release.yml         # CI checks + release automation (PyPI + GitHub)
 ├── changelog.d/                # Changelog fragments (like .changeset/)
 │   ├── README.md               # Fragment instructions
@@ -189,9 +189,9 @@ The GitHub Actions workflow provides:
 
 ### API Documentation
 
-API documentation is built with [Sphinx](https://www.sphinx-doc.org/) and deployed
-to GitHub Pages on every push to `main`. Pull requests build the docs (without
-deploying) to catch regressions before they merge.
+API documentation is built with [Sphinx](https://www.sphinx-doc.org/) and can be
+deployed to GitHub Pages on pushes to `main`. Pull requests build the docs
+(without deploying) to catch regressions before they merge.
 
 ```bash
 # Install docs dependencies
@@ -213,15 +213,20 @@ this template, update `project`, `author`, and the autosummary target in
 #### Deploying API documentation
 
 The `Docs` workflow (`.github/workflows/docs.yml`) builds on every push and
-pull request, and deploys to GitHub Pages only on `push` to `main` (matching
-the JS and Rust template patterns; see
-[link-foundation/relative-meta-logic#170](https://github.com/link-foundation/relative-meta-logic/pull/170)
-for the bug this guards against).
+pull request. On `push` to `main`, it deploys to GitHub Pages only when the
+repository variable `DEPLOY_GITHUB_PAGES` is set to `true`. This keeps fresh
+repositories green while still validating their docs before Pages is configured.
 
-**One-time setup per repository**: open `Settings → Pages` and set
-`Source = GitHub Actions`. Without this, the first deploy run fails on
-`actions/deploy-pages` with `Get Pages site failed`. This cannot be configured
-from a workflow.
+**One-time setup per repository**:
+
+1. Open `Settings -> Pages` and set `Source = GitHub Actions`.
+2. Open `Settings -> Secrets and variables -> Actions -> Variables`, then add
+   repository variable `DEPLOY_GITHUB_PAGES` with value `true`.
+
+Without the variable, the workflow logs a notice and skips deployment without
+failing. Without the Pages source setting, an opted-in deploy fails on
+`actions/deploy-pages` with `Get Pages site failed`. The Pages source setting
+cannot be configured from a workflow.
 
 ### Preview regeneration parity
 
