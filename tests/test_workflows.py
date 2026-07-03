@@ -99,6 +99,19 @@ def test_release_workflow_action_versions_are_current() -> None:
     assert_action_pin_count(release_workflow, "actions/download-artifact", "v7", 1)
 
 
+def test_release_workflow_sets_git_default_branch_before_checkout() -> None:
+    """Release workflow should suppress Git's default branch hint during checkout."""
+    workflow = read_workflow("release.yml")
+
+    assert "env:\n  GIT_CONFIG_COUNT: '1'" in workflow
+    assert "  GIT_CONFIG_KEY_0: init.defaultBranch" in workflow
+    assert "  GIT_CONFIG_VALUE_0: main" in workflow
+
+    env_index = workflow.index("env:\n  GIT_CONFIG_COUNT: '1'")
+    first_checkout_index = workflow.index("uses: actions/checkout@v6")
+    assert env_index < first_checkout_index
+
+
 def test_release_workflow_gates_codecov_upload_on_token() -> None:
     """Codecov uploads should be skipped without a token and fail loudly with one."""
     workflow = read_workflow("release.yml")
