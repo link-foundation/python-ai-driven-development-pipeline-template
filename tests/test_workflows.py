@@ -228,3 +228,32 @@ def test_docs_workflow_action_versions_are_current() -> None:
     assert_action_pin_absent(docs_workflow, "actions/configure-pages", "v5")
     assert_action_pin_absent(docs_workflow, "actions/upload-pages-artifact", "v3")
     assert_action_pin_absent(docs_workflow, "actions/deploy-pages", "v4")
+
+
+def test_docs_workflow_deploys_pages_only_when_opted_in() -> None:
+    """Fresh repositories should build docs without failing Pages deployment."""
+    workflow = read_workflow("docs.yml")
+    build_job = workflow_job_block(workflow, "build")
+    deploy_job = workflow_job_block(workflow, "deploy")
+    configure_step = workflow_step_block(build_job, "Configure GitHub Pages")
+    upload_step = workflow_step_block(build_job, "Upload GitHub Pages artifact")
+    skip_step = workflow_step_block(build_job, "Report skipped GitHub Pages deployment")
+
+    deploy_condition = (
+        "github.event_name == 'push' && "
+        "github.ref == 'refs/heads/main' && "
+        "vars.DEPLOY_GITHUB_PAGES == 'true'"
+    )
+    skip_condition = (
+        "github.event_name == 'push' && "
+        "github.ref == 'refs/heads/main' && "
+        "vars.DEPLOY_GITHUB_PAGES != 'true'"
+    )
+
+    assert f"if: {deploy_condition}" in configure_step
+    assert f"if: {deploy_condition}" in upload_step
+    assert f"if: {deploy_condition}" in deploy_job
+    assert f"if: {skip_condition}" in skip_step
+    assert "::notice::" in skip_step
+    assert "DEPLOY_GITHUB_PAGES=true" in skip_step
+    assert "Settings -> Pages" in skip_step
