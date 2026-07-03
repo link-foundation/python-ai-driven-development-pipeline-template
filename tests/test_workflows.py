@@ -30,6 +30,25 @@ def workflow_job_block(workflow: str, job_name: str) -> str:
     return "\n".join(lines[start:end])
 
 
+def workflow_step_block(job_block: str, step_name: str) -> str:
+    """Return the YAML text block for one named workflow step."""
+    lines = job_block.splitlines()
+    start = next(
+        index
+        for index, line in enumerate(lines)
+        if line.strip() == f"- name: {step_name}"
+    )
+    end = next(
+        (
+            index
+            for index, line in enumerate(lines[start + 1 :], start + 1)
+            if re.match(r"^      - ", line)
+        ),
+        len(lines),
+    )
+    return "\n".join(lines[start:end])
+
+
 def assert_action_pin_count(
     workflow: str, action: str, version: str, count: int
 ) -> None:
@@ -78,6 +97,25 @@ def test_release_workflow_action_versions_are_current() -> None:
     assert_action_pin_count(release_workflow, "actions/checkout", "v6", 7)
     assert_action_pin_count(release_workflow, "actions/upload-artifact", "v7", 1)
     assert_action_pin_count(release_workflow, "actions/download-artifact", "v7", 1)
+
+
+def test_release_workflow_gates_codecov_upload_on_token() -> None:
+    """Codecov uploads should be skipped without a token and fail loudly with one."""
+    workflow = read_workflow("release.yml")
+    test_job = workflow_job_block(workflow, "test")
+    skip_step = workflow_step_block(test_job, "Report skipped Codecov upload")
+    upload_step = workflow_step_block(test_job, "Upload coverage to Codecov")
+
+    assert "CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}" in test_job
+    assert "if: env.CODECOV_TOKEN == ''" in skip_step
+    assert "::notice::" in skip_step
+    assert "if: env.CODECOV_TOKEN != ''" in upload_step
+    assert "uses: codecov/codecov-action@v4" in upload_step
+    assert "file: ${{ steps.python_layout.outputs.root }}/coverage.xml" in upload_step
+    assert "token: ${{ env.CODECOV_TOKEN }}" in upload_step
+    assert "disable_search: true" in upload_step
+    assert "fail_ci_if_error: true" in upload_step
+    assert "fail_ci_if_error: false" not in upload_step
 
 
 def test_release_workflow_auto_detects_python_layout() -> None:

@@ -172,6 +172,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: [detect-changes]
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     # always() && !cancelled() lets this job evaluate even though detect-changes
     # is skipped for workflow_dispatch; without it, the skipped dependency would
     # propagate and skip test despite the workflow_dispatch condition below.
@@ -228,11 +230,18 @@ jobs:
           cd "${{ steps.python_layout.outputs.root }}"
           pytest tests/ -v --cov=src --cov-report=xml --cov-report=term
 
+      - name: Report skipped Codecov upload
+        if: env.CODECOV_TOKEN == ''
+        run: echo "::notice::Skipping Codecov upload because CODECOV_TOKEN is not configured"
+
       - name: Upload coverage to Codecov
+        if: env.CODECOV_TOKEN != ''
         uses: codecov/codecov-action@v4
         with:
-          file: ./coverage.xml
-          fail_ci_if_error: false
+          file: ${{ steps.python_layout.outputs.root }}/coverage.xml
+          token: ${{ env.CODECOV_TOKEN }}
+          disable_search: true
+          fail_ci_if_error: true
 
   # === BUILD PACKAGE ===
   # Build package - runs if lint and test pass, or were skipped (docs-only PR)
