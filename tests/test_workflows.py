@@ -237,6 +237,8 @@ def test_release_workflow_checks_fresh_merge_and_secrets() -> None:
         "npx --yes -p secretlint -p "
         '@secretlint/secretlint-rule-preset-recommend secretlint "**/*"' in lint
     )
+    secretlint_config = (ROOT / ".secretlintrc.json").read_text(encoding="utf-8")
+    assert '"id": "@secretlint/secretlint-rule-preset-recommend"' in secretlint_config
 
 
 def test_release_workflow_builds_docker_images_on_pull_requests() -> None:
