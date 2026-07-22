@@ -95,8 +95,13 @@ def test_release_workflow_action_versions_are_current() -> None:
     release_workflow = read_workflow("release.yml")
 
     assert_action_pin_count(release_workflow, "actions/checkout", "v6", 7)
+    assert_action_pin_count(release_workflow, "actions/setup-python", "v6", 7)
     assert_action_pin_count(release_workflow, "actions/upload-artifact", "v7", 1)
     assert_action_pin_count(release_workflow, "actions/download-artifact", "v7", 1)
+    assert_action_pin_count(release_workflow, "codecov/codecov-action", "v7", 1)
+
+    assert_action_pin_absent(release_workflow, "actions/setup-python", "v5")
+    assert_action_pin_absent(release_workflow, "codecov/codecov-action", "v4")
 
 
 def test_release_workflow_sets_git_default_branch_before_checkout() -> None:
@@ -123,7 +128,7 @@ def test_release_workflow_gates_codecov_upload_on_token() -> None:
     assert "if: env.CODECOV_TOKEN == ''" in skip_step
     assert "::notice::" in skip_step
     assert "if: env.CODECOV_TOKEN != ''" in upload_step
-    assert "uses: codecov/codecov-action@v4" in upload_step
+    assert "uses: codecov/codecov-action@v7" in upload_step
     assert "file: ${{ steps.python_layout.outputs.root }}/coverage.xml" in upload_step
     assert "token: ${{ env.CODECOV_TOKEN }}" in upload_step
     assert "disable_search: true" in upload_step
@@ -231,12 +236,14 @@ def test_docs_workflow_action_versions_are_current() -> None:
     docs_workflow = read_workflow("docs.yml")
 
     assert_action_pin_count(docs_workflow, "actions/checkout", "v6", 1)
+    assert_action_pin_count(docs_workflow, "actions/setup-python", "v6", 1)
     assert_action_pin_count(docs_workflow, "actions/upload-artifact", "v7", 1)
     assert_action_pin_count(docs_workflow, "actions/configure-pages", "v6", 1)
     assert_action_pin_count(docs_workflow, "actions/upload-pages-artifact", "v5", 1)
     assert_action_pin_count(docs_workflow, "actions/deploy-pages", "v5", 1)
 
     assert_action_pin_absent(docs_workflow, "actions/checkout", "v4")
+    assert_action_pin_absent(docs_workflow, "actions/setup-python", "v5")
     assert_action_pin_absent(docs_workflow, "actions/upload-artifact", "v4")
     assert_action_pin_absent(docs_workflow, "actions/configure-pages", "v5")
     assert_action_pin_absent(docs_workflow, "actions/upload-pages-artifact", "v3")
