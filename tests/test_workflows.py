@@ -140,7 +140,8 @@ def test_release_workflow_gates_codecov_upload_on_token() -> None:
     assert "::notice::" in skip_step
     assert "if: env.CODECOV_TOKEN != ''" in upload_step
     assert "uses: codecov/codecov-action@v7" in upload_step
-    assert "file: ${{ steps.python_layout.outputs.root }}/coverage.xml" in upload_step
+    assert "files: ${{ steps.python_layout.outputs.root }}/coverage.xml" in upload_step
+    assert "\n          file:" not in upload_step
     assert "token: ${{ env.CODECOV_TOKEN }}" in upload_step
     assert "disable_search: true" in upload_step
     assert "fail_ci_if_error: true" in upload_step
