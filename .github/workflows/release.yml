@@ -246,7 +246,7 @@ jobs:
         if: env.CODECOV_TOKEN != ''
         uses: codecov/codecov-action@v7
         with:
-          file: ${{ steps.python_layout.outputs.root }}/coverage.xml
+          files: ${{ steps.python_layout.outputs.root }}/coverage.xml
           token: ${{ env.CODECOV_TOKEN }}
           disable_search: true
           fail_ci_if_error: true
