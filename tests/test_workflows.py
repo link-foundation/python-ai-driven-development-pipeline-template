@@ -71,6 +71,17 @@ def test_release_workflow_keeps_main_releases_running() -> None:
     assert "cancel-in-progress: true" not in workflow
 
 
+def test_release_workflow_uses_least_privilege_permissions() -> None:
+    """Only publishing jobs should receive write-capable tokens."""
+    workflow = read_workflow("release.yml")
+
+    assert "\npermissions:\n  contents: read\n" in workflow
+
+    for job_name in ("auto-release", "manual-release"):
+        block = workflow_job_block(workflow, job_name)
+        assert "permissions:\n      contents: write\n      id-token: write" in block
+
+
 def test_release_workflow_jobs_have_explicit_timeouts() -> None:
     """Release workflow jobs should fail fast instead of using the six-hour default."""
     workflow = read_workflow("release.yml")
