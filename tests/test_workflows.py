@@ -92,6 +92,7 @@ def test_release_workflow_jobs_have_explicit_timeouts() -> None:
         "test": 30,
         "build": 20,
         "changelog": 10,
+        "docker-build": 60,
         "auto-release": 30,
         "manual-release": 30,
     }
@@ -105,7 +106,7 @@ def test_release_workflow_action_versions_are_current() -> None:
     """Release workflow actions should use the current major versions."""
     release_workflow = read_workflow("release.yml")
 
-    assert_action_pin_count(release_workflow, "actions/checkout", "v6", 7)
+    assert_action_pin_count(release_workflow, "actions/checkout", "v6", 8)
     assert_action_pin_count(release_workflow, "actions/setup-python", "v6", 7)
     assert_action_pin_count(release_workflow, "actions/upload-artifact", "v7", 1)
     assert_action_pin_count(release_workflow, "actions/download-artifact", "v7", 1)
@@ -209,6 +210,55 @@ def test_dispatch_dependent_jobs_use_status_check_function() -> None:
             f"job {job_name!r} depends on a skippable job but its if condition "
             f"does not start with a status-check function: {condition!r}"
         )
+
+
+def test_release_workflow_propagates_cancellation() -> None:
+    """Dependent jobs must stop when a workflow run is cancelled."""
+    workflow = read_workflow("release.yml")
+
+    assert "always() && !cancelled()" not in workflow
+    for job_name in ("lint", "test", "build", "manual-release"):
+        condition = job_condition(workflow, job_name)
+        assert "!cancelled()" in condition
+        assert "always()" not in condition
+
+
+def test_release_workflow_checks_fresh_merge_and_secrets() -> None:
+    """Pull requests must test a fresh base merge and scan for secrets."""
+    workflow = read_workflow("release.yml")
+    lint = workflow_job_block(workflow, "lint")
+
+    assert "fetch-depth: 0" in lint
+    assert "- name: Simulate fresh merge with base branch (PR only)" in lint
+    assert "if: github.event_name == 'pull_request'" in lint
+    assert "BASE_REF: ${{ github.base_ref }}" in lint
+    assert "run: bash scripts/simulate-fresh-merge.sh" in lint
+    assert "- name: Check for secrets" in lint
+    assert (
+        "npx --yes -p secretlint -p "
+        '@secretlint/secretlint-rule-preset-recommend secretlint "**/*"' in lint
+    )
+    secretlint_config = (ROOT / ".secretlintrc.json").read_text(encoding="utf-8")
+    assert '"id": "@secretlint/secretlint-rule-preset-recommend"' in secretlint_config
+
+
+def test_release_workflow_builds_docker_images_on_pull_requests() -> None:
+    """Docker regressions must fail before packages are published."""
+    workflow = read_workflow("release.yml")
+    block = workflow_job_block(workflow, "docker-build")
+
+    assert "name: Docker Image Build Check" in block
+    assert "needs: [detect-changes]" in block
+    assert (
+        "if: github.event_name == 'pull_request' && "
+        "needs.detect-changes.outputs.any-code-changed == 'true'" in block
+    )
+    assert "uses: docker/setup-buildx-action@v4" in block
+    assert "uses: docker/build-push-action@v7" in block
+    assert "push: false" in block
+    assert "load: true" in block
+    assert "cache-from: type=gha" in block
+    assert "cache-to: type=gha,mode=max" in block
 
 
 def test_manual_release_requires_required_checks_to_succeed() -> None:

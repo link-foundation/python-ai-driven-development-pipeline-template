@@ -101,11 +101,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [detect-changes]
-    # always() && !cancelled() lets this job evaluate even though detect-changes
-    # is skipped for workflow_dispatch; without it, the skipped dependency would
-    # propagate and skip lint despite the workflow_dispatch condition below.
+    # !cancelled() lets this job evaluate even though detect-changes is skipped
+    # for workflow_dispatch while still propagating workflow cancellation.
     if: |
-      always() && !cancelled() && (
+      !cancelled() && (
         github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
         needs.detect-changes.outputs.py-changed == 'true' ||
@@ -116,6 +115,14 @@ jobs:
       )
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Simulate fresh merge with base branch (PR only)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: bash scripts/simulate-fresh-merge.sh
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -173,6 +180,9 @@ jobs:
           cd "${{ steps.python_layout.outputs.root }}"
           python scripts/check_file_size.py
 
+      - name: Check for secrets
+        run: npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint "**/*"
+
   # === TEST ===
   # Test on latest Python version only
   test:
@@ -182,11 +192,10 @@ jobs:
     needs: [detect-changes]
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    # always() && !cancelled() lets this job evaluate even though detect-changes
-    # is skipped for workflow_dispatch; without it, the skipped dependency would
-    # propagate and skip test despite the workflow_dispatch condition below.
+    # !cancelled() lets this job evaluate even though detect-changes is skipped
+    # for workflow_dispatch while still propagating workflow cancellation.
     if: |
-      always() && !cancelled() && (
+      !cancelled() && (
         github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
         needs.detect-changes.outputs.py-changed == 'true' ||
@@ -260,7 +269,7 @@ jobs:
     needs: [detect-changes, lint, test]
     # Run if: push/dispatch event, OR lint/test succeeded, OR lint/test were skipped (docs-only PR)
     if: |
-      always() && (
+      !cancelled() && (
         github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
         (
@@ -404,6 +413,43 @@ jobs:
 
           echo "✓ Changelog check passed"
 
+  # === DOCKER IMAGE BUILD CHECK (pull requests) ===
+  # Build without pushing so a broken Dockerfile fails before package publish.
+  # Skip cleanly when a generated repository does not include a Dockerfile.
+  docker-build:
+    name: Docker Image Build Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: [detect-changes]
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Detect Dockerfile
+        id: dockerfile
+        run: |
+          if [ -f Dockerfile ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping Docker build because no Dockerfile is present"
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.dockerfile.outputs.exists == 'true'
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build Docker image (no push)
+        if: steps.dockerfile.outputs.exists == 'true'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          tags: app:pr-check
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   # RELEASE JOBS - Only run after all CI checks pass
 
   # Automatic release on push to main (if version changed)
@@ -513,11 +559,11 @@ jobs:
   manual-release:
     name: Manual Release
     needs: [lint, test, build]
-    # always() && !cancelled() prevents the skipped detect-changes dependency from
-    # propagating through lint/test/build and silently skipping the release.
+    # !cancelled() prevents the skipped detect-changes dependency from propagating
+    # through lint/test/build while still propagating workflow cancellation.
     # The explicit result checks ensure release only proceeds after CI passes.
     if: |
-      always() && !cancelled() &&
+      !cancelled() &&
       github.event_name == 'workflow_dispatch' &&
       needs.lint.result == 'success' &&
       needs.test.result == 'success' &&
