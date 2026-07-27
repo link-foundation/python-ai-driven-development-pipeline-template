@@ -41,11 +41,6 @@ jobs:
     timeout-minutes: 5
     if: github.event_name != 'workflow_dispatch'
     outputs:
-      py-changed: ${{ steps.changes.outputs.py-changed }}
-      tests-changed: ${{ steps.changes.outputs.tests-changed }}
-      package-changed: ${{ steps.changes.outputs.package-changed }}
-      docs-changed: ${{ steps.changes.outputs.docs-changed }}
-      workflow-changed: ${{ steps.changes.outputs.workflow-changed }}
       any-code-changed: ${{ steps.changes.outputs.any-code-changed }}
     steps:
       - uses: actions/checkout@v6
@@ -94,7 +89,7 @@ jobs:
   # These jobs ensure code quality and tests pass before any release
 
   # === LINT AND FORMAT CHECK ===
-  # Lint runs independently of changelog check - it's a fast check that should always run
+  # Lint runs independently of changelog check for detected code changes.
   # See: https://github.com/link-assistant/hive-mind/pull/1024 for why this dependency was removed
   lint:
     name: Lint and Format Check
@@ -105,13 +100,8 @@ jobs:
     # for workflow_dispatch while still propagating workflow cancellation.
     if: |
       !cancelled() && (
-        github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
-        needs.detect-changes.outputs.py-changed == 'true' ||
-        needs.detect-changes.outputs.tests-changed == 'true' ||
-        needs.detect-changes.outputs.docs-changed == 'true' ||
-        needs.detect-changes.outputs.package-changed == 'true' ||
-        needs.detect-changes.outputs.workflow-changed == 'true'
+        needs.detect-changes.outputs.any-code-changed == 'true'
       )
     steps:
       - uses: actions/checkout@v6
@@ -196,12 +186,8 @@ jobs:
     # for workflow_dispatch while still propagating workflow cancellation.
     if: |
       !cancelled() && (
-        github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
-        needs.detect-changes.outputs.py-changed == 'true' ||
-        needs.detect-changes.outputs.tests-changed == 'true' ||
-        needs.detect-changes.outputs.package-changed == 'true' ||
-        needs.detect-changes.outputs.workflow-changed == 'true'
+        needs.detect-changes.outputs.any-code-changed == 'true'
       )
     steps:
       - uses: actions/checkout@v6
@@ -261,21 +247,20 @@ jobs:
           fail_ci_if_error: true
 
   # === BUILD PACKAGE ===
-  # Build package - runs if lint and test pass, or were skipped (docs-only PR)
+  # Build package after required checks pass for detected code changes or dispatches.
   build:
     name: Build Package
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [detect-changes, lint, test]
-    # Run if: push/dispatch event, OR lint/test succeeded, OR lint/test were skipped (docs-only PR)
+    # Build change-bearing automatic events and all manually dispatched releases.
     if: |
       !cancelled() && (
-        github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
-        (
-          (needs.lint.result == 'success' || needs.lint.result == 'skipped') &&
-          (needs.test.result == 'success' || needs.test.result == 'skipped')
-        )
+        needs.detect-changes.outputs.any-code-changed == 'true'
+      ) && (
+        needs.lint.result == 'success' &&
+        needs.test.result == 'success'
       )
     steps:
       - uses: actions/checkout@v6
