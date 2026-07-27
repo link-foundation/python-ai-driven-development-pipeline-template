@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ROOT / ".github" / "workflows"
 
@@ -221,6 +220,34 @@ def test_release_workflow_propagates_cancellation() -> None:
         condition = job_condition(workflow, job_name)
         assert "!cancelled()" in condition
         assert "always()" not in condition
+
+
+def test_change_gated_jobs_use_detector_for_pull_requests_and_pushes() -> None:
+    """Automatic events must use the same authoritative detector output."""
+    workflow = read_workflow("release.yml")
+
+    for job_name in ("lint", "test", "build"):
+        condition = job_condition(workflow, job_name)
+        assert "needs.detect-changes.outputs.any-code-changed == 'true'" in condition
+        assert "github.event_name == 'push'" not in condition
+        assert "github.event_name == 'workflow_dispatch'" in condition
+
+
+def test_detect_changes_only_exports_consumed_outputs() -> None:
+    """Detector outputs should not drift from the workflow's actual job gates."""
+    workflow = read_workflow("release.yml")
+    block = workflow_job_block(workflow, "detect-changes")
+
+    assert "any-code-changed:" in block
+    for unused_output in (
+        "py-changed",
+        "tests-changed",
+        "package-changed",
+        "docs-changed",
+        "workflow-changed",
+    ):
+        assert f"{unused_output}:" not in block
+        assert f"outputs.{unused_output}" not in workflow
 
 
 def test_release_workflow_checks_fresh_merge_and_secrets() -> None:

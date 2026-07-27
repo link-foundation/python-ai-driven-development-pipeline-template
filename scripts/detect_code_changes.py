@@ -13,6 +13,7 @@ Key behavior:
 Excluded from code changes (don't require changelog fragments):
 - Markdown files (*.md) in any folder
 - changelog.d/ folder (changelog metadata)
+- dev/log/ folder (development logs)
 - docs/ folder (documentation)
 - experiments/ folder (experimental scripts)
 - examples/ folder (example scripts)
@@ -26,12 +27,7 @@ Environment variables (set by GitHub Actions):
     - GITHUB_HEAD_SHA: Head commit SHA for PR
 
 Outputs (written to GITHUB_OUTPUT):
-    - py-changed: 'true' if any .py files changed
-    - tests-changed: 'true' if any tests/ files changed
-    - package-changed: 'true' if pyproject.toml changed
-    - docs-changed: 'true' if any .md files changed
-    - workflow-changed: 'true' if any .github/workflows/ files changed
-    - any-code-changed: 'true' if any code files changed (excludes docs, changelogs, experiments, examples)
+    - any-code-changed: 'true' if any code files changed outside excluded paths
 """
 
 from __future__ import annotations
@@ -39,6 +35,15 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+
+EXCLUDED_FOLDERS = (
+    "changelog.d/",
+    "dev/log/",
+    "docs/",
+    "examples/",
+    "experiments/",
+)
+CODE_EXTENSIONS = (".py", ".toml", ".yml", ".yaml")
 
 
 def exec_command(command: str) -> str:
@@ -97,7 +102,7 @@ def get_changed_files() -> list[str]:
                 output = exec_command(f"git diff --name-only {base_sha} {head_sha}")
                 if output:
                     return [f for f in output.split("\n") if f]
-            except Exception as e:
+            except (OSError, subprocess.SubprocessError) as e:
                 print(f"Git diff failed: {e}", file=sys.stderr)
 
     # For push events or fallback
@@ -106,7 +111,7 @@ def get_changed_files() -> list[str]:
         output = exec_command("git diff --name-only HEAD^ HEAD")
         if output:
             return [f for f in output.split("\n") if f]
-    except Exception:
+    except (OSError, subprocess.SubprocessError):
         # If HEAD^ doesn't exist (first commit), list all files in HEAD
         print("HEAD^ not available, listing all files in HEAD")
         output = exec_command("git ls-tree --name-only -r HEAD")
@@ -118,27 +123,30 @@ def get_changed_files() -> list[str]:
 
 def is_excluded_from_code_changes(file_path: str) -> bool:
     """Check if a file should be excluded from code changes detection."""
-    # Exclude markdown files in any folder
     if file_path.endswith(".md"):
         return True
 
-    # Exclude specific folders from code changes
-    excluded_folders = [
-        "changelog.d/",
-        "docs/",
-        "experiments/",
-        "examples/",
-        "python/changelog.d/",
-        "python/docs/",
-        "python/experiments/",
-        "python/examples/",
-    ]
+    relative_path = file_path.removeprefix("python/")
+    return relative_path.startswith(EXCLUDED_FOLDERS)
 
-    for folder in excluded_folders:
-        if file_path.startswith(folder):
-            return True
 
-    return False
+def detect_change_types(
+    changed_files: list[str], *, event_name: str
+) -> dict[str, bool]:
+    """Classify changed files for job gating on an automatic event."""
+    if event_name not in {"pull_request", "push"}:
+        message = f"Unsupported automatic event: {event_name}"
+        raise ValueError(message)
+
+    code_changed = any(
+        (
+            file_path.endswith(CODE_EXTENSIONS)
+            or file_path.startswith(".github/workflows/")
+        )
+        and not is_excluded_from_code_changes(file_path)
+        for file_path in changed_files
+    )
+    return {"any-code-changed": code_changed}
 
 
 def detect_changes() -> None:
@@ -155,31 +163,6 @@ def detect_changes() -> None:
             print(f"  {file}")
     print()
 
-    # Detect .py file changes
-    py_changed = any(f.endswith(".py") for f in changed_files)
-    set_output("py-changed", "true" if py_changed else "false")
-
-    # Detect tests/ changes
-    tests_changed = any(
-        f.startswith("tests/") or f.startswith("python/tests/") for f in changed_files
-    )
-    set_output("tests-changed", "true" if tests_changed else "false")
-
-    # Detect pyproject.toml changes
-    package_changed = any(
-        f in {"pyproject.toml", "python/pyproject.toml"} for f in changed_files
-    )
-    set_output("package-changed", "true" if package_changed else "false")
-
-    # Detect documentation changes (any .md file)
-    docs_changed = any(f.endswith(".md") for f in changed_files)
-    set_output("docs-changed", "true" if docs_changed else "false")
-
-    # Detect workflow changes
-    workflow_changed = any(f.startswith(".github/workflows/") for f in changed_files)
-    set_output("workflow-changed", "true" if workflow_changed else "false")
-
-    # Detect code changes (excluding docs, changelogs, experiments, examples folders, and markdown files)
     code_changed_files = [
         f for f in changed_files if not is_excluded_from_code_changes(f)
     ]
@@ -192,12 +175,10 @@ def detect_changes() -> None:
             print(f"  {file}")
     print()
 
-    # Check if any code files changed (.py, .toml, .yml, .yaml, or workflow files)
-    import re
-
-    code_pattern = re.compile(r"\.(py|toml|yml|yaml)$|\.github/workflows/")
-    code_changed = any(code_pattern.search(f) for f in code_changed_files)
-    set_output("any-code-changed", "true" if code_changed else "false")
+    event_name = os.environ.get("GITHUB_EVENT_NAME", "push")
+    outputs = detect_change_types(changed_files, event_name=event_name)
+    for name, value in outputs.items():
+        set_output(name, "true" if value else "false")
 
     print("\nChange detection completed.")
 
