@@ -48,6 +48,33 @@ def workflow_step_block(job_block: str, step_name: str) -> str:
     return "\n".join(lines[start:end])
 
 
+def workflow_run_blocks(workflow: str) -> list[str]:
+    """Return every shell ``run:`` block from a workflow."""
+    lines = workflow.splitlines()
+    blocks: list[str] = []
+    index = 0
+
+    while index < len(lines):
+        line = lines[index]
+        indentation = len(line) - len(line.lstrip())
+        if not line.lstrip().startswith("run:"):
+            index += 1
+            continue
+
+        block = [line]
+        index += 1
+        while index < len(lines):
+            next_line = lines[index]
+            next_indentation = len(next_line) - len(next_line.lstrip())
+            if next_line.strip() and next_indentation <= indentation:
+                break
+            block.append(next_line)
+            index += 1
+        blocks.append("\n".join(block))
+
+    return blocks
+
+
 def assert_action_pin_count(
     workflow: str, action: str, version: str, count: int
 ) -> None:
@@ -62,12 +89,53 @@ def assert_action_pin_absent(workflow: str, action: str, version: str) -> None:
     assert not re.search(pattern, workflow)
 
 
-def test_release_workflow_keeps_main_releases_running() -> None:
-    """Main release runs must not be cancelled by follow-up pushes."""
-    workflow = read_workflow("release.yml")
+def test_workflow_run_blocks_do_not_interpolate_untrusted_inputs() -> None:
+    """Contributor-controlled inputs must reach shell scripts through env vars."""
+    unsafe_expression = re.compile(
+        r"\$\{\{\s*(?:inputs\.|github\.event\.inputs\.|github\.head_ref)[^}]*\}\}"
+    )
 
-    assert "cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}" in workflow
-    assert "cancel-in-progress: true" not in workflow
+    for path in sorted(WORKFLOWS.glob("*.y*ml")):
+        workflow = path.read_text(encoding="utf-8")
+        for run_block in workflow_run_blocks(workflow):
+            assert not unsafe_expression.search(run_block), (
+                f"{path.name} interpolates an untrusted expression in a run block:\n"
+                f"{run_block}"
+            )
+
+
+def test_release_workflow_separates_check_and_write_concurrency() -> None:
+    """Checks cancel independently while release writes share a FIFO queue."""
+    workflow = read_workflow("release.yml")
+    workflow_header = workflow.split("\njobs:\n", maxsplit=1)[0]
+
+    assert "\nconcurrency:\n" not in workflow_header
+
+    for job_name in (
+        "detect-changes",
+        "lint",
+        "test",
+        "build",
+        "changelog",
+        "docker-build",
+    ):
+        block = workflow_job_block(workflow, job_name)
+        expected_group = (
+            "group: ${{ github.workflow }}-${{ github.ref }}-" f"{job_name}"
+        )
+        assert expected_group in block
+        assert "cancel-in-progress: true" in block
+
+    write_concurrency = "\n".join(
+        (
+            "    concurrency:",
+            "      group: ${{ github.workflow }}-main-write",
+            "      cancel-in-progress: false",
+            "      queue: max",
+        )
+    )
+    for job_name in ("auto-release", "manual-release"):
+        assert write_concurrency in workflow_job_block(workflow, job_name)
 
 
 def test_release_workflow_uses_least_privilege_permissions() -> None:
