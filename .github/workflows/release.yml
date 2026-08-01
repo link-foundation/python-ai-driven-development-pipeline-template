@@ -24,21 +24,24 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
-
 env:
   GIT_CONFIG_COUNT: '1'
   GIT_CONFIG_KEY_0: init.defaultBranch
   GIT_CONFIG_VALUE_0: main
 
+# Concurrency is intentionally job-scoped. Superseded read-only jobs cancel
+# independently, including on main. Write-capable release jobs share one FIFO
+# queue so a publication that has started is never cancelled and subsequent
+# publications run one at a time.
 jobs:
   # === DETECT CHANGES - determines which jobs should run ===
   detect-changes:
     name: Detect Changes
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-detect-changes
+      cancel-in-progress: true
     if: github.event_name != 'workflow_dispatch'
     outputs:
       any-code-changed: ${{ steps.changes.outputs.any-code-changed }}
@@ -95,6 +98,9 @@ jobs:
     name: Lint and Format Check
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-lint
+      cancel-in-progress: true
     needs: [detect-changes]
     # !cancelled() lets this job evaluate even though detect-changes is skipped
     # for workflow_dispatch while still propagating workflow cancellation.
@@ -179,6 +185,9 @@ jobs:
     name: Test (Python 3.13)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-test
+      cancel-in-progress: true
     needs: [detect-changes]
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -252,6 +261,9 @@ jobs:
     name: Build Package
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-build
+      cancel-in-progress: true
     needs: [detect-changes, lint, test]
     # Build change-bearing automatic events and all manually dispatched releases.
     if: |
@@ -322,6 +334,9 @@ jobs:
     name: Changelog Fragment Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-changelog
+      cancel-in-progress: true
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
@@ -405,6 +420,9 @@ jobs:
     name: Docker Image Build Check
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-docker-build
+      cancel-in-progress: true
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
@@ -441,6 +459,10 @@ jobs:
   auto-release:
     name: Auto Release
     needs: [lint, test, build]
+    concurrency:
+      group: ${{ github.workflow }}-main-write
+      cancel-in-progress: false
+      queue: max
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -544,6 +566,10 @@ jobs:
   manual-release:
     name: Manual Release
     needs: [lint, test, build]
+    concurrency:
+      group: ${{ github.workflow }}-main-write
+      cancel-in-progress: false
+      queue: max
     # !cancelled() prevents the skipped detect-changes dependency from propagating
     # through lint/test/build while still propagating workflow cancellation.
     # The explicit result checks ensure release only proceeds after CI passes.
@@ -606,24 +632,29 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Collect changelog fragments
+        env:
+          BUMP_TYPE: ${{ github.event.inputs.bump_type }}
         run: |
           cd "${{ steps.python_layout.outputs.root }}"
           # Check if there are any fragments to collect
           FRAGMENTS=$(find changelog.d -name "*.md" ! -name "README.md" ! -name "*.j2" 2>/dev/null | wc -l)
           if [ "$FRAGMENTS" -gt 0 ]; then
             echo "Found $FRAGMENTS changelog fragment(s), collecting..."
-            scriv collect --version "${{ github.event.inputs.bump_type }}"
+            scriv collect --version "$BUMP_TYPE"
           else
             echo "No changelog fragments found, skipping collection"
           fi
 
       - name: Version and commit
         id: version
+        env:
+          BUMP_TYPE: ${{ github.event.inputs.bump_type }}
+          DESCRIPTION: ${{ github.event.inputs.description }}
         run: |
           cd "${{ steps.python_layout.outputs.root }}"
           python scripts/version_and_commit.py \
-            --bump-type "${{ github.event.inputs.bump_type }}" \
-            --description "${{ github.event.inputs.description }}"
+            --bump-type "$BUMP_TYPE" \
+            --description "$DESCRIPTION"
 
       - name: Build package
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
