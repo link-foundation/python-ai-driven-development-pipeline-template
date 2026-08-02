@@ -92,7 +92,8 @@ def assert_action_pin_absent(workflow: str, action: str, version: str) -> None:
 def test_workflow_run_blocks_do_not_interpolate_untrusted_inputs() -> None:
     """Contributor-controlled inputs must reach shell scripts through env vars."""
     unsafe_expression = re.compile(
-        r"\$\{\{\s*(?:inputs\.|github\.event\.inputs\.|github\.head_ref)[^}]*\}\}"
+        r"\$\{\{\s*(?:inputs\.|github\.event\.inputs\.|github\.(?:base|head)_ref)"
+        r"[^}]*\}\}"
     )
 
     for path in sorted(WORKFLOWS.glob("*.y*ml")):
@@ -102,6 +103,22 @@ def test_workflow_run_blocks_do_not_interpolate_untrusted_inputs() -> None:
                 f"{path.name} interpolates an untrusted expression in a run block:\n"
                 f"{run_block}"
             )
+
+
+def test_changelog_check_safely_requires_a_fragment() -> None:
+    """Source-changing pull requests must fail safely without a fragment."""
+    workflow = read_workflow("release.yml")
+    changelog_job = workflow_job_block(workflow, "changelog")
+    check_step = workflow_step_block(changelog_job, "Check for changelog fragments")
+
+    assert "GITHUB_BASE_REF: ${{ github.base_ref }}" in check_step
+    assert "set -euo pipefail" in check_step
+    assert 'git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD"' in check_step
+    assert 'grep -cE "$SOURCE_PATTERN" || true' in check_step
+    assert "::error::No changelog fragment found." in check_step
+    assert "::warning::No changelog fragment found." not in check_step
+    assert "exit 1" in check_step
+    assert "exit 0" not in check_step
 
 
 def test_release_workflow_separates_check_and_write_concurrency() -> None:
