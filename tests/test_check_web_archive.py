@@ -65,4 +65,3 @@ def test_check_wayback_machine_treats_api_errors_as_unavailable(monkeypatch) -> 
     assert result.available is False
     assert result.archive_url is None
     assert result.timestamp is None
-
