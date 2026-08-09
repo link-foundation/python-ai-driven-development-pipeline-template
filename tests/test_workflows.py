@@ -105,6 +105,35 @@ def test_workflow_run_blocks_do_not_interpolate_untrusted_inputs() -> None:
             )
 
 
+def test_security_workflow_scans_code_actions_and_dependencies() -> None:
+    """Security checks must cover pushes, pull requests, and scheduled scans."""
+    workflow = read_workflow("security.yml")
+    codeql_job = workflow_job_block(workflow, "codeql")
+    dependency_job = workflow_job_block(workflow, "dependency-review")
+
+    assert "branches: [main]" in workflow
+    assert "pull_request:" in workflow
+    assert "schedule:" in workflow
+    assert "cron: '0 6 * * 1'" in workflow
+    assert "permissions:\n  contents: read" in workflow
+
+    assert "timeout-minutes: 30" in codeql_job
+    assert "security-events: write" in codeql_job
+    assert "language: [python, actions]" in codeql_job
+    assert "languages: ${{ matrix.language }}" in codeql_job
+    assert "uses: github/codeql-action/init@v4" in codeql_job
+    assert "uses: github/codeql-action/autobuild@v4" in codeql_job
+    assert "uses: github/codeql-action/analyze@v4" in codeql_job
+    assert "cancel-in-progress: true" in codeql_job
+
+    assert "if: github.event_name == 'pull_request'" in dependency_job
+    assert "timeout-minutes: 10" in dependency_job
+    assert "pull-requests: write" in dependency_job
+    assert "uses: actions/dependency-review-action@v5" in dependency_job
+    assert "fail-on-severity: high" in dependency_job
+    assert "comment-summary-in-pr: on-failure" in dependency_job
+
+
 def test_changelog_check_safely_requires_a_fragment() -> None:
     """Source-changing pull requests must fail safely without a fragment."""
     workflow = read_workflow("release.yml")
