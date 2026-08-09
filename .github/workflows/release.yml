@@ -30,9 +30,9 @@ env:
   GIT_CONFIG_VALUE_0: main
 
 # Concurrency is intentionally job-scoped. Superseded read-only jobs cancel
-# independently, including on main. Write-capable release jobs share one FIFO
-# queue so a publication that has started is never cancelled and subsequent
-# publications run one at a time.
+# independently away from main. Jobs on main are never superseded, which lets
+# the terminal status gate reliably treat a cancellation there as a timeout or
+# manual cancellation. Write-capable release jobs share one FIFO queue.
 jobs:
   # === DETECT CHANGES - determines which jobs should run ===
   detect-changes:
@@ -41,7 +41,7 @@ jobs:
     timeout-minutes: 5
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-detect-changes
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     if: github.event_name != 'workflow_dispatch'
     outputs:
       any-code-changed: ${{ steps.changes.outputs.any-code-changed }}
@@ -100,7 +100,7 @@ jobs:
     timeout-minutes: 20
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-lint
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     needs: [detect-changes]
     # !cancelled() lets this job evaluate even though detect-changes is skipped
     # for workflow_dispatch while still propagating workflow cancellation.
@@ -187,7 +187,7 @@ jobs:
     timeout-minutes: 30
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-test
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     needs: [detect-changes]
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -263,7 +263,7 @@ jobs:
     timeout-minutes: 20
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-build
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     needs: [detect-changes, lint, test]
     # Build change-bearing automatic events and all manually dispatched releases.
     if: |
@@ -336,7 +336,7 @@ jobs:
     timeout-minutes: 10
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-changelog
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
@@ -424,7 +424,7 @@ jobs:
     timeout-minutes: 60
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-docker-build
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
@@ -691,3 +691,21 @@ jobs:
             --version "${{ steps.version.outputs.new_version }}" \
             --repository "${{ github.repository }}" \
             --repository-root "."
+
+  # A job killed by timeout-minutes concludes "cancelled", not "failure".
+  # Observe every other job so that state cannot silently hide a broken run.
+  pipeline-status:
+    name: Pipeline Status
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always()
+    needs: [detect-changes, lint, test, build, changelog, docker-build,
+            auto-release, manual-release]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Fail the run when a required job was cancelled or failed
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+          IS_MAIN: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+        run: bash scripts/check-pipeline-status.sh

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import re
+import shutil
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -180,7 +182,7 @@ def test_changelog_check_safely_requires_a_fragment() -> None:
 
 
 def test_release_workflow_separates_check_and_write_concurrency() -> None:
-    """Checks cancel independently while release writes share a FIFO queue."""
+    """Checks supersede off main while release writes share a FIFO queue."""
     workflow = read_workflow("release.yml")
     workflow_header = workflow.split("\njobs:\n", maxsplit=1)[0]
 
@@ -199,7 +201,7 @@ def test_release_workflow_separates_check_and_write_concurrency() -> None:
             "group: ${{ github.workflow }}-${{ github.ref }}-" f"{job_name}"
         )
         assert expected_group in block
-        assert "cancel-in-progress: true" in block
+        assert "cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}" in block
 
     write_concurrency = "\n".join(
         (
@@ -237,6 +239,7 @@ def test_release_workflow_jobs_have_explicit_timeouts() -> None:
         "docker-build": 60,
         "auto-release": 30,
         "manual-release": 30,
+        "pipeline-status": 5,
     }
 
     for job_name, timeout in expected_timeouts.items():
@@ -244,11 +247,64 @@ def test_release_workflow_jobs_have_explicit_timeouts() -> None:
         assert f"timeout-minutes: {timeout}" in block
 
 
+def test_pipeline_status_gate_covers_every_other_release_job() -> None:
+    """Every release job must feed the terminal timeout/failure gate."""
+    workflow = read_workflow("release.yml")
+    jobs_section = workflow.split("\njobs:\n", maxsplit=1)[1]
+    job_names = re.findall(r"^  ([A-Za-z0-9_-]+):$", jobs_section, re.MULTILINE)
+    gate = workflow_job_block(workflow, "pipeline-status")
+
+    assert "if: always()" in gate
+    assert "run: bash scripts/check-pipeline-status.sh" in gate
+    assert "NEEDS_JSON: ${{ toJSON(needs) }}" in gate
+    assert (
+        "IS_MAIN: ${{ github.ref == 'refs/heads/main' && "
+        "github.event_name == 'push' }}" in gate
+    )
+    for job_name in job_names:
+        if job_name != "pipeline-status":
+            assert re.search(rf"(?:^|[\s,[])({re.escape(job_name)})(?=[\s,\]])", gate)
+
+
+def test_pipeline_status_script_handles_all_job_conclusions() -> None:
+    """The gate fails failures and main cancellations without breaking supersedes."""
+    script = ROOT / "scripts" / "check-pipeline-status.sh"
+    assert script.exists()
+    assert "set -euo pipefail" in script.read_text(encoding="utf-8")
+
+    if shutil.which("jq") is None:
+        return
+
+    cases = (
+        ({"lint": "success", "test": "skipped"}, True, True),
+        ({"lint": "failure"}, False, False),
+        ({"auto-release": "cancelled"}, True, False),
+        ({"test": "cancelled"}, False, True),
+    )
+    for results, is_main, should_pass in cases:
+        needs_json = (
+            "{"
+            + ",".join(
+                f'"{job}":{{"result":"{result}"}}' for job, result in results.items()
+            )
+            + "}"
+        )
+        completed = subprocess.run(
+            ["bash", str(script)],
+            cwd=ROOT,
+            env={"NEEDS_JSON": needs_json, "IS_MAIN": str(is_main).lower()},
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert completed.returncode == (0 if should_pass else 1), completed.stdout
+
+
 def test_release_workflow_action_versions_are_current() -> None:
     """Release workflow actions should use the current major versions."""
     release_workflow = read_workflow("release.yml")
 
-    assert_action_pin_count(release_workflow, "actions/checkout", "v6", 8)
+    assert_action_pin_count(release_workflow, "actions/checkout", "v6", 9)
     assert_action_pin_count(release_workflow, "actions/setup-python", "v6", 7)
     assert_action_pin_count(release_workflow, "actions/upload-artifact", "v7", 1)
     assert_action_pin_count(release_workflow, "actions/download-artifact", "v7", 1)
