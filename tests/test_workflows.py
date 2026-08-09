@@ -134,6 +134,35 @@ def test_security_workflow_scans_code_actions_and_dependencies() -> None:
     assert "comment-summary-in-pr: on-failure" in dependency_job
 
 
+def test_links_workflow_checks_docs_with_web_archive_fallback() -> None:
+    """Markdown and HTML changes must trigger the bounded broken-link check."""
+    workflow = read_workflow("links.yml")
+    link_job = workflow_job_block(workflow, "link-checker")
+    lychee_step = workflow_step_block(link_job, "Check links with lychee")
+    archive_step = workflow_step_block(
+        link_job, "Check broken links against Web Archive"
+    )
+    failure_step = workflow_step_block(
+        link_job, "Fail if broken links found and no web archive fallback"
+    )
+
+    assert "- '**.md'" in workflow
+    assert "- '**.html'" in workflow
+    assert "permissions:\n  contents: read" in workflow
+    assert "timeout-minutes: 10" in link_job
+    assert "cancel-in-progress: true" in link_job
+    assert "uses: actions/checkout@v6" in link_job
+    assert "uses: lycheeverse/lychee-action@v2" in lychee_step
+    assert "--exclude-path docs/case-studies" in lychee_step
+    assert "examples/universal-app/index.html" not in lychee_step
+    assert "fail: false" in lychee_step
+    assert "output: lychee/out.md" in lychee_step
+    assert "if: steps.lychee.outputs.exit_code != 0" in archive_step
+    assert "python scripts/check_web_archive.py" in archive_step
+    assert "steps.webarchive.outputs.all_archived != 'true'" in failure_step
+    assert "exit 1" in failure_step
+
+
 def test_changelog_check_safely_requires_a_fragment() -> None:
     """Source-changing pull requests must fail safely without a fragment."""
     workflow = read_workflow("release.yml")
