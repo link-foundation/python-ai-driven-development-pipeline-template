@@ -249,6 +249,10 @@ The release workflow (`release.yml`) provides:
 6. **Published package smoke test**: Installs the just-published PyPI package
    into a clean virtualenv and verifies imports/console scripts
 7. **GitHub releases**: Automatic creation with CHANGELOG content
+8. **Optional multi-architecture Docker images**: When a `Dockerfile` exists,
+   set the `DOCKERHUB_IMAGE` and `DOCKERHUB_USERNAME` repository variables and
+   the `DOCKERHUB_TOKEN` secret to publish native `linux/amd64` and
+   `linux/arm64` images after each GitHub release
 
 **Important**: All releases require passing CI checks (lint + test + build). No release will ever happen without passing tests, ensuring code quality and stability.
 
