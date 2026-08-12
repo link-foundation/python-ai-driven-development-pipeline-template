@@ -461,6 +461,9 @@ jobs:
   auto-release:
     name: Auto Release
     needs: [lint, test, build]
+    outputs:
+      released: ${{ steps.github_release.outputs.released }}
+      version: ${{ steps.github_release.outputs.version }}
     concurrency:
       group: ${{ github.workflow }}-main-write
       cancel-in-progress: false
@@ -555,19 +558,26 @@ jobs:
             --version "${{ steps.version_check.outputs.current_version }}"
 
       - name: Create GitHub Release
+        id: github_release
         if: steps.version_check.outputs.should_release == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ steps.version_check.outputs.current_version }}
         run: |
           python "${{ steps.python_layout.outputs.root }}/scripts/create_github_release.py" \
-            --version "${{ steps.version_check.outputs.current_version }}" \
+            --version "$RELEASE_VERSION" \
             --repository "${{ github.repository }}" \
             --repository-root "."
+          echo "released=true" >> "$GITHUB_OUTPUT"
+          echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
 
   # Manual release via workflow_dispatch - only after CI passes
   manual-release:
     name: Manual Release
     needs: [lint, test, build]
+    outputs:
+      released: ${{ steps.github_release.outputs.released }}
+      version: ${{ steps.github_release.outputs.version }}
     concurrency:
       group: ${{ github.workflow }}-main-write
       cancel-in-progress: false
@@ -683,14 +693,160 @@ jobs:
             --version "${{ steps.version.outputs.new_version }}"
 
       - name: Create GitHub Release
+        id: github_release
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ steps.version.outputs.new_version }}
         run: |
           python "${{ steps.python_layout.outputs.root }}/scripts/create_github_release.py" \
-            --version "${{ steps.version.outputs.new_version }}" \
+            --version "$RELEASE_VERSION" \
             --repository "${{ github.repository }}" \
             --repository-root "."
+          echo "released=true" >> "$GITHUB_OUTPUT"
+          echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+
+  # Optional Docker Hub publishing after the GitHub release exists. Set the
+  # DOCKERHUB_IMAGE and DOCKERHUB_USERNAME repository variables and the
+  # DOCKERHUB_TOKEN secret to enable it in repositories that ship a Dockerfile.
+  docker-publish-config:
+    name: Configure Docker Hub Publish
+    needs: [auto-release, manual-release]
+    if: |
+      !cancelled() && (
+        needs.auto-release.outputs.released == 'true' ||
+        needs.manual-release.outputs.released == 'true'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      enabled: ${{ steps.config.outputs.enabled }}
+      image: ${{ steps.config.outputs.image }}
+      version: ${{ steps.config.outputs.version }}
+    env:
+      DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_IMAGE }}
+      DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      RELEASE_VERSION: ${{ needs.auto-release.outputs.version || needs.manual-release.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check Docker publish configuration
+        id: config
+        run: |
+          if [ ! -f Dockerfile ]; then
+            echo "::notice::Skipping Docker publish because no Dockerfile is present"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          elif [ -z "$DOCKERHUB_IMAGE" ] || [ -z "$DOCKERHUB_USERNAME" ] || [ -z "$DOCKERHUB_TOKEN" ]; then
+            echo "::notice::Skipping Docker publish because Docker Hub is not configured"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "image=$DOCKERHUB_IMAGE" >> "$GITHUB_OUTPUT"
+            echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Native runners build both architectures in parallel and push immutable
+  # digests. This avoids the performance and reliability cost of QEMU.
+  docker-publish-build:
+    name: Build Docker Image (${{ matrix.platform }})
+    needs: [docker-publish-config]
+    if: needs.docker-publish-config.outputs.enabled == 'true'
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push platform image by digest
+        id: docker_build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          cache-from: type=gha,scope=${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
+          outputs: type=image,name=${{ needs.docker-publish-config.outputs.image }},push-by-digest=true,name-canonical=true,push=true
+
+      - name: Export image digest
+        env:
+          DIGEST: ${{ steps.docker_build.outputs.digest }}
+        run: |
+          mkdir -p /tmp/digests
+          touch "/tmp/digests/${DIGEST#sha256:}"
+
+      - name: Upload image digest
+        uses: actions/upload-artifact@v7
+        with:
+          name: docker-digest-${{ strategy.job-index }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  docker-publish:
+    name: Publish Multi-Architecture Docker Image
+    needs: [docker-publish-config, docker-publish-build]
+    if: needs.docker-publish-build.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Download image digests
+        uses: actions/download-artifact@v7
+        with:
+          path: /tmp/digests
+          pattern: docker-digest-*
+          merge-multiple: true
+
+      - name: Create multi-architecture manifest
+        working-directory: /tmp/digests
+        env:
+          IMAGE: ${{ needs.docker-publish-config.outputs.image }}
+          VERSION: ${{ needs.docker-publish-config.outputs.version }}
+        run: |
+          docker buildx imagetools create \
+            --tag "${IMAGE}:latest" \
+            --tag "${IMAGE}:${VERSION}" \
+            $(printf "${IMAGE}@sha256:%s " *)
+
+      - name: Verify multi-architecture manifest
+        env:
+          IMAGE: ${{ needs.docker-publish-config.outputs.image }}
+          VERSION: ${{ needs.docker-publish-config.outputs.version }}
+        run: |
+          MANIFEST=$(docker buildx imagetools inspect "${IMAGE}:${VERSION}")
+          grep -q "linux/amd64" <<< "$MANIFEST"
+          grep -q "linux/arm64" <<< "$MANIFEST"
 
   # A job killed by timeout-minutes concludes "cancelled", not "failure".
   # Observe every other job so that state cannot silently hide a broken run.
@@ -700,7 +856,8 @@ jobs:
     timeout-minutes: 5
     if: always()
     needs: [detect-changes, lint, test, build, changelog, docker-build,
-            auto-release, manual-release]
+            auto-release, manual-release, docker-publish-config,
+            docker-publish-build, docker-publish]
     steps:
       - uses: actions/checkout@v6
 

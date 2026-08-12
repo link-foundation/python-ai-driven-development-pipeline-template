@@ -304,10 +304,10 @@ def test_release_workflow_action_versions_are_current() -> None:
     """Release workflow actions should use the current major versions."""
     release_workflow = read_workflow("release.yml")
 
-    assert_action_pin_count(release_workflow, "actions/checkout", "v6", 9)
+    assert_action_pin_count(release_workflow, "actions/checkout", "v6", 11)
     assert_action_pin_count(release_workflow, "actions/setup-python", "v6", 7)
-    assert_action_pin_count(release_workflow, "actions/upload-artifact", "v7", 1)
-    assert_action_pin_count(release_workflow, "actions/download-artifact", "v7", 1)
+    assert_action_pin_count(release_workflow, "actions/upload-artifact", "v7", 2)
+    assert_action_pin_count(release_workflow, "actions/download-artifact", "v7", 2)
     assert_action_pin_count(release_workflow, "codecov/codecov-action", "v7", 1)
 
     assert_action_pin_absent(release_workflow, "actions/setup-python", "v5")
@@ -518,6 +518,9 @@ def test_release_workflow_publishes_multi_arch_docker_images() -> None:
     assert "docker buildx imagetools create" in publish
     assert '--tag "${IMAGE}:latest"' in publish
     assert '--tag "${IMAGE}:${VERSION}"' in publish
+    assert "docker buildx imagetools inspect" in publish
+    assert 'grep -q "linux/amd64"' in publish
+    assert 'grep -q "linux/arm64"' in publish
     assert "docker/setup-qemu-action" not in workflow
 
 
