@@ -487,6 +487,55 @@ def test_release_workflow_builds_docker_images_on_pull_requests() -> None:
     assert "cache-to: type=gha,mode=max" in block
 
 
+def test_release_workflow_publishes_multi_arch_docker_images() -> None:
+    """Released Docker images must use native amd64 and arm64 runners."""
+    workflow = read_workflow("release.yml")
+    config = workflow_job_block(workflow, "docker-publish-config")
+    build = workflow_job_block(workflow, "docker-publish-build")
+    publish = workflow_job_block(workflow, "docker-publish")
+
+    assert "needs: [auto-release, manual-release]" in config
+    assert "DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_IMAGE }}" in config
+    assert "DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}" in config
+    assert "DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}" in config
+    assert "if [ ! -f Dockerfile ]" in config
+
+    assert "fail-fast: false" in build
+    assert "platform: linux/amd64" in build
+    assert "runner: ubuntu-latest" in build
+    assert "platform: linux/arm64" in build
+    assert "runner: ubuntu-24.04-arm" in build
+    assert "runs-on: ${{ matrix.runner }}" in build
+    assert "platforms: ${{ matrix.platform }}" in build
+    assert "cache-from: type=gha,scope=${{ matrix.platform }}" in build
+    assert "cache-to: type=gha,mode=max,scope=${{ matrix.platform }}" in build
+    assert "push-by-digest=true" in build
+    assert "name-canonical=true" in build
+    assert "uses: actions/upload-artifact@v7" in build
+
+    assert "uses: actions/download-artifact@v7" in publish
+    assert "merge-multiple: true" in publish
+    assert "docker buildx imagetools create" in publish
+    assert '--tag "${IMAGE}:latest"' in publish
+    assert '--tag "${IMAGE}:${VERSION}"' in publish
+    assert "docker/setup-qemu-action" not in workflow
+
+
+def test_docker_publish_follows_github_release_creation() -> None:
+    """Image publication must only start after a GitHub release succeeds."""
+    workflow = read_workflow("release.yml")
+    config = workflow_job_block(workflow, "docker-publish-config")
+
+    for release_job in ("auto-release", "manual-release"):
+        block = workflow_job_block(workflow, release_job)
+        assert "- name: Create GitHub Release" in block
+        assert "released: ${{ steps.github_release.outputs.released }}" in block
+        assert "version: ${{ steps.github_release.outputs.version }}" in block
+
+    assert "needs.auto-release.outputs.released == 'true'" in config
+    assert "needs.manual-release.outputs.released == 'true'" in config
+
+
 def test_manual_release_requires_required_checks_to_succeed() -> None:
     """Manual release must only run after lint, test, and build succeed."""
     workflow = read_workflow("release.yml")
