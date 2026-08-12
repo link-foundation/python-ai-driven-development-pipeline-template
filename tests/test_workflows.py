@@ -144,9 +144,7 @@ def test_links_workflow_fails_for_every_broken_live_link() -> None:
     archive_step = workflow_step_block(
         link_job, "Check broken links against Web Archive"
     )
-    failure_step = workflow_step_block(
-        link_job, "Fail if broken links were found"
-    )
+    failure_step = workflow_step_block(link_job, "Fail if broken links were found")
 
     assert "- '**.md'" in workflow
     assert "- '**.html'" in workflow
