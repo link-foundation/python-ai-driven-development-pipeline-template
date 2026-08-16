@@ -11,6 +11,24 @@ permissions:
   contents: read
 
 jobs:
+  dependency-audit:
+    name: Audit Resolved Python Dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-dependency-audit
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Audit pyproject.toml and docs/requirements.txt
+        run: python scripts/audit_dependencies.py
+
   codeql:
     name: CodeQL (${{ matrix.language }})
     runs-on: ubuntu-latest
