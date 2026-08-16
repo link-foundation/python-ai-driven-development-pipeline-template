@@ -140,8 +140,12 @@ def test_security_workflow_scans_code_actions_and_dependencies() -> None:
     assert "uses: actions/checkout@v6" in audit_job
     assert "uses: actions/setup-python@v6" in audit_job
     assert "python scripts/audit_dependencies.py" in audit_job
-    assert "pip-audit==2.10.1" in audit_job
     assert "if: github.event_name == 'pull_request'" not in audit_job
+
+    audit_script = (ROOT / "scripts" / "audit_dependencies.py").read_text(
+        encoding="utf-8"
+    )
+    assert 'PIP_AUDIT_VERSION = "2.10.1"' in audit_script
 
 
 def test_dependency_audit_maps_every_declared_surface() -> None:
@@ -152,9 +156,9 @@ def test_dependency_audit_maps_every_declared_surface() -> None:
     assert dependency_surfaces
     for surface in dependency_surfaces:
         relative_surface = surface.relative_to(ROOT).as_posix()
-        assert relative_surface in script, (
-            f"Dependency surface {relative_surface!r} has no audit mapping"
-        )
+        assert (
+            relative_surface in script
+        ), f"Dependency surface {relative_surface!r} has no audit mapping"
 
 
 def test_links_workflow_fails_for_every_broken_live_link() -> None:
