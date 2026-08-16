@@ -112,6 +112,7 @@ def test_security_workflow_scans_code_actions_and_dependencies() -> None:
     workflow = read_workflow("security.yml")
     codeql_job = workflow_job_block(workflow, "codeql")
     dependency_job = workflow_job_block(workflow, "dependency-review")
+    audit_job = workflow_job_block(workflow, "dependency-audit")
 
     assert "branches: [main]" in workflow
     assert "pull_request:" in workflow
@@ -134,6 +135,26 @@ def test_security_workflow_scans_code_actions_and_dependencies() -> None:
     assert "uses: actions/dependency-review-action@v5" in dependency_job
     assert "fail-on-severity: high" in dependency_job
     assert "comment-summary-in-pr: on-failure" in dependency_job
+
+    assert "timeout-minutes: 15" in audit_job
+    assert "uses: actions/checkout@v6" in audit_job
+    assert "uses: actions/setup-python@v6" in audit_job
+    assert "python scripts/audit_dependencies.py" in audit_job
+    assert "pip-audit==2.10.1" in audit_job
+    assert "if: github.event_name == 'pull_request'" not in audit_job
+
+
+def test_dependency_audit_maps_every_declared_surface() -> None:
+    """Every dependency declaration in the template must be audited."""
+    script = (ROOT / "scripts" / "audit_dependencies.py").read_text(encoding="utf-8")
+    dependency_surfaces = [ROOT / "pyproject.toml", *ROOT.rglob("requirements*.txt")]
+
+    assert dependency_surfaces
+    for surface in dependency_surfaces:
+        relative_surface = surface.relative_to(ROOT).as_posix()
+        assert relative_surface in script, (
+            f"Dependency surface {relative_surface!r} has no audit mapping"
+        )
 
 
 def test_links_workflow_fails_for_every_broken_live_link() -> None:
