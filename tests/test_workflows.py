@@ -641,3 +641,122 @@ def test_docs_workflow_deploys_pages_only_when_opted_in() -> None:
     assert "::notice::" in skip_step
     assert "DEPLOY_GITHUB_PAGES=true" in skip_step
     assert "Settings -> Pages" in skip_step
+
+
+# The share of a job's `timeout-minutes` cap that its step deadlines may claim.
+# The remainder pays for the work outside them -- checkout, Python setup, cache
+# restore, artifact transfer -- plus the wrapper's SIGTERM grace. If the cap
+# expires first, GitHub reports the kill as `cancelled` rather than `failure`
+# and the overrun stops being visible on a pull request at all (issue #60).
+MAX_BUDGET_SHARE_PERCENT = 70
+
+
+def workflow_job_names(workflow: str) -> list[str]:
+    """Return every top-level job name declared by a workflow."""
+    jobs_section = workflow.split("\njobs:\n", maxsplit=1)[1]
+    return re.findall(r"^  ([A-Za-z0-9_-]+):$", jobs_section, re.MULTILINE)
+
+
+def job_timeout_minutes(job_block: str) -> int | None:
+    """Return the job-level ``timeout-minutes`` cap, if the job declares one."""
+    match = re.search(r"^    timeout-minutes: (\d+)$", job_block, re.MULTILINE)
+    return int(match.group(1)) if match else None
+
+
+def job_step_deadline_seconds(job_block: str) -> list[tuple[str, int]]:
+    """Return every step-level deadline in a job, as ``(source, seconds)``.
+
+    A shell step owns its deadline through ``run-with-budget-warning.sh`` and a
+    ``*_BUDGET_SECONDS`` env var; a step that runs a composite action cannot be
+    wrapped, so it owns a step-level ``timeout-minutes`` instead.
+    """
+    budgets = [
+        (name, int(seconds))
+        for name, seconds in re.findall(
+            r"^          ([A-Z0-9_]*BUDGET_SECONDS): (\d+)$", job_block, re.MULTILINE
+        )
+    ]
+    step_timeouts = [
+        (f"step timeout-minutes: {minutes}", int(minutes) * 60)
+        for minutes in re.findall(
+            r"^        timeout-minutes: (\d+)$", job_block, re.MULTILINE
+        )
+    ]
+    return budgets + step_timeouts
+
+
+def test_every_workflow_job_declares_a_timeout() -> None:
+    """A job with no cap inherits GitHub's six-hour default before cancelling."""
+    for path in sorted(WORKFLOWS.glob("*.y*ml")):
+        workflow = path.read_text(encoding="utf-8")
+        for job_name in workflow_job_names(workflow):
+            block = workflow_job_block(workflow, job_name)
+            assert job_timeout_minutes(block) is not None, (
+                f"{path.name}: job `{job_name}` declares no timeout-minutes, so it "
+                "inherits the 360-minute default and concludes `cancelled`"
+            )
+
+
+def test_step_deadlines_expire_before_the_job_timeout_they_sit_under() -> None:
+    """`timeout-minutes` is a backstop; the step deadlines must fire first."""
+    checked = 0
+
+    for path in sorted(WORKFLOWS.glob("*.y*ml")):
+        workflow = path.read_text(encoding="utf-8")
+        for job_name in workflow_job_names(workflow):
+            block = workflow_job_block(workflow, job_name)
+            deadlines = job_step_deadline_seconds(block)
+            if not deadlines:
+                continue
+
+            cap_minutes = job_timeout_minutes(block)
+            assert (
+                cap_minutes is not None
+            ), f"{path.name}: job `{job_name}` budgets a step but declares no cap"
+            checked += len(deadlines)
+
+            cap_seconds = cap_minutes * 60
+            total = sum(seconds for _, seconds in deadlines)
+            share = total * 100 // cap_seconds
+            assert share <= MAX_BUDGET_SHARE_PERCENT, (
+                f"{path.name}: job `{job_name}` gives its steps {total}s of "
+                f"deadlines ({dict(deadlines)}) under a {cap_minutes}m cap "
+                f"({share}% of it). Unbudgeted setup has to fit in the remainder, "
+                "or the job clock expires first and the overrun is reported as "
+                "`cancelled` instead of `failure` (issue #60). Keep the total at "
+                f"or below {MAX_BUDGET_SHARE_PERCENT}% of the cap."
+            )
+
+    assert checked >= 6, f"expected every budgeted step to be checked, saw {checked}"
+
+
+def test_long_release_steps_own_an_execution_deadline() -> None:
+    """The steps whose duration a remote host decides must not run unbounded."""
+    workflow = read_workflow("release.yml")
+
+    wrapped = {
+        "lint": ("Install dependencies", "Check for secrets"),
+        "test": ("Install dependencies", "Run tests"),
+    }
+    for job_name, step_names in wrapped.items():
+        block = workflow_job_block(workflow, job_name)
+        for step_name in step_names:
+            step = workflow_step_block(block, step_name)
+            assert "run-with-budget-warning.sh" in step, (
+                f"release.yml: step `{step_name}` of job `{job_name}` runs "
+                "unbounded under the job clock (issue #60)"
+            )
+            assert re.search(r"^          [A-Z0-9_]*BUDGET_SECONDS: \d+$", step, re.M)
+
+    # `uses:` steps cannot be wrapped by a shell script, so their deadline is a
+    # step-level timeout-minutes -- which GitHub reports as a failed step.
+    for job_name, step_name in (
+        ("docker-build", "Build Docker image (no push)"),
+        ("docker-publish-build", "Build and push platform image by digest"),
+    ):
+        block = workflow_job_block(workflow, job_name)
+        step = workflow_step_block(block, step_name)
+        assert re.search(r"^        timeout-minutes: \d+$", step, re.M), (
+            f"release.yml: step `{step_name}` of job `{job_name}` has no "
+            "step-level timeout, so an overrun cancels the job (issue #60)"
+        )
