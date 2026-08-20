@@ -186,7 +186,7 @@ jobs:
         env:
           SECRETLINT_BUDGET_SECONDS: 300
         run: |
-          bash scripts/run-with-budget-warning.sh \
+          bash "${{ steps.python_layout.outputs.root }}/scripts/run-with-budget-warning.sh" \
             "$SECRETLINT_BUDGET_SECONDS" "Check for secrets" \
             npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint "**/*"
 
