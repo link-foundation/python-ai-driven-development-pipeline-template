@@ -77,6 +77,36 @@ def workflow_run_blocks(workflow: str) -> list[str]:
     return blocks
 
 
+SUPPORTED_CONCURRENCY_KEYS = frozenset({"group", "cancel-in-progress"})
+
+
+def concurrency_keys(workflow: str) -> list[str]:
+    """Return every key declared inside a ``concurrency:`` mapping."""
+    lines = workflow.splitlines()
+    keys: list[str] = []
+
+    for index, line in enumerate(lines):
+        header = re.match(r"^(\s*)concurrency:\s*$", line)
+        if not header:
+            continue
+
+        block_indentation = len(header.group(1))
+        key_indentation = block_indentation + 2
+        for next_line in lines[index + 1 :]:
+            if not next_line.strip() or next_line.lstrip().startswith("#"):
+                continue
+            indentation = len(next_line) - len(next_line.lstrip())
+            if indentation <= block_indentation:
+                break
+            if indentation != key_indentation:
+                continue
+            key = re.match(r"([A-Za-z0-9_-]+):", next_line.lstrip())
+            if key:
+                keys.append(key.group(1))
+
+    return keys
+
+
 def assert_action_pin_count(
     workflow: str, action: str, version: str, count: int
 ) -> None:
@@ -206,7 +236,7 @@ def test_changelog_check_safely_requires_a_fragment() -> None:
 
 
 def test_release_workflow_separates_check_and_write_concurrency() -> None:
-    """Checks supersede off main while release writes share a FIFO queue."""
+    """Checks supersede off main while release writes share one group."""
     workflow = read_workflow("release.yml")
     workflow_header = workflow.split("\njobs:\n", maxsplit=1)[0]
 
@@ -232,7 +262,6 @@ def test_release_workflow_separates_check_and_write_concurrency() -> None:
             "    concurrency:",
             "      group: ${{ github.workflow }}-main-write",
             "      cancel-in-progress: false",
-            "      queue: max",
         )
     )
     for job_name in ("auto-release", "manual-release"):
@@ -760,3 +789,66 @@ def test_long_release_steps_own_an_execution_deadline() -> None:
             f"release.yml: step `{step_name}` of job `{job_name}` has no "
             "step-level timeout, so an overrun cancels the job (issue #60)"
         )
+
+
+def test_concurrency_key_parser_reports_unsupported_keys() -> None:
+    """The scanner below has to see a key GitHub would silently ignore."""
+    invalid = "\n".join(
+        (
+            "jobs:",
+            "  publish:",
+            "    concurrency:",
+            "      group: main-write",
+            "      # Not a real key.",
+            "      cancel-in-progress: false",
+            "      queue: max",
+            "    steps: []",
+        )
+    )
+
+    assert concurrency_keys(invalid) == [
+        "group",
+        "cancel-in-progress",
+        "queue",
+    ]
+
+
+def test_workflow_concurrency_blocks_use_only_supported_keys() -> None:
+    """GitHub ignores unknown concurrency keys instead of rejecting them.
+
+    Regression test for issue #62: ``queue: max`` documented a queuing
+    guarantee the workflow never had. The syntax accepts only ``group`` and
+    ``cancel-in-progress``; with ``cancel-in-progress: false`` GitHub keeps the
+    running job and holds a single pending run per group.
+    https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#concurrency
+    """
+    checked = 0
+
+    for path in sorted(WORKFLOWS.glob("*.y*ml")):
+        keys = concurrency_keys(path.read_text(encoding="utf-8"))
+        unsupported = sorted(set(keys) - SUPPORTED_CONCURRENCY_KEYS)
+        assert not unsupported, (
+            f"{path.name}: concurrency blocks declare {unsupported}, which "
+            "GitHub Actions ignores silently. Only "
+            f"{sorted(SUPPORTED_CONCURRENCY_KEYS)} exist."
+        )
+        checked += len(keys)
+
+    assert checked >= 2, f"expected concurrency blocks to be scanned, saw {checked}"
+
+
+def test_workflow_lint_job_validates_every_workflow() -> None:
+    """actionlint has to run in CI, or this class of defect goes unnoticed.
+
+    It is what reports both halves of issue #62: the unsupported concurrency
+    key, and (only when shellcheck is on PATH) the shell findings inside every
+    ``run:`` block.
+    """
+    workflow = read_workflow("workflows.yml")
+    job = workflow_job_block(workflow, "actionlint")
+
+    assert "paths:" in workflow and "'.github/**'" in workflow
+    assert "timeout-minutes:" in job
+    # The Docker image bundles shellcheck and pyflakes; a bare binary without
+    # shellcheck on PATH skips the shell checks and still exits 0.
+    assert "docker://rhysd/actionlint:" in job
