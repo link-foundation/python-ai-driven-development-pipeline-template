@@ -32,7 +32,10 @@ env:
 # Concurrency is intentionally job-scoped. Superseded read-only jobs cancel
 # independently away from main. Jobs on main are never superseded, which lets
 # the terminal status gate reliably treat a cancellation there as a timeout or
-# manual cancellation. Write-capable release jobs share one FIFO queue.
+# manual cancellation. Write-capable release jobs share one non-cancelling
+# concurrency group: a write that has started is never interrupted, and GitHub
+# holds at most one pending run for the group. GitHub Actions accepts only
+# `group` and `cancel-in-progress` here -- there is no queue-depth key.
 jobs:
   # === DETECT CHANGES - determines which jobs should run ===
   detect-changes:
@@ -489,7 +492,6 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-main-write
       cancel-in-progress: false
-      queue: max
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -544,7 +546,7 @@ jobs:
 
           # Get current version from pyproject.toml
           CURRENT_VERSION=$(grep -Po '(?<=^version = ")[^"]*' "$PYPROJECT")
-          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
 
           if [ "${{ steps.python_layout.outputs.multi_language }}" = "true" ]; then
             TAG="py_v$CURRENT_VERSION"
@@ -556,10 +558,10 @@ jobs:
           # Check if tag exists
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "Tag $TAG already exists, skipping release"
-            echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
           else
             echo "New version detected: $CURRENT_VERSION ($TAG)"
-            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Download artifacts
@@ -603,7 +605,6 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-main-write
       cancel-in-progress: false
-      queue: max
     # !cancelled() prevents the skipped detect-changes dependency from propagating
     # through lint/test/build while still propagating workflow cancellation.
     # The explicit result checks ensure release only proceeds after CI passes.
@@ -765,9 +766,11 @@ jobs:
             echo "::notice::Skipping Docker publish because Docker Hub is not configured"
             echo "enabled=false" >> "$GITHUB_OUTPUT"
           else
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-            echo "image=$DOCKERHUB_IMAGE" >> "$GITHUB_OUTPUT"
-            echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+            {
+              echo "enabled=true"
+              echo "image=$DOCKERHUB_IMAGE"
+              echo "version=$RELEASE_VERSION"
+            } >> "$GITHUB_OUTPUT"
           fi
 
   # Native runners build both architectures in parallel and push immutable
@@ -857,6 +860,9 @@ jobs:
           IMAGE: ${{ needs.docker-publish-config.outputs.image }}
           VERSION: ${{ needs.docker-publish-config.outputs.version }}
         run: |
+          # Word splitting is deliberate: every digest file in this directory
+          # becomes its own source argument for the manifest.
+          # shellcheck disable=SC2046
           docker buildx imagetools create \
             --tag "${IMAGE}:latest" \
             --tag "${IMAGE}:${VERSION}" \
