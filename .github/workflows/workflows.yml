@@ -31,6 +31,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       # The Docker image bundles shellcheck and pyflakes, so this lints every
       # `run:` block too. A native actionlint binary without shellcheck on
@@ -40,3 +42,33 @@ jobs:
         uses: docker://rhysd/actionlint:1.7.7
         with:
           args: -color
+
+  # actionlint validates workflow schema and shell; it does not detect
+  # credential persistence, template injection or unpinned actions. zizmor
+  # covers exactly those, so both linters run on every change under .github/.
+  # Reproduce locally with:
+  #   pipx run zizmor==1.30.0 --min-confidence medium --persona regular \
+  #     --config .github/zizmor.yml .github/workflows
+  zizmor:
+    name: Audit Workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-zizmor
+      cancel-in-progress: true
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      # Annotations instead of SARIF: forks of this template do not necessarily
+      # have code scanning enabled, and the job should fail loudly either way.
+      - name: Audit workflow files
+        uses: zizmorcore/zizmor-action@v0.6.2
+        with:
+          advanced-security: false
+          annotations: true
+          config: .github/zizmor.yml
+          min-confidence: medium

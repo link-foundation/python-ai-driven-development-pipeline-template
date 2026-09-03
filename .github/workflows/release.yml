@@ -51,6 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Python
@@ -115,6 +116,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Simulate fresh merge with base branch (PR only)
@@ -214,6 +216,8 @@ jobs:
       )
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -272,7 +276,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: env.CODECOV_TOKEN != ''
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f  # v7.0.0 @ 2026-06-07
         with:
           files: ${{ steps.python_layout.outputs.root }}/coverage.xml
           token: ${{ env.CODECOV_TOKEN }}
@@ -300,6 +304,8 @@ jobs:
       )
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -366,6 +372,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Set up Python
@@ -453,6 +460,8 @@ jobs:
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Detect Dockerfile
         id: dockerfile
@@ -501,6 +510,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Python
@@ -573,7 +583,7 @@ jobs:
 
       - name: Publish to PyPI
         if: steps.version_check.outputs.should_release == 'true'
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33  # v1.14.2 @ 2026-07-29
 
       - name: Smoke test published package
         if: steps.version_check.outputs.should_release == 'true'
@@ -620,8 +630,13 @@ jobs:
       contents: write
       id-token: write
     steps:
+      # The only checkout in this repository that keeps credentials in
+      # .git/config: scripts/version_and_commit.py runs `git push origin main`
+      # to publish the version bump, which needs the token wired into the
+      # remote. Every other checkout sets persist-credentials: false.
       - uses: actions/checkout@v6
         with:
+          persist-credentials: true
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -705,7 +720,7 @@ jobs:
 
       - name: Publish to PyPI
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33  # v1.14.2 @ 2026-07-29
         with:
           packages-dir: ${{ steps.python_layout.outputs.dist_dir }}
 
@@ -755,6 +770,8 @@ jobs:
       RELEASE_VERSION: ${{ needs.auto-release.outputs.version || needs.manual-release.outputs.version }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Check Docker publish configuration
         id: config
@@ -793,6 +810,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -889,6 +908,8 @@ jobs:
             docker-publish-build, docker-publish]
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Fail the run when a required job was cancelled or failed
         env:
