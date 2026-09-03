@@ -28,10 +28,10 @@ on:
       - '.github/workflows/docs.yml'
   workflow_dispatch:
 
+# Least-privilege default; the write scopes GitHub Pages needs are granted
+# per job, to the two jobs that actually publish.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -42,8 +42,14 @@ jobs:
     name: Build docs
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      # actions/configure-pages enables the Pages site on push to main.
+      pages: write
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -86,6 +92,11 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_GITHUB_PAGES == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      # actions/deploy-pages publishes the artifact using an OIDC token.
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

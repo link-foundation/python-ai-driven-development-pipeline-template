@@ -121,6 +121,24 @@ def assert_action_pin_absent(workflow: str, action: str, version: str) -> None:
     assert not re.search(pattern, workflow)
 
 
+def assert_action_hash_pin(workflow: str, action: str, count: int) -> str:
+    """Assert an action is pinned to a full commit hash annotated with its tag.
+
+    zizmor's ``unpinned-uses`` audit demands a hash pin for every publisher not
+    listed in ``.github/zizmor.yml``. A bare hash is unreadable, so the pin
+    carries a ``# <tag> @ <date>`` comment that says what was pinned and when.
+    """
+    pattern = (
+        rf"uses:\s+{re.escape(action)}@([0-9a-f]{{40}})"
+        r"\s+#\s+(v[0-9][^\s]*) @ (\d{4}-\d{2}-\d{2})"
+    )
+    matches = re.findall(pattern, workflow)
+    assert (
+        len(matches) == count
+    ), f"expected {count} hash-pinned {action} reference(s), found {len(matches)}"
+    return matches[0][0]
+
+
 def test_workflow_run_blocks_do_not_interpolate_untrusted_inputs() -> None:
     """Contributor-controlled inputs must reach shell scripts through env vars."""
     unsafe_expression = re.compile(
@@ -361,10 +379,15 @@ def test_release_workflow_action_versions_are_current() -> None:
     assert_action_pin_count(release_workflow, "actions/setup-python", "v6", 7)
     assert_action_pin_count(release_workflow, "actions/upload-artifact", "v7", 2)
     assert_action_pin_count(release_workflow, "actions/download-artifact", "v7", 2)
-    assert_action_pin_count(release_workflow, "codecov/codecov-action", "v7", 1)
+    assert_action_hash_pin(release_workflow, "codecov/codecov-action", 1)
+    assert_action_hash_pin(release_workflow, "pypa/gh-action-pypi-publish", 2)
 
     assert_action_pin_absent(release_workflow, "actions/setup-python", "v5")
     assert_action_pin_absent(release_workflow, "codecov/codecov-action", "v4")
+    # A mutable branch pin executes whatever that branch holds at run time.
+    assert_action_pin_absent(
+        release_workflow, "pypa/gh-action-pypi-publish", "release/v1"
+    )
 
 
 def test_release_workflow_sets_git_default_branch_before_checkout() -> None:
@@ -391,7 +414,7 @@ def test_release_workflow_gates_codecov_upload_on_token() -> None:
     assert "if: env.CODECOV_TOKEN == ''" in skip_step
     assert "::notice::" in skip_step
     assert "if: env.CODECOV_TOKEN != ''" in upload_step
-    assert "uses: codecov/codecov-action@v7" in upload_step
+    assert_action_hash_pin(upload_step, "codecov/codecov-action", 1)
     assert "files: ${{ steps.python_layout.outputs.root }}/coverage.xml" in upload_step
     assert "\n          file:" not in upload_step
     assert "token: ${{ env.CODECOV_TOKEN }}" in upload_step
@@ -852,3 +875,92 @@ def test_workflow_lint_job_validates_every_workflow() -> None:
     # The Docker image bundles shellcheck and pyflakes; a bare binary without
     # shellcheck on PATH skips the shell checks and still exits 0.
     assert "docker://rhysd/actionlint:" in job
+
+
+def test_workflow_audit_job_runs_zizmor() -> None:
+    """zizmor has to run in CI next to actionlint, or its findings never surface.
+
+    actionlint validates workflow schema and shell. It does not detect
+    credential persistence, template injection or unpinned actions -- zizmor
+    audits exactly those (issue #64).
+    """
+    workflow = read_workflow("workflows.yml")
+    job = workflow_job_block(workflow, "zizmor")
+
+    assert "paths:" in workflow and "'.github/**'" in workflow
+    assert "timeout-minutes:" in job
+    assert "uses: zizmorcore/zizmor-action@" in job
+    assert "config: .github/zizmor.yml" in job
+    assert "min-confidence: medium" in job
+    # SARIF upload needs code scanning, which forks of this template do not
+    # necessarily have; annotations fail the job either way.
+    assert "advanced-security: false" in job
+    assert "annotations: true" in job
+
+
+def test_zizmor_config_requires_hash_pins_by_default() -> None:
+    """Unlisted publishers must be hash-pinned; trusted ones may stay tag-pinned."""
+    config = (ROOT / ".github" / "zizmor.yml").read_text(encoding="utf-8")
+
+    assert "unpinned-uses:" in config
+    policies = dict(
+        re.findall(r"^\s+'?([A-Za-z0-9_*/-]+)'?:\s*((?:hash|ref)-pin)$", config, re.M)
+    )
+
+    assert policies["*"] == "hash-pin"
+    for publisher in ("actions/*", "github/*", "docker/*", "zizmorcore/*"):
+        assert policies[publisher] == "ref-pin", publisher
+    # Anything that publishes releases or artifacts is deliberately absent
+    # here, so the catch-all hash-pin rule applies to it.
+    assert not any(key.startswith(("pypa/", "codecov/")) for key in policies)
+
+
+def test_every_checkout_declares_credential_persistence() -> None:
+    """actions/checkout writes the token into .git/config unless told not to.
+
+    Any later step in the same job can read it from there, so each checkout has
+    to make the choice explicit rather than inherit the credential-persisting
+    default (zizmor's ``artipacked`` audit).
+    """
+    checkouts = 0
+    persisting: list[str] = []
+
+    for path in sorted(WORKFLOWS.glob("*.y*ml")):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for index, line in enumerate(lines):
+            if not re.match(r"^\s*- uses: actions/checkout@", line):
+                continue
+            checkouts += 1
+            step = "\n".join(lines[index : index + 6])
+            assert "persist-credentials:" in step, (
+                f"{path.name}:{index + 1} checkout does not set " "persist-credentials"
+            )
+            if "persist-credentials: true" in step:
+                persisting.append(f"{path.name}:{index + 1}")
+
+    assert checkouts == 18, f"expected 18 checkouts, found {checkouts}"
+    # Only the job that pushes the version bump commit needs the token wired
+    # into the remote; every other checkout only reads the tree.
+    assert (
+        len(persisting) == 1
+    ), f"only the pushing checkout may persist credentials, saw {persisting}"
+    manual_release = workflow_job_block(read_workflow("release.yml"), "manual-release")
+    assert "persist-credentials: true" in manual_release
+
+
+def test_write_permissions_are_granted_per_job() -> None:
+    """Workflow-level write scopes leak into every job, including read-only ones."""
+    for path in sorted(WORKFLOWS.glob("*.y*ml")):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for index, line in enumerate(lines):
+            if line != "permissions:":
+                continue
+            for scope in lines[index + 1 :]:
+                if not scope.startswith("  ") or not scope.strip():
+                    break
+                if scope.lstrip().startswith("#"):
+                    continue
+                assert scope.strip().endswith(("read", "none")), (
+                    f"{path.name} grants '{scope.strip()}' to every job; move "
+                    "write scopes to the jobs that need them"
+                )
