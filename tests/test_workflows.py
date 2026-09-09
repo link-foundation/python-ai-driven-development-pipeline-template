@@ -1030,7 +1030,15 @@ def test_workflow_lint_job_validates_every_workflow() -> None:
     assert "timeout-minutes:" in job
     # The Docker image bundles shellcheck and pyflakes; a bare binary without
     # shellcheck on PATH skips the shell checks and still exits 0.
-    assert "docker://rhysd/actionlint:" in job
+    # Pinned by digest (issue #71): a mutable tag of a repository outside this
+    # organization is arbitrary code in a job that analyses credentials.
+    pin = re.search(
+        r"uses:\s+docker://rhysd/actionlint@sha256:([0-9a-f]{64})\s+#\s+(v\S+)",
+        job,
+    )
+    assert pin, "actionlint image must be digest-pinned with its tag in a comment"
+    assert pin.group(2) == "v1.7.12"
+    assert "docker://rhysd/actionlint:1.7" not in job
 
 
 def test_workflow_audit_job_runs_zizmor() -> None:
@@ -1052,6 +1060,26 @@ def test_workflow_audit_job_runs_zizmor() -> None:
     # necessarily have; annotations fail the job either way.
     assert "advanced-security: false" in job
     assert "annotations: true" in job
+    # Named, not left at the action's default (issue #76): the action's
+    # `latest` table freezes zizmor at 1.29.0, so an unversioned run is a
+    # silent downgrade, not the newest analyser.
+    assert "version: 1.29.0" in job
+    # The pedantic-only pass (issue #75): audits like `unpinned-images` do not
+    # run in the regular persona, so a digest-pin regression in
+    # `uses: docker://` would otherwise go unnoticed.
+    assert "Audit for pedantic-only high-severity findings" in job
+    assert "pipx run zizmor==1.29.0" in job
+    assert "--persona pedantic" in job
+    assert "--min-severity high" in job
+    assert "--min-confidence high" in job
+    # The pedantic step owns a deadline of its own; the shared budget test
+    # (test_step_deadlines_expire_before_the_job_timeout_they_sit_under) checks
+    # it against the job cap.
+    assert re.search(
+        r"Audit for pedantic-only high-severity findings.*?^        timeout-minutes: \d+$",
+        job,
+        re.MULTILINE | re.DOTALL,
+    )
 
 
 def test_zizmor_config_requires_hash_pins_by_default() -> None:
