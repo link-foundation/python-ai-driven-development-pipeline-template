@@ -251,12 +251,14 @@ jobs:
 
       - name: Probe every release credential
         env:
+          # Expressions have no ternary operator; this idiom is safe because
+          # both branch values are non-empty string literals.
           PREFLIGHT_MODE: >-
             ${{
               (
                 (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
                 github.event_name == 'workflow_dispatch'
-              ) ? 'release' : 'report'
+              ) && 'release' || 'report'
             }}
           DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_IMAGE }}
           DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME || secrets.DOCKERHUB_USERNAME }}
