@@ -21,6 +21,7 @@ import os
 import subprocess
 import sys
 import tomllib
+from enum import Enum, auto
 from pathlib import Path
 
 
@@ -98,6 +99,104 @@ def get_repo_root() -> Path:
         capture=True,
     ).stdout.strip()
     return Path(output)
+
+
+# Not every failed `git push` is a lost race (issue #73). A repository
+# ruleset rejection arrives shaped like a non-fast-forward, and rebasing
+# against a policy refusal three times burns the job's budget before dying
+# with a misleading "conflict" error, so the failure is classified first.
+REPOSITORY_RULE_PATTERNS = (
+    "gh006",
+    "gh013",
+    "repository rule violations",
+    "changes must be made through a pull request",
+    "protected branch",
+    "push declined",
+)
+
+NON_FAST_FORWARD_PATTERNS = (
+    "[rejected]",
+    "non-fast-forward",
+    "fetch first",
+    "updates were rejected",
+)
+
+
+class PushFailure(Enum):
+    """Classification of a failed `git push`."""
+
+    REPOSITORY_RULES = auto()
+    LOST_RACE = auto()
+    OTHER = auto()
+
+
+def classify_push_failure(raw_output: str) -> PushFailure:
+    """Classify a git push failure so only a genuine race is retried."""
+    haystack = raw_output.lower()
+    # Rules first: a ruleset rejection also contains the word "rejected".
+    if any(pattern in haystack for pattern in REPOSITORY_RULE_PATTERNS):
+        return PushFailure.REPOSITORY_RULES
+    if any(pattern in haystack for pattern in NON_FAST_FORWARD_PATTERNS):
+        return PushFailure.LOST_RACE
+    return PushFailure.OTHER
+
+
+def run_git_capturing(cmd: list[str]) -> subprocess.CompletedProcess:
+    """Run a git command, returning its result without exiting on failure."""
+    print(f"Running: {' '.join(cmd)}")
+    return subprocess.run(cmd, capture_output=True, text=True, check=False)
+
+
+def push_branch_with_rebase_retry(branch: str, *, max_attempts: int = 3) -> None:
+    """Push to a branch, retrying a lost race with a rebase (issue #73).
+
+    A repository-ruleset refusal or any other failure is reported as what it
+    is instead of being masked as a merge conflict; only a lost non-fast-
+    forward race is fixed by rebasing onto the new remote tip.
+    """
+    for attempt in range(1, max_attempts + 1):
+        completed = run_git_capturing(["git", "push", "origin", branch])
+        if completed.returncode == 0:
+            return
+
+        push_error = f"{completed.stdout}{completed.stderr}".strip()
+        failure = classify_push_failure(push_error)
+
+        if failure is PushFailure.REPOSITORY_RULES:
+            print(
+                f"::error title=Push declined by repository rules::The push to "
+                f"branch '{branch}' was declined by a repository rule (a "
+                f"GH006/GH013-class rejection, e.g. 'changes must be made through "
+                f"a pull request' or a protected-branch ruleset). Rebasing and "
+                f"retrying cannot change repository policy: release this change "
+                f"through a pull request, or adjust the ruleset so the release "
+                f"bot may push.\n--- git output ---\n{push_error}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
+        if failure is PushFailure.OTHER:
+            print(f"Error pushing: {push_error}", file=sys.stderr)
+            sys.exit(1)
+
+        if attempt >= max_attempts:
+            print(
+                f"Error pushing after {max_attempts} attempts: {push_error}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
+        print(
+            f"Push rejected as non-fast-forward (attempt {attempt}/"
+            f"{max_attempts}); the remote branch moved. Rebasing and retrying...",
+            file=sys.stderr,
+        )
+        rebase = run_git_capturing(["git", "pull", "--rebase", "origin", branch])
+        if rebase.returncode != 0:
+            rebase_error = f"{rebase.stdout}{rebase.stderr}".strip()
+            print(f"Error during pull --rebase: {rebase_error}", file=sys.stderr)
+            run_git_capturing(["git", "rebase", "--abort"])
+            sys.exit(1)
 
 
 def configure_git() -> None:
@@ -247,8 +346,8 @@ def main() -> int:
             # Commit with version as message
             run_command(["git", "commit", "-m", new_version])
 
-            # Push to main
-            run_command(["git", "push", "origin", "main"])
+            # Push to main; only a genuine lost race is retried (issue #73)
+            push_branch_with_rebase_retry("main")
 
             print(
                 f"\n✅ Version bump committed and pushed: {old_version} → {new_version}"
