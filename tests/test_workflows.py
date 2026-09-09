@@ -214,6 +214,9 @@ def test_links_workflow_fails_for_every_broken_live_link() -> None:
     workflow = read_workflow("links.yml")
     link_job = workflow_job_block(workflow, "link-checker")
     lychee_step = workflow_step_block(link_job, "Check links with lychee")
+    recheck_step = workflow_step_block(
+        link_job, "Re-check links that never got an answer"
+    )
     archive_step = workflow_step_block(
         link_job, "Check broken links against Web Archive"
     )
@@ -221,6 +224,8 @@ def test_links_workflow_fails_for_every_broken_live_link() -> None:
 
     assert "- '**.md'" in workflow
     assert "- '**.html'" in workflow
+    assert "scripts/recheck_broken_links.py" in workflow
+    assert "scripts/check_web_archive.py" in workflow
     assert "permissions:\n  contents: read" in workflow
     assert "timeout-minutes: 10" in link_job
     assert "cancel-in-progress: true" in link_job
@@ -230,9 +235,21 @@ def test_links_workflow_fails_for_every_broken_live_link() -> None:
     assert "examples/universal-app/index.html" not in lychee_step
     assert "fail: false" in lychee_step
     assert "output: lychee/out.md" in lychee_step
-    assert "if: steps.lychee.outputs.exit_code != 0" in archive_step
+    # Issue #78: --max-retries cannot retry a connect-phase reset
+    # (lycheeverse/lychee#2297), so unanswered failures are re-asked
+    # outside lychee before anything is declared broken.
+    assert "if: steps.lychee.outputs.exit_code != 0" in recheck_step
+    assert "python scripts/recheck_broken_links.py" in recheck_step
+    assert "RECOVERED_OUTPUT: lychee/recovered.txt" in recheck_step
+    # `!= 'true'`, never `== 'false'`: a skipped re-check leaves the output
+    # empty, and only the != form fails safe.
+    assert "steps.lychee.outputs.exit_code != 0" in archive_step
+    assert "steps.recheck.outputs.all_recovered != 'true'" in archive_step
     assert "python scripts/check_web_archive.py" in archive_step
-    assert "if: always() && steps.lychee.outputs.exit_code != 0" in failure_step
+    assert "RECOVERED_URLS: lychee/recovered.txt" in archive_step
+    assert "always()" in failure_step
+    assert "steps.lychee.outputs.exit_code != 0" in failure_step
+    assert "steps.recheck.outputs.all_recovered != 'true'" in failure_step
     assert "all_archived" not in failure_step
     assert "exit 1" in failure_step
 

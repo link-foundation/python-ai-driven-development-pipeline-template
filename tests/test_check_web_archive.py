@@ -65,3 +65,46 @@ def test_check_wayback_machine_treats_api_errors_as_unavailable(monkeypatch) -> 
     assert result.available is False
     assert result.archive_url is None
     assert result.timestamp is None
+
+
+def test_split_recovered_urls_drops_recovered_urls_from_the_archive_lookup() -> None:
+    """A URL the re-check found healthy must not reach the Wayback Machine."""
+    remaining, recovered = module.split_recovered_urls(
+        ["https://a.example/x", "https://b.example/y"], "https://b.example/y\n"
+    )
+
+    assert remaining == ["https://a.example/x"]
+    assert recovered == ["https://b.example/y"]
+
+
+def test_split_recovered_urls_skips_nothing_when_the_file_is_missing_or_empty() -> None:
+    urls = ["https://a.example/x"]
+
+    assert module.split_recovered_urls(urls, "") == (urls, [])
+    assert module.split_recovered_urls(urls, None) == (urls, [])
+
+
+def test_main_treats_a_recheck_recovered_url_as_not_broken(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    """The archive pass must pass cleanly when the re-check recovered every URL."""
+    report = tmp_path / "out.md"
+    report.write_text(
+        "- [ERROR] <https://recovered.example/reset> | Connection reset by peer\n",
+        encoding="utf-8",
+    )
+    recovered = tmp_path / "recovered.txt"
+    recovered.write_text("https://recovered.example/reset\n", encoding="utf-8")
+    monkeypatch.setenv("LYCHEE_OUTPUT", str(report))
+    monkeypatch.setenv("RECOVERED_URLS", str(recovered))
+    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+
+    def explode(url: str) -> dict[str, object]:
+        raise AssertionError(f"healthy URL {url} must not reach the Wayback Machine")
+
+    monkeypatch.setattr(module, "fetch_json", explode)
+
+    assert module.main() == 0
+    output = capsys.readouterr().out
+    assert "answers the re-check -- not broken" in output
+    assert "No broken URLs found in lychee output." in output
