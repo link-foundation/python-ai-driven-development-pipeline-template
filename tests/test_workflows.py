@@ -559,8 +559,26 @@ def test_release_workflow_builds_docker_images_on_pull_requests() -> None:
     assert "uses: docker/build-push-action@v7" in block
     assert "push: false" in block
     assert "load: true" in block
-    assert "cache-from: type=gha" in block
-    assert "cache-to: type=gha,mode=max" in block
+    assert "cache-from: type=gha,scope=docker-pr-check" in block
+    assert "cache-to: type=gha,mode=max,scope=docker-pr-check" in block
+
+
+def test_every_gha_cache_export_carries_a_scope() -> None:
+    """An unscoped GHA cache write lands in the shared `buildkit` scope.
+
+    There the repository's builds overwrite each other, leaving only the final
+    cache, and `mode=max` exports crowd the repository-wide 10 GB pool that
+    actions/cache entries share (issue #66).
+    """
+    for path in sorted(WORKFLOWS.glob("*.y*ml")):
+        workflow = path.read_text(encoding="utf-8")
+        for line_number, line in enumerate(workflow.splitlines(), start=1):
+            if "cache-to: type=gha" not in line:
+                continue
+            assert "scope=" in line, (
+                f"{path.name}:{line_number} exports the GHA build cache without "
+                "a scope; builds would overwrite each other's cache entries"
+            )
 
 
 def test_release_workflow_publishes_multi_arch_docker_images() -> None:

@@ -486,8 +486,11 @@ jobs:
           push: false
           load: true
           tags: app:pr-check
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Scoped like the per-platform writes below (issue #66): an unscoped
+          # GHA cache export lands in the shared `buildkit` scope, where builds
+          # overwrite each other and crowd out actions/cache entries.
+          cache-from: type=gha,scope=docker-pr-check
+          cache-to: type=gha,mode=max,scope=docker-pr-check
 
   # RELEASE JOBS - Only run after all CI checks pass
 
