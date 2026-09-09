@@ -918,4 +918,6 @@ jobs:
         env:
           NEEDS_JSON: ${{ toJSON(needs) }}
           IS_MAIN: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          RUN_SHA: ${{ github.sha }}
+          BRANCH_REF: ${{ github.ref_name }}
         run: bash scripts/check-pipeline-status.sh

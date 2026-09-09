@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+import os
 import re
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -340,35 +340,108 @@ def test_pipeline_status_gate_covers_every_other_release_job() -> None:
 def test_pipeline_status_script_handles_all_job_conclusions() -> None:
     """The gate fails failures and main cancellations without breaking supersedes."""
     script = ROOT / "scripts" / "check-pipeline-status.sh"
+    text = script.read_text(encoding="utf-8")
     assert script.exists()
-    assert "set -euo pipefail" in script.read_text(encoding="utf-8")
+    assert "set -euo pipefail" in text
+    assert "run_is_superseded" in text
+    assert "git ls-remote" in text
 
-    if shutil.which("jq") is None:
-        return
+    def run_gate(env: dict[str, str]) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            ["bash", str(script)],
+            cwd=ROOT,
+            env={**os.environ, **env},
+            capture_output=True,
+            text=True,
+            check=False,
+        )
 
-    cases = (
-        ({"lint": "success", "test": "skipped"}, True, True),
-        ({"lint": "failure"}, False, False),
-        ({"auto-release": "cancelled"}, True, False),
-        ({"test": "cancelled"}, False, True),
-    )
-    for results, is_main, should_pass in cases:
-        needs_json = (
+    def needs_json(**results: str) -> str:
+        return (
             "{"
             + ",".join(
                 f'"{job}":{{"result":"{result}"}}' for job, result in results.items()
             )
             + "}"
         )
-        completed = subprocess.run(
-            ["bash", str(script)],
-            cwd=ROOT,
-            env={"NEEDS_JSON": needs_json, "IS_MAIN": str(is_main).lower()},
-            capture_output=True,
-            text=True,
-            check=False,
+
+    healthy = run_gate(
+        {
+            "NEEDS_JSON": needs_json(lint="success", test="skipped"),
+            "IS_MAIN": "true",
+        }
+    )
+    assert healthy.returncode == 0, healthy.stdout
+
+    failed = run_gate(
+        {"NEEDS_JSON": needs_json(lint="failure"), "IS_MAIN": "false"}
+    )
+    assert failed.returncode == 1
+    assert "::error::Pipeline failed" in failed.stdout
+
+    # A cancellation off main is usually a superseded run: warn, do not fail.
+    superseded_ref = run_gate(
+        {"NEEDS_JSON": needs_json(test="cancelled"), "IS_MAIN": "false"}
+    )
+    assert superseded_ref.returncode == 0
+    assert "::warning::Cancelled jobs" in superseded_ref.stdout
+
+    # On main a cancellation is an overrun unless this run is provably behind
+    # the branch head. An unprovable supersede fails loud (issue #69).
+    unprovable = run_gate(
+        {"NEEDS_JSON": needs_json(auto_release="cancelled"), "IS_MAIN": "true"}
+    )
+    assert unprovable.returncode == 1
+    assert "cannot be proven superseded" in unprovable.stderr
+
+    at_head = run_gate(
+        {
+            "NEEDS_JSON": needs_json(test="cancelled"),
+            "IS_MAIN": "true",
+            "RUN_SHA": "1" * 40,
+            "BRANCH_REF": "main",
+            "BRANCH_HEAD_SHA": "1" * 40,
+        }
+    )
+    assert at_head.returncode == 1
+    assert "::error::Pipeline has cancelled jobs on main" in at_head.stdout
+
+    behind_head = run_gate(
+        {
+            "NEEDS_JSON": needs_json(test="cancelled"),
+            "IS_MAIN": "true",
+            "RUN_SHA": "1" * 40,
+            "BRANCH_REF": "main",
+            "BRANCH_HEAD_SHA": "2" * 40,
+        }
+    )
+    assert behind_head.returncode == 0
+    assert "expected churn" in behind_head.stdout
+
+
+def test_every_workflow_has_a_terminal_status_gate() -> None:
+    """A timeout outside release.yml must not vanish into a grey run (issue #69)."""
+    for path in sorted(WORKFLOWS.glob("*.y*ml")):
+        workflow = path.read_text(encoding="utf-8")
+        jobs_section = workflow.split("\njobs:\n", maxsplit=1)[1]
+        job_names = re.findall(r"^  ([A-Za-z0-9_-]+):$", jobs_section, re.MULTILINE)
+        gate = workflow_job_block(workflow, "pipeline-status")
+
+        assert "if: always()" in gate, f"{path.name} gate must run unconditionally"
+        assert "run: bash scripts/check-pipeline-status.sh" in gate
+        assert "NEEDS_JSON: ${{ toJSON(needs) }}" in gate
+        assert (
+            "IS_MAIN: ${{ github.ref == 'refs/heads/main' && "
+            "github.event_name == 'push' }}" in gate
         )
-        assert completed.returncode == (0 if should_pass else 1), completed.stdout
+        assert "RUN_SHA: ${{ github.sha }}" in gate
+        assert "BRANCH_REF: ${{ github.ref_name }}" in gate
+        for job_name in job_names:
+            if job_name == "pipeline-status":
+                continue
+            assert re.search(
+                rf"(?:^|[\s,[])({re.escape(job_name)})(?=[\s,\]])", gate
+            ), f"{path.name}: pipeline-status must observe {job_name}"
 
 
 def test_release_workflow_action_versions_are_current() -> None:
@@ -669,7 +742,7 @@ def test_docs_workflow_action_versions_are_current() -> None:
     """Docs workflow actions should stay aligned with the current Pages stack."""
     docs_workflow = read_workflow("docs.yml")
 
-    assert_action_pin_count(docs_workflow, "actions/checkout", "v6", 1)
+    assert_action_pin_count(docs_workflow, "actions/checkout", "v6", 2)
     assert_action_pin_count(docs_workflow, "actions/setup-python", "v6", 1)
     assert_action_pin_count(docs_workflow, "actions/upload-artifact", "v7", 1)
     assert_action_pin_count(docs_workflow, "actions/configure-pages", "v6", 1)
@@ -956,7 +1029,7 @@ def test_every_checkout_declares_credential_persistence() -> None:
             if "persist-credentials: true" in step:
                 persisting.append(f"{path.name}:{index + 1}")
 
-    assert checkouts == 18, f"expected 18 checkouts, found {checkouts}"
+    assert checkouts == 22, f"expected 22 checkouts, found {checkouts}"
     # Only the job that pushes the version bump commit needs the token wired
     # into the remote; every other checkout only reads the tree.
     assert (
