@@ -18,9 +18,9 @@ Environment variables:
 
 import argparse
 import os
-import re
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 
@@ -66,13 +66,29 @@ def set_github_output(key: str, value: str) -> None:
         print(f"Set output: {key}={value}")
 
 
+def parse_version(content: str) -> str:
+    """Read project.version from pyproject.toml content (issue #67).
+
+    A line-anchored regex cannot see TOML tables, so a ``version`` key in any
+    other table -- scriv's documented ``[tool.scriv] version``, for example --
+    matched first and released under the wrong number. Parse the document and
+    read the field by its table path instead; a missing version fails loudly.
+    """
+    try:
+        document = tomllib.loads(content)
+    except tomllib.TOMLDecodeError as error:
+        raise ValueError(f"pyproject.toml is not valid TOML: {error}") from error
+    if "project" not in document or not isinstance(document["project"], dict):
+        raise ValueError("pyproject.toml has no [project] table")
+    version = document["project"].get("version")
+    if not isinstance(version, str):
+        raise ValueError("pyproject.toml has no project.version string")
+    return version
+
+
 def get_current_version(pyproject_path: Path) -> str:
     """Get version from pyproject.toml."""
-    content = pyproject_path.read_text()
-    match = re.search(r'^version\s*=\s*["\']([^"\']+)["\']', content, re.MULTILINE)
-    if not match:
-        raise ValueError("Could not find version in pyproject.toml")
-    return match.group(1)
+    return parse_version(pyproject_path.read_text())
 
 
 def get_repo_root() -> Path:
@@ -127,24 +143,23 @@ def check_remote_changes(
             capture=True,
         ).stdout
 
-        remote_match = re.search(
-            r'^version\s*=\s*["\']([^"\']+)["\']',
-            remote_content,
-            re.MULTILINE,
-        )
-        if remote_match:
-            remote_version = remote_match.group(1)
-            print(f"Remote version: {remote_version}")
+        try:
+            remote_version = parse_version(remote_content)
+        except ValueError as error:
+            print(f"Could not parse remote pyproject.toml: {error}")
+            return False, ""
 
-            # Check if versions differ (indicating work was done)
-            local_version = get_current_version(pyproject_path)
-            if local_version != remote_version:
-                print("Local and remote versions differ, rebasing...")
-                run_command(["git", "rebase", "origin/main"])
-                return False, remote_version
-            else:
-                print("Versions match, assuming previous run completed successfully")
-                return True, remote_version
+        print(f"Remote version: {remote_version}")
+
+        # Check if versions differ (indicating work was done)
+        local_version = get_current_version(pyproject_path)
+        if local_version != remote_version:
+            print("Local and remote versions differ, rebasing...")
+            run_command(["git", "rebase", "origin/main"])
+            return False, remote_version
+        else:
+            print("Versions match, assuming previous run completed successfully")
+            return True, remote_version
 
     return False, ""
 

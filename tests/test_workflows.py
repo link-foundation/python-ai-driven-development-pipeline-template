@@ -581,6 +581,28 @@ def test_change_gated_jobs_use_detector_for_pull_requests_and_pushes() -> None:
         assert "github.event_name == 'workflow_dispatch'" in condition
 
 
+def test_manifest_versions_are_read_by_table_path_not_grep() -> None:
+    """Version scrapes with grep/sed/awk/cut cannot see TOML tables (issue #67).
+
+    A line-anchored scrape matches a ``version`` key in any table -- scriv's
+    documented ``[tool.scriv] version``, for example -- so every pyproject.toml
+    version read must go through scripts/read_manifest.py or tomllib.
+    """
+    for name in ("release.yml", "workflows.yml", "docs.yml", "links.yml", "security.yml"):
+        workflow = read_workflow(name)
+        for block in workflow_run_blocks(workflow):
+            commands = "\n".join(
+                line for line in block.splitlines() if not line.lstrip().startswith("#")
+            )
+            if "pyproject.toml" not in commands or "version" not in commands:
+                continue
+            for scraper in ("grep ", "grep$", "sed ", "sed$", "awk ", "awk$", "cut "):
+                assert scraper not in commands, (
+                    f"{name}: scrape pyproject.toml version with "
+                    f"scripts/read_manifest.py instead of {scraper.strip()}"
+                )
+
+
 def test_detect_changes_only_exports_consumed_outputs() -> None:
     """Detector outputs should not drift from the workflow's actual job gates."""
     workflow = read_workflow("release.yml")

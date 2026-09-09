@@ -557,8 +557,12 @@ jobs:
           PYTHON_ROOT="${{ steps.python_layout.outputs.root }}"
           PYPROJECT="$PYTHON_ROOT/pyproject.toml"
 
-          # Get current version from pyproject.toml
-          CURRENT_VERSION=$(grep -Po '(?<=^version = ")[^"]*' "$PYPROJECT")
+          # Read project.version by its table path (issue #67): a grep cannot
+          # see TOML tables, so a `version` key in any other table -- the one
+          # scriv's documentation recommends adding to [tool.scriv], for
+          # instance -- used to surface as a second match and break this step
+          # with a multi-line $GITHUB_OUTPUT value.
+          CURRENT_VERSION=$(python scripts/read_manifest.py "$PYPROJECT" --field project.version)
           echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
 
           if [ "${{ steps.python_layout.outputs.multi_language }}" = "true" ]; then
