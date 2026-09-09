@@ -227,7 +227,7 @@ def print_violations(violations: list[Finding]) -> None:
             f"  {violation.file}: {violation.lines} lines "
             f"(exceeds {violation.max_lines})"
         )
-    print(f"\nPlease refactor these files to be under their hard limit\n")
+    print("\nPlease refactor these files to be under their hard limit\n")
 
 
 def main() -> None:

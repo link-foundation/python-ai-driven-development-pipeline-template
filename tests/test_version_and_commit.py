@@ -95,9 +95,7 @@ def test_lost_race_is_rebased_and_push_succeeds(monkeypatch, capsys) -> None:
     def fake_run(cmd):
         commands.append(cmd)
         if cmd[:2] == ["git", "push"] and len(commands) == 1:
-            return subprocess.CompletedProcess(
-                cmd, 1, stdout="", stderr=LOST_RACE
-            )
+            return subprocess.CompletedProcess(cmd, 1, stdout="", stderr=LOST_RACE)
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
     monkeypatch.setattr(module, "run_git_capturing", fake_run)
@@ -138,9 +136,7 @@ def test_other_failures_exit_without_retrying(monkeypatch, capsys) -> None:
     def fake_run(cmd):
         attempts.append(cmd)
         if cmd[:2] == ["git", "push"]:
-            return subprocess.CompletedProcess(
-                cmd, 128, stdout="", stderr=REAL_ERROR
-            )
+            return subprocess.CompletedProcess(cmd, 128, stdout="", stderr=REAL_ERROR)
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
     monkeypatch.setattr(module, "run_git_capturing", fake_run)
@@ -158,9 +154,7 @@ def test_persistent_race_gives_up_after_max_attempts(monkeypatch, capsys) -> Non
     def fake_run(cmd):
         commands.append(cmd)
         if cmd[:2] == ["git", "push"]:
-            return subprocess.CompletedProcess(
-                cmd, 1, stdout="", stderr=LOST_RACE
-            )
+            return subprocess.CompletedProcess(cmd, 1, stdout="", stderr=LOST_RACE)
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
     monkeypatch.setattr(module, "run_git_capturing", fake_run)
@@ -185,9 +179,7 @@ def test_failed_rebase_aborts_and_exits(monkeypatch, capsys) -> None:
                 cmd, 1, stdout="", stderr="CONFLICT (content): Merge conflict in x"
             )
         if cmd[:2] == ["git", "push"]:
-            return subprocess.CompletedProcess(
-                cmd, 1, stdout="", stderr=LOST_RACE
-            )
+            return subprocess.CompletedProcess(cmd, 1, stdout="", stderr=LOST_RACE)
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
     monkeypatch.setattr(module, "run_git_capturing", fake_run)

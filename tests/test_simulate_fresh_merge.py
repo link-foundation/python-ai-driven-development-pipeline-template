@@ -31,7 +31,9 @@ esac
 """
 
 
-def run_script(fake_bin: Path, extra_env: dict[str, str]) -> subprocess.CompletedProcess:
+def run_script(
+    fake_bin: Path, extra_env: dict[str, str]
+) -> subprocess.CompletedProcess:
     """Run the script with a stand-in `git` first on PATH."""
     env = {
         **os.environ,
@@ -111,9 +113,7 @@ def test_persistent_fetch_failure_fails_after_the_attempts_are_exhausted(
     )
 
     assert result.returncode == 1
-    assert (
-        "::error::Could not fetch origin/main after 3 attempts" in result.stderr
-    )
+    assert "::error::Could not fetch origin/main after 3 attempts" in result.stderr
     assert "attempt 2 of 3" in result.stdout
     assert "attempt 3 of 3" not in result.stdout
     assert "attempt 4 of 3" not in result.stdout

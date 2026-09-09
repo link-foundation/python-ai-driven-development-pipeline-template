@@ -241,7 +241,8 @@ def main() -> int:
     final = [
         failure
         for failure in failures
-        if failure.answered or not failure.url.lower().startswith(("http://", "https://"))
+        if failure.answered
+        or not failure.url.lower().startswith(("http://", "https://"))
     ]
     unanswered = [
         failure.url

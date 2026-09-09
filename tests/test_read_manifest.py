@@ -12,9 +12,7 @@ import sys
 from pathlib import Path
 
 
-SCRIPT_PATH = (
-    Path(__file__).resolve().parent.parent / "scripts" / "read_manifest.py"
-)
+SCRIPT_PATH = Path(__file__).resolve().parent.parent / "scripts" / "read_manifest.py"
 spec = importlib.util.spec_from_file_location("read_manifest", SCRIPT_PATH)
 module = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = module

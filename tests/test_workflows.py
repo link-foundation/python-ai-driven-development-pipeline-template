@@ -390,9 +390,7 @@ def test_pipeline_status_script_handles_all_job_conclusions() -> None:
     )
     assert healthy.returncode == 0, healthy.stdout
 
-    failed = run_gate(
-        {"NEEDS_JSON": needs_json(lint="failure"), "IS_MAIN": "false"}
-    )
+    failed = run_gate({"NEEDS_JSON": needs_json(lint="failure"), "IS_MAIN": "false"})
     assert failed.returncode == 1
     assert "::error::Pipeline failed" in failed.stdout
 
@@ -605,7 +603,13 @@ def test_manifest_versions_are_read_by_table_path_not_grep() -> None:
     documented ``[tool.scriv] version``, for example -- so every pyproject.toml
     version read must go through scripts/read_manifest.py or tomllib.
     """
-    for name in ("release.yml", "workflows.yml", "docs.yml", "links.yml", "security.yml"):
+    for name in (
+        "release.yml",
+        "workflows.yml",
+        "docs.yml",
+        "links.yml",
+        "security.yml",
+    ):
         workflow = read_workflow(name)
         for block in workflow_run_blocks(workflow):
             commands = "\n".join(
@@ -641,9 +645,9 @@ def test_release_preflight_gates_every_publishing_job() -> None:
     ):
         job = workflow_job_block(workflow, job_name)
         assert "release-preflight" in job, f"{job_name} must need release-preflight"
-        assert "needs.release-preflight.result == 'success'" in job, (
-            f"{job_name} must gate on the preflight verdict, not just greenness"
-        )
+        assert (
+            "needs.release-preflight.result == 'success'" in job
+        ), f"{job_name} must gate on the preflight verdict, not just greenness"
 
 
 def test_validate_docs_gates_on_docs_changes() -> None:

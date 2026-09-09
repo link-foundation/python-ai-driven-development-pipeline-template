@@ -15,8 +15,6 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = ROOT / "scripts" / "recheck_broken_links.py"
 
@@ -94,7 +92,9 @@ def test_treats_a_rejected_status_code_as_an_answer_whatever_the_marker() -> Non
 def test_keeps_non_http_failures_out_of_the_recheck_even_when_unanswered() -> None:
     failures = module.parse_lychee_failures(FIXTURE_REPORT)
     unanswerable = [
-        f.url for f in failures if not f.answered and not f.url.lower().startswith(("http://", "https://"))
+        f.url
+        for f in failures
+        if not f.answered and not f.url.lower().startswith(("http://", "https://"))
     ]
 
     assert sorted(unanswerable) == [
@@ -110,7 +110,9 @@ def test_reads_the_same_accept_list_and_user_agent_as_the_lychee_step() -> None:
     apply on both sides; if either side changes, this test fails until the
     other follows.
     """
-    workflow = (ROOT / ".github" / "workflows" / "links.yml").read_text(encoding="utf-8")
+    workflow = (ROOT / ".github" / "workflows" / "links.yml").read_text(
+        encoding="utf-8"
+    )
     accept, user_agent = module.extract_lychee_request_options(workflow)
 
     assert accept == "100..=103,200..=299"
@@ -374,9 +376,7 @@ def test_releases_the_gate_only_when_every_unanswered_link_recovered(
     try:
         base = f"http://127.0.0.1:{server.server_address[1]}"
         report = tmp_path / "out.md"
-        report.write_text(
-            f"- [TIMEOUT] <{base}/slow> | Timeout\n", encoding="utf-8"
-        )
+        report.write_text(f"- [TIMEOUT] <{base}/slow> | Timeout\n", encoding="utf-8")
         recovered_path = tmp_path / "recovered.txt"
         output_path = tmp_path / "github-output.txt"
 

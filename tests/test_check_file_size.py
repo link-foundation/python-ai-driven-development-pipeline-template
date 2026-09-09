@@ -44,20 +44,27 @@ def test_markdown_files_get_their_own_budget() -> None:
     """Prose budgets are larger than code budgets but still bounded."""
     assert module.LIMITS[".md"] == (module.MAX_DOC_LINES, module.WARN_DOC_LINES)
     assert module.MAX_DOC_LINES > module.MAX_LINES
-    assert module.classify_line_count(
-        module.MAX_LINES + 1,
-        max_lines=module.MAX_DOC_LINES,
-        warn_lines=module.WARN_DOC_LINES,
-    ) == module.LineStatus.OK
-    assert module.classify_line_count(
-        module.MAX_DOC_LINES + 1,
-        max_lines=module.MAX_DOC_LINES,
-        warn_lines=module.WARN_DOC_LINES,
-    ) == module.LineStatus.VIOLATION
+    assert (
+        module.classify_line_count(
+            module.MAX_LINES + 1,
+            max_lines=module.MAX_DOC_LINES,
+            warn_lines=module.WARN_DOC_LINES,
+        )
+        == module.LineStatus.OK
+    )
+    assert (
+        module.classify_line_count(
+            module.MAX_DOC_LINES + 1,
+            max_lines=module.MAX_DOC_LINES,
+            warn_lines=module.WARN_DOC_LINES,
+        )
+        == module.LineStatus.VIOLATION
+    )
 
 
 def test_check_directory_applies_markdown_budget(tmp_path) -> None:
     """A markdown file over the code limit stays OK; over the doc limit fails."""
+
     def write_lines(path: Path, line_count: int) -> None:
         path.write_text(
             "\n".join(f"line {line}" for line in range(1, line_count + 1)),

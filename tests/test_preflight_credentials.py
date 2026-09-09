@@ -147,17 +147,20 @@ def test_release_mode_fails_without_any_credential() -> None:
     result = run_script({"PREFLIGHT_MODE": "release"})
     assert result.returncode == 1
     assert "FAIL: no OIDC token available" in result.stdout
-    assert "::error::release-preflight: refusing to release with 1 refused credential(s)" in (
-        result.stdout + result.stderr
+    assert (
+        "::error::release-preflight: refusing to release with 1 refused credential(s)"
+        in (result.stdout + result.stderr)
     )
 
 
 def test_report_mode_reports_failures_without_blocking() -> None:
-    result = run_script({
-        "PREFLIGHT_MODE": "report",
-        "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "",
-        "ACTIONS_ID_TOKEN_REQUEST_URL": "",
-    })
+    result = run_script(
+        {
+            "PREFLIGHT_MODE": "report",
+            "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "",
+            "ACTIONS_ID_TOKEN_REQUEST_URL": "",
+        }
+    )
     assert result.returncode == 0
     assert "FAIL: no OIDC token available" in result.stdout
     assert "::warning::release-preflight:" in result.stdout
@@ -188,11 +191,13 @@ def test_pypi_refusal_fails_the_release(fake_endpoints) -> None:
 
 
 def test_oidc_unreachable_is_unknown_and_never_a_release_pass(fake_endpoints) -> None:
-    result = run_script({
-        "PYPI_API": fake_endpoints.url,
-        "ACTIONS_ID_TOKEN_REQUEST_URL": "http://127.0.0.1:9/oidc?audience=github",
-        "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "request-token",
-    })
+    result = run_script(
+        {
+            "PYPI_API": fake_endpoints.url,
+            "ACTIONS_ID_TOKEN_REQUEST_URL": "http://127.0.0.1:9/oidc?audience=github",
+            "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "request-token",
+        }
+    )
     assert result.returncode == 1
     assert "UNKNOWN" in result.stdout
     assert "::error::release-preflight: verified nothing (1 unknown)" in result.stdout
@@ -200,14 +205,16 @@ def test_oidc_unreachable_is_unknown_and_never_a_release_pass(fake_endpoints) ->
 
 def test_docker_write_probe_passes_and_cancels_the_session(fake_endpoints) -> None:
     fake = fake_endpoints
-    result = run_script({
-        **pypi_only_env(fake),
-        "DOCKER_AUTH": fake.url,
-        "DOCKER_REGISTRY": fake.url,
-        "DOCKERHUB_IMAGE": fake.image,
-        "DOCKERHUB_USERNAME": "user",
-        "DOCKERHUB_TOKEN": "token",
-    })
+    result = run_script(
+        {
+            **pypi_only_env(fake),
+            "DOCKER_AUTH": fake.url,
+            "DOCKER_REGISTRY": fake.url,
+            "DOCKERHUB_IMAGE": fake.image,
+            "DOCKERHUB_USERNAME": "user",
+            "DOCKERHUB_TOKEN": "token",
+        }
+    )
     assert result.returncode == 0, result.stdout + result.stderr
     assert "PASS: Docker Hub accepted a blob-upload write" in result.stdout
     assert "(202; upload session cancelled)" in result.stdout
@@ -218,14 +225,16 @@ def test_docker_write_probe_passes_and_cancels_the_session(fake_endpoints) -> No
 def test_docker_write_refusal_fails_even_with_pypi_ok(fake_endpoints) -> None:
     fake = fake_endpoints
     fake.blob_status = 403
-    result = run_script({
-        **pypi_only_env(fake),
-        "DOCKER_AUTH": fake.url,
-        "DOCKER_REGISTRY": fake.url,
-        "DOCKERHUB_IMAGE": fake.image,
-        "DOCKERHUB_USERNAME": "user",
-        "DOCKERHUB_TOKEN": "token",
-    })
+    result = run_script(
+        {
+            **pypi_only_env(fake),
+            "DOCKER_AUTH": fake.url,
+            "DOCKER_REGISTRY": fake.url,
+            "DOCKERHUB_IMAGE": fake.image,
+            "DOCKERHUB_USERNAME": "user",
+            "DOCKERHUB_TOKEN": "token",
+        }
+    )
     assert result.returncode == 1
     assert "FAIL: Docker Hub refused the write" in result.stdout
     assert "would still have succeeded" in result.stdout
@@ -235,14 +244,16 @@ def test_every_failure_is_reported_not_just_the_first(fake_endpoints) -> None:
     fake = fake_endpoints
     fake.mint_status = 403
     fake.blob_status = 403
-    result = run_script({
-        **pypi_only_env(fake),
-        "DOCKER_AUTH": fake.url,
-        "DOCKER_REGISTRY": fake.url,
-        "DOCKERHUB_IMAGE": fake.image,
-        "DOCKERHUB_USERNAME": "user",
-        "DOCKERHUB_TOKEN": "token",
-    })
+    result = run_script(
+        {
+            **pypi_only_env(fake),
+            "DOCKER_AUTH": fake.url,
+            "DOCKER_REGISTRY": fake.url,
+            "DOCKERHUB_IMAGE": fake.image,
+            "DOCKERHUB_USERNAME": "user",
+            "DOCKERHUB_TOKEN": "token",
+        }
+    )
     assert result.returncode == 1
     assert "FAIL: PyPI refused to mint" in result.stdout
     assert "FAIL: Docker Hub refused the write" in result.stdout
@@ -251,10 +262,12 @@ def test_every_failure_is_reported_not_just_the_first(fake_endpoints) -> None:
 def test_step_summary_receives_the_verdict(fake_endpoints, tmp_path: Path) -> None:
     fake = fake_endpoints
     summary = tmp_path / "summary.md"
-    result = run_script({
-        **pypi_only_env(fake),
-        "GITHUB_STEP_SUMMARY": str(summary),
-    })
+    result = run_script(
+        {
+            **pypi_only_env(fake),
+            "GITHUB_STEP_SUMMARY": str(summary),
+        }
+    )
     assert result.returncode == 0
     written = summary.read_text()
     assert "### Release preflight (release mode)" in written
