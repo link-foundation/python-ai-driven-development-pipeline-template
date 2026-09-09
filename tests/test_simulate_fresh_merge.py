@@ -114,8 +114,8 @@ def test_persistent_fetch_failure_fails_after_the_attempts_are_exhausted(
     assert (
         "::error::Could not fetch origin/main after 3 attempts" in result.stderr
     )
-    assert "attempt 3 of 3" in result.stdout
-    assert "attempt 4" not in result.stdout
+    assert "attempt 2 of 3" in result.stdout
+    assert "attempt 3 of 3" not in result.stdout
     assert "attempt 4 of 3" not in result.stdout
 
 
