@@ -48,6 +48,7 @@ jobs:
     if: github.event_name != 'workflow_dispatch'
     outputs:
       any-code-changed: ${{ steps.changes.outputs.any-code-changed }}
+      docs-changed: ${{ steps.changes.outputs.docs-changed }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -194,6 +195,37 @@ jobs:
           bash "${{ steps.python_layout.outputs.root }}/scripts/run-with-budget-warning.sh" \
             "$SECRETLINT_BUDGET_SECONDS" "Check for secrets" \
             npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint "**/*"
+
+  # === DOCUMENTATION VALIDATION ===
+  # Principle 12 (issue #72): documentation-only pull requests skip the
+  # changelog gate, so this is the one job that observes docs changes. It
+  # verifies the required documents exist with the sections other documents
+  # link to, and enforces the markdown size budget.
+  validate-docs:
+    name: Validate Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-validate-docs
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    needs: [detect-changes]
+    # !cancelled() lets this job evaluate even though detect-changes is skipped
+    # for workflow_dispatch while still propagating workflow cancellation.
+    if: |
+      !cancelled() && (
+        github.event_name == 'workflow_dispatch' ||
+        needs.detect-changes.outputs.docs-changed == 'true'
+      )
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Check required documents and sections
+        run: bash scripts/check-required-docs.sh
+
+      - name: Check file size limit
+        run: python scripts/check_file_size.py
 
   # === TEST ===
   # Test on latest Python version only
@@ -910,8 +942,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
-    needs: [detect-changes, lint, test, build, changelog, docker-build,
-            auto-release, manual-release, docker-publish-config,
+    needs: [detect-changes, validate-docs, lint, test, build, changelog,
+            docker-build, auto-release, manual-release, docker-publish-config,
             docker-publish-build, docker-publish]
     steps:
       - uses: actions/checkout@v6

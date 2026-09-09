@@ -448,7 +448,7 @@ def test_release_workflow_action_versions_are_current() -> None:
     """Release workflow actions should use the current major versions."""
     release_workflow = read_workflow("release.yml")
 
-    assert_action_pin_count(release_workflow, "actions/checkout", "v6", 11)
+    assert_action_pin_count(release_workflow, "actions/checkout", "v6", 12)
     assert_action_pin_count(release_workflow, "actions/setup-python", "v6", 7)
     assert_action_pin_count(release_workflow, "actions/upload-artifact", "v7", 2)
     assert_action_pin_count(release_workflow, "actions/download-artifact", "v7", 2)
@@ -603,17 +603,34 @@ def test_manifest_versions_are_read_by_table_path_not_grep() -> None:
                 )
 
 
+def test_validate_docs_gates_on_docs_changes() -> None:
+    """Docs-only PRs skip the changelog gate, so validate-docs must observe
+    docs-changed and enforce the documentation contract (issue #72)."""
+    workflow = read_workflow("release.yml")
+    job = workflow_job_block(workflow, "validate-docs")
+
+    assert "needs: [detect-changes]" in job
+    assert "if: |" in job
+    assert "github.event_name == 'workflow_dispatch'" in job
+    assert "needs.detect-changes.outputs.docs-changed == 'true'" in job
+    assert "bash scripts/check-required-docs.sh" in job
+    assert "python scripts/check_file_size.py" in job
+    assert "persist-credentials: false" in job
+    assert "timeout-minutes:" in job
+
+
 def test_detect_changes_only_exports_consumed_outputs() -> None:
     """Detector outputs should not drift from the workflow's actual job gates."""
     workflow = read_workflow("release.yml")
     block = workflow_job_block(workflow, "detect-changes")
 
     assert "any-code-changed:" in block
+    assert "docs-changed:" in block
+    assert "outputs.docs-changed == 'true'" in workflow
     for unused_output in (
         "py-changed",
         "tests-changed",
         "package-changed",
-        "docs-changed",
         "workflow-changed",
     ):
         assert f"{unused_output}:" not in block
@@ -1051,7 +1068,7 @@ def test_every_checkout_declares_credential_persistence() -> None:
             if "persist-credentials: true" in step:
                 persisting.append(f"{path.name}:{index + 1}")
 
-    assert checkouts == 22, f"expected 22 checkouts, found {checkouts}"
+    assert checkouts == 23, f"expected 23 checkouts, found {checkouts}"
     # Only the job that pushes the version bump commit needs the token wired
     # into the remote; every other checkout only reads the tree.
     assert (
