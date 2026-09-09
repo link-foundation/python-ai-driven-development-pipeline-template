@@ -227,6 +227,42 @@ jobs:
       - name: Check file size limit
         run: python scripts/check_file_size.py
 
+  # Prove the release credentials can write before any expensive job runs
+  # (issues #74 and #77). Principle 16: a non-empty secret proves nothing and
+  # a login proves authentication, not authorisation -- so the preflight
+  # attempts a write (PyPI trusted-publishing token mint, Docker Hub
+  # blob-upload session) and refuses to release if a credential is refused.
+  # In report mode (pull requests -- a fork has no publishing secrets) the
+  # same probes annotate without blocking, which is why the publishing jobs
+  # gate on `result == 'success'` rather than on the run being green.
+  release-preflight:
+    name: Release Preflight (credentials)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      # The PyPI probe exchanges this job's OIDC token for a short-lived
+      # upload token -- the same exchange the publish step performs.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Probe every release credential
+        env:
+          PREFLIGHT_MODE: >-
+            ${{
+              (
+                (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+                github.event_name == 'workflow_dispatch'
+              ) ? 'release' : 'report'
+            }}
+          DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_IMAGE }}
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME || secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: bash scripts/preflight-credentials.sh
+
   # === TEST ===
   # Test on latest Python version only
   test:
@@ -529,14 +565,20 @@ jobs:
   # Automatic release on push to main (if version changed)
   auto-release:
     name: Auto Release
-    needs: [lint, test, build]
+    needs: [lint, test, build, release-preflight]
     outputs:
       released: ${{ steps.github_release.outputs.released }}
       version: ${{ steps.github_release.outputs.version }}
     concurrency:
       group: ${{ github.workflow }}-main-write
       cancel-in-progress: false
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      !cancelled() &&
+      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      needs.lint.result == 'success' &&
+      needs.test.result == 'success' &&
+      needs.build.result == 'success' &&
+      needs.release-preflight.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -647,7 +689,7 @@ jobs:
   # Manual release via workflow_dispatch - only after CI passes
   manual-release:
     name: Manual Release
-    needs: [lint, test, build]
+    needs: [lint, test, build, release-preflight]
     outputs:
       released: ${{ steps.github_release.outputs.released }}
       version: ${{ steps.github_release.outputs.version }}
@@ -662,7 +704,8 @@ jobs:
       github.event_name == 'workflow_dispatch' &&
       needs.lint.result == 'success' &&
       needs.test.result == 'success' &&
-      needs.build.result == 'success'
+      needs.build.result == 'success' &&
+      needs.release-preflight.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -788,9 +831,10 @@ jobs:
   # DOCKERHUB_TOKEN secret to enable it in repositories that ship a Dockerfile.
   docker-publish-config:
     name: Configure Docker Hub Publish
-    needs: [auto-release, manual-release]
+    needs: [auto-release, manual-release, release-preflight]
     if: |
-      !cancelled() && (
+      !cancelled() &&
+      needs.release-preflight.result == 'success' && (
         needs.auto-release.outputs.released == 'true' ||
         needs.manual-release.outputs.released == 'true'
       )
@@ -833,8 +877,10 @@ jobs:
   # digests. This avoids the performance and reliability cost of QEMU.
   docker-publish-build:
     name: Build Docker Image (${{ matrix.platform }})
-    needs: [docker-publish-config]
-    if: needs.docker-publish-config.outputs.enabled == 'true'
+    needs: [docker-publish-config, release-preflight]
+    if: |
+      needs.release-preflight.result == 'success' &&
+      needs.docker-publish-config.outputs.enabled == 'true'
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -889,8 +935,10 @@ jobs:
 
   docker-publish:
     name: Publish Multi-Architecture Docker Image
-    needs: [docker-publish-config, docker-publish-build]
-    if: needs.docker-publish-build.result == 'success'
+    needs: [docker-publish-config, docker-publish-build, release-preflight]
+    if: |
+      needs.release-preflight.result == 'success' &&
+      needs.docker-publish-build.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -942,9 +990,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
-    needs: [detect-changes, validate-docs, lint, test, build, changelog,
-            docker-build, auto-release, manual-release, docker-publish-config,
-            docker-publish-build, docker-publish]
+    needs: [detect-changes, validate-docs, release-preflight, lint, test, build,
+            changelog, docker-build, auto-release, manual-release,
+            docker-publish-config, docker-publish-build, docker-publish]
     steps:
       - uses: actions/checkout@v6
         with:

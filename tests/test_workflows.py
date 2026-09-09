@@ -448,7 +448,7 @@ def test_release_workflow_action_versions_are_current() -> None:
     """Release workflow actions should use the current major versions."""
     release_workflow = read_workflow("release.yml")
 
-    assert_action_pin_count(release_workflow, "actions/checkout", "v6", 12)
+    assert_action_pin_count(release_workflow, "actions/checkout", "v6", 13)
     assert_action_pin_count(release_workflow, "actions/setup-python", "v6", 7)
     assert_action_pin_count(release_workflow, "actions/upload-artifact", "v7", 2)
     assert_action_pin_count(release_workflow, "actions/download-artifact", "v7", 2)
@@ -603,6 +603,32 @@ def test_manifest_versions_are_read_by_table_path_not_grep() -> None:
                 )
 
 
+def test_release_preflight_gates_every_publishing_job() -> None:
+    """Nothing that writes to PyPI, GitHub, or Docker Hub may skip the
+    credential preflight (issues #74 and #77)."""
+    workflow = read_workflow("release.yml")
+    preflight = workflow_job_block(workflow, "release-preflight")
+
+    assert "bash scripts/preflight-credentials.sh" in preflight
+    assert "timeout-minutes: 5" in preflight
+    # The PyPI probe mints a trusted-publishing upload token, which needs OIDC.
+    assert "id-token: write" in preflight
+    assert "persist-credentials: false" in preflight
+
+    for job_name in (
+        "auto-release",
+        "manual-release",
+        "docker-publish-config",
+        "docker-publish-build",
+        "docker-publish",
+    ):
+        job = workflow_job_block(workflow, job_name)
+        assert "release-preflight" in job, f"{job_name} must need release-preflight"
+        assert "needs.release-preflight.result == 'success'" in job, (
+            f"{job_name} must gate on the preflight verdict, not just greenness"
+        )
+
+
 def test_validate_docs_gates_on_docs_changes() -> None:
     """Docs-only PRs skip the changelog gate, so validate-docs must observe
     docs-changed and enforce the documentation contract (issue #72)."""
@@ -700,7 +726,7 @@ def test_release_workflow_publishes_multi_arch_docker_images() -> None:
     build = workflow_job_block(workflow, "docker-publish-build")
     publish = workflow_job_block(workflow, "docker-publish")
 
-    assert "needs: [auto-release, manual-release]" in config
+    assert "needs: [auto-release, manual-release, release-preflight]" in config
     assert "DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_IMAGE }}" in config
     assert "DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}" in config
     assert "DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}" in config
@@ -1068,7 +1094,7 @@ def test_every_checkout_declares_credential_persistence() -> None:
             if "persist-credentials: true" in step:
                 persisting.append(f"{path.name}:{index + 1}")
 
-    assert checkouts == 23, f"expected 23 checkouts, found {checkouts}"
+    assert checkouts == 24, f"expected 24 checkouts, found {checkouts}"
     # Only the job that pushes the version bump commit needs the token wired
     # into the remote; every other checkout only reads the tree.
     assert (
