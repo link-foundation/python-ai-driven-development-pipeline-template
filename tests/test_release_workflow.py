@@ -131,7 +131,19 @@ def test_pipeline_status_script_handles_all_job_conclusions() -> None:
         return subprocess.run(
             ["bash", str(script)],
             cwd=ROOT,
-            env={**os.environ, **env},
+            env={
+                **os.environ,
+                # Keep these subprocess fixtures hermetic when pytest itself
+                # is running inside GitHub Actions.
+                "GITHUB_WORKFLOW_REF": "",
+                "WORKFLOW_FILE": "",
+                "RUN_SHA": "",
+                "GITHUB_SHA": "",
+                "BRANCH_HEAD_SHA": "",
+                "BRANCH_NAME": "",
+                "BRANCH_REF": "",
+                **env,
+            },
             capture_output=True,
             text=True,
             check=False,
