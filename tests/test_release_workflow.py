@@ -111,17 +111,15 @@ def test_pipeline_status_gate_covers_every_other_release_job() -> None:
     assert "if: always()" in gate
     assert "run: bash scripts/check-pipeline-status.sh" in gate
     assert "NEEDS_JSON: ${{ toJSON(needs) }}" in gate
-    assert (
-        "IS_MAIN: ${{ github.ref == 'refs/heads/main' && "
-        "github.event_name == 'push' }}" in gate
-    )
+    assert "RUN_SHA: ${{ github.event.pull_request.head.sha || github.sha }}" in gate
+    assert "BRANCH_NAME: ${{ github.head_ref || github.ref_name }}" in gate
     for job_name in job_names:
         if job_name != "pipeline-status":
             assert re.search(rf"(?:^|[\s,[])({re.escape(job_name)})(?=[\s,\]])", gate)
 
 
 def test_pipeline_status_script_handles_all_job_conclusions() -> None:
-    """The gate fails failures and main cancellations without breaking supersedes."""
+    """The gate fails failures and only excuses configured supersedes."""
     script = ROOT / "scripts" / "check-pipeline-status.sh"
     text = script.read_text(encoding="utf-8")
     assert script.exists()
@@ -133,7 +131,19 @@ def test_pipeline_status_script_handles_all_job_conclusions() -> None:
         return subprocess.run(
             ["bash", str(script)],
             cwd=ROOT,
-            env={**os.environ, **env},
+            env={
+                **os.environ,
+                # Keep these subprocess fixtures hermetic when pytest itself
+                # is running inside GitHub Actions.
+                "GITHUB_WORKFLOW_REF": "",
+                "WORKFLOW_FILE": "",
+                "RUN_SHA": "",
+                "GITHUB_SHA": "",
+                "BRANCH_HEAD_SHA": "",
+                "BRANCH_NAME": "",
+                "BRANCH_REF": "",
+                **env,
+            },
             capture_output=True,
             text=True,
             check=False,
@@ -148,56 +158,58 @@ def test_pipeline_status_script_handles_all_job_conclusions() -> None:
             + "}"
         )
 
-    healthy = run_gate(
-        {
-            "NEEDS_JSON": needs_json(lint="success", test="skipped"),
-            "IS_MAIN": "true",
-        }
-    )
+    healthy = run_gate({"NEEDS_JSON": needs_json(lint="success", test="skipped")})
     assert healthy.returncode == 0, healthy.stdout
 
-    failed = run_gate({"NEEDS_JSON": needs_json(lint="failure"), "IS_MAIN": "false"})
+    failed = run_gate({"NEEDS_JSON": needs_json(lint="failure")})
     assert failed.returncode == 1
-    assert "::error::Pipeline failed" in failed.stdout
+    assert "::error title=Pipeline failed::" in failed.stdout
 
-    # A cancellation off main is usually a superseded run: warn, do not fail.
+    # A cancellation is excused only when the run is superseded and the active
+    # workflow gives that specific job a literal cancel-in-progress: true.
     superseded_ref = run_gate(
-        {"NEEDS_JSON": needs_json(test="cancelled"), "IS_MAIN": "false"}
+        {
+            "NEEDS_JSON": needs_json(actionlint="cancelled"),
+            "RUN_SHA": "1" * 40,
+            "BRANCH_NAME": "feature",
+            "BRANCH_HEAD_SHA": "2" * 40,
+            "WORKFLOW_FILE": ".github/workflows/workflows.yml",
+        }
     )
     assert superseded_ref.returncode == 0
-    assert "::warning::Cancelled jobs" in superseded_ref.stdout
+    assert (
+        "::warning title=Cancelled jobs in a superseded run::" in superseded_ref.stdout
+    )
 
     # On main a cancellation is an overrun unless this run is provably behind
     # the branch head. An unprovable supersede fails loud (issue #69).
-    unprovable = run_gate(
-        {"NEEDS_JSON": needs_json(auto_release="cancelled"), "IS_MAIN": "true"}
-    )
+    unprovable = run_gate({"NEEDS_JSON": needs_json(auto_release="cancelled")})
     assert unprovable.returncode == 1
-    assert "cannot be proven superseded" in unprovable.stderr
+    assert "cannot be proven superseded" in unprovable.stdout
 
     at_head = run_gate(
         {
             "NEEDS_JSON": needs_json(test="cancelled"),
-            "IS_MAIN": "true",
             "RUN_SHA": "1" * 40,
-            "BRANCH_REF": "main",
+            "BRANCH_NAME": "main",
             "BRANCH_HEAD_SHA": "1" * 40,
+            "WORKFLOW_FILE": ".github/workflows/workflows.yml",
         }
     )
     assert at_head.returncode == 1
-    assert "::error::Pipeline has cancelled jobs on main" in at_head.stdout
+    assert "::error title=Pipeline has cancelled jobs::" in at_head.stdout
 
     behind_head = run_gate(
         {
-            "NEEDS_JSON": needs_json(test="cancelled"),
-            "IS_MAIN": "true",
+            "NEEDS_JSON": needs_json(actionlint="cancelled"),
             "RUN_SHA": "1" * 40,
-            "BRANCH_REF": "main",
+            "BRANCH_NAME": "main",
             "BRANCH_HEAD_SHA": "2" * 40,
+            "WORKFLOW_FILE": ".github/workflows/workflows.yml",
         }
     )
     assert behind_head.returncode == 0
-    assert "expected churn" in behind_head.stdout
+    assert "Cancelled jobs in a superseded run" in behind_head.stdout
 
 
 def test_release_workflow_action_versions_are_current() -> None:

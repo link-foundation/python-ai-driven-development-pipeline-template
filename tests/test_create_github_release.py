@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -154,6 +155,88 @@ def test_create_release_caps_oversized_release_notes(monkeypatch) -> None:
     assert "Tail marker that should be omitted" not in release_notes
     assert "Release notes were truncated" in release_notes
     assert "https://github.com/owner/repo/blob/py_v1.2.3/CHANGELOG.md" in release_notes
+
+
+def test_untrusted_release_notes_are_bracketed_in_actions_logs(
+    monkeypatch, capsys
+) -> None:
+    """A changelog's legacy workflow command must remain inert everywhere."""
+    payload = "A note quoting ##[error]injected by a pull request"
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setattr(
+        module,
+        "run_command",
+        lambda cmd, check=True: subprocess.CompletedProcess(cmd, 0, "", ""),
+    )
+
+    module.create_release("1.2.3", "owner/repo", payload)
+
+    output = capsys.readouterr().out
+    token_match = re.search(r"::stop-commands::([0-9a-f]{32})", output)
+    assert token_match, output
+    token = token_match.group(1)
+    assert output.index(f"::stop-commands::{token}") < output.index(payload)
+    assert output.index(payload) < output.index(f"::{token}::")
+
+
+def test_logged_release_command_cannot_reinject_notes(monkeypatch, capsys) -> None:
+    """The ``gh --notes`` argv log is guarded as well as the notes preview."""
+    payload = "##[stop-commands]attacker-token"
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setattr(
+        module.subprocess,
+        "run",
+        lambda cmd, **kwargs: subprocess.CompletedProcess(cmd, 0, "", ""),
+    )
+
+    module.run_command(["gh", "release", "create", "v1", "--notes", payload])
+
+    output = capsys.readouterr().out
+    assert payload in output
+    assert re.search(
+        r"::stop-commands::([0-9a-f]{32})\n.*##\[stop-commands\].*\n::\1::",
+        output,
+        re.DOTALL,
+    )
+
+
+def test_subprocess_output_cannot_inject_runner_commands(monkeypatch, capsys) -> None:
+    """Command output uses matching guards on its original output stream."""
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setattr(
+        module.subprocess,
+        "run",
+        lambda cmd, **kwargs: subprocess.CompletedProcess(
+            cmd,
+            1,
+            "tool said ##[add-mask]secret",
+            "tool said ##[error]failure",
+        ),
+    )
+
+    module.run_command(["tool"], check=False)
+
+    captured = capsys.readouterr()
+    for stream, payload in (
+        (captured.out, "tool said ##[add-mask]secret"),
+        (captured.err, "tool said ##[error]failure"),
+    ):
+        assert re.search(
+            rf"::stop-commands::(?P<token>[0-9a-f]{{32}})\n"
+            rf"{re.escape(payload)}\n::(?P=token)::",
+            stream,
+        ), stream
+
+
+def test_untrusted_output_stays_plain_outside_github_actions(
+    monkeypatch, capsys
+) -> None:
+    """Local users should not see runner-specific control markers."""
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+
+    module.print_untrusted("ordinary local output")
+
+    assert capsys.readouterr().out == "ordinary local output\n"
 
 
 def test_append_pypi_badge_if_missing_adds_linked_version_badge() -> None:
