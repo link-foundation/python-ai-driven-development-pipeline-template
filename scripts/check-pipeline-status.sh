@@ -20,7 +20,7 @@ import os
 needs = json.loads(os.environ["NEEDS_JSON"])
 selection = os.environ["SELECTION"]
 for name, details in needs.items():
-    result = details.get("result", "unknown")
+    result = (details or {}).get("result", "unknown")
     if selection == "cancelled" and result == "cancelled":
         print(name)
     elif selection == "failed" and result not in {"success", "skipped", "cancelled"}:
@@ -81,7 +81,10 @@ if [[ -n "$cancelled_jobs" ]]; then
   if [[ -n "$workflow_file" && -f "$workflow_file" ]]; then
     while IFS=$'\t' read -r job value; do
       cancellation_policy["$job"]="$value"
-    done < <(WORKFLOW_FILE="$workflow_file" "$SCRIPT_DIR/read-job-cancel-in-progress.sh" $cancelled_jobs)
+    done < <(
+      WORKFLOW_FILE="$workflow_file" JOB_NAMES="$cancelled_jobs" \
+        "$SCRIPT_DIR/read-job-cancel-in-progress.sh"
+    )
   fi
 
   while IFS= read -r job; do

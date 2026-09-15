@@ -191,7 +191,7 @@ command_is_running() {
 
 wait_while_running() {
   local deadline=$((SECONDS + $1))
-  while command_is_running && [ "$SECONDS" -lt "$deadline" ]; do
+  while group_is_populated && [ "$SECONDS" -lt "$deadline" ]; do
     relay_output
     sleep "$poll_seconds"
   done
@@ -204,22 +204,29 @@ report_survivors() {
   [ -n "$survivors" ] || return 0
   echo "::error title=${label} left processes running::${label} could not be terminated. Still running: $(echo "$survivors" | tr '\n' ';')" >&2
   echo "$survivors" >&2
+  return 1
 }
 
 terminate_over_budget() {
-  echo "::error title=${label} exceeded its execution budget::The command was terminated after ${SECONDS}s, its full ${budget_seconds}s execution budget. The budget expires before \`timeout-minutes\` so this reports as a failure instead of a cancelled job." >&2
+  echo "::error title=${label} exceeded its execution budget::Termination was requested after ${SECONDS}s, its full ${budget_seconds}s execution budget. The budget expires before \`timeout-minutes\` so this reports as a failure instead of a cancelled job." >&2
   signal_command_tree TERM
   wait_while_running "$grace_seconds"
-  if command_is_running; then
+  if group_is_populated; then
     echo "${label} ignored SIGTERM after ${grace_seconds}s; sending SIGKILL."
     signal_command_tree KILL
     wait_while_running "$kill_seconds"
   fi
-  report_survivors
+  survivors=false
+  report_survivors || survivors=true
   wait "$command_pid" 2>/dev/null || true
   relay_output
-  printf '%s was terminated after %ss, its full %ss execution budget.\n' \
-    "$label" "$SECONDS" "$budget_seconds"
+  if [ "$survivors" = true ]; then
+    printf '%s still had live processes after its %ss execution budget.\n' \
+      "$label" "$budget_seconds"
+  else
+    printf '%s was terminated after %ss, its full %ss execution budget.\n' \
+      "$label" "$SECONDS" "$budget_seconds"
+  fi
   exit 124
 }
 

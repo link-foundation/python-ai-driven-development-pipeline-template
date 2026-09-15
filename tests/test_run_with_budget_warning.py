@@ -169,6 +169,29 @@ def test_overrun_escalates_when_sigterm_is_ignored() -> None:
     assert elapsed < 10
 
 
+def test_sigkill_still_reaches_worker_after_root_handles_sigterm(
+    tmp_path: Path,
+) -> None:
+    """A root completion status must not hide a stubborn surviving worker."""
+    pid_file = tmp_path / "worker-pid"
+    command = (
+        "trap 'exit 0' TERM; "
+        "bash -c 'trap \"\" TERM; sleep 60' & "
+        f"echo $! > '{pid_file}'; wait"
+    )
+
+    completed, _ = run_wrapper(
+        ["1", "Root exits", "bash", "-c", command],
+        BUDGET_GRACE_SECONDS="1",
+        BUDGET_KILL_SECONDS="1",
+        BUDGET_POLL_SECONDS="0.1",
+    )
+
+    assert completed.returncode == 124, completed.stderr
+    assert "sending SIGKILL" in completed.stdout
+    assert not is_running(int(pid_file.read_text(encoding="utf-8")))
+
+
 def test_warning_arrives_while_the_command_is_still_running() -> None:
     """A post-mortem warning on a killed job is exactly the missing diagnostic."""
     completed, _ = run_wrapper(
