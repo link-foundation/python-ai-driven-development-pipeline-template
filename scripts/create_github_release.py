@@ -15,9 +15,11 @@ Environment variables:
 import argparse
 import os
 import re
+import secrets
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional, TextIO
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
@@ -38,15 +40,30 @@ MAX_RELEASE_NOTES_BYTES = 60_000
 ENCODING = "utf-8"
 
 
+def print_untrusted(text: str, file: Optional[TextIO] = None) -> None:
+    """Print text while disabling GitHub runner command interpretation."""
+    stream = sys.stdout if file is None else file
+    if not os.environ.get("GITHUB_ACTIONS"):
+        print(text, file=stream, flush=True)
+        return
+
+    # Use a fresh 128-bit token so repository-controlled text cannot guess the
+    # resume command and re-enable parsing before the block has finished.
+    token = secrets.token_hex(16)
+    print(f"::stop-commands::{token}", file=stream, flush=True)
+    print(text, file=stream, flush=True)
+    print(f"::{token}::", file=stream, flush=True)
+
+
 def run_command(cmd: list[str], check: bool = True) -> subprocess.CompletedProcess:
     """Run a command and handle errors."""
-    print(f"Running: {' '.join(cmd)}")
+    print_untrusted(f"Running: {' '.join(cmd)}")
     result = subprocess.run(cmd, capture_output=True, text=True, check=False)
 
     if result.stdout:
-        print(result.stdout)
+        print_untrusted(result.stdout)
     if result.stderr and result.returncode != 0:
-        print(result.stderr, file=sys.stderr)
+        print_untrusted(result.stderr, file=sys.stderr)
 
     if check and result.returncode != 0:
         print(
@@ -173,7 +190,9 @@ def create_release(
             "Release notes truncated from "
             f"{original_notes_size} to {capped_notes_size} bytes",
         )
-    print(f"\nRelease notes:\n{release_notes}\n")
+    print("\nRelease notes:")
+    print_untrusted(release_notes)
+    print()
 
     cmd = [
         "gh",
