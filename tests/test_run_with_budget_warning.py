@@ -73,6 +73,47 @@ def test_command_inside_its_budget_succeeds_and_reports_what_it_spent() -> None:
     assert failing.returncode == 1, failing.stderr
 
 
+def test_finished_root_cannot_leave_the_callers_output_pipe_open() -> None:
+    """A detached worker must not keep ``tee`` or ``subprocess`` waiting for EOF."""
+    completed, elapsed = run_wrapper(
+        ["30", "Worker probe", "bash", "-c", "sleep 4 & exit 0"],
+        BUDGET_POLL_SECONDS="0.1",
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert elapsed < 2, f"a surviving worker held stdout open for {elapsed:.1f}s"
+
+
+def test_output_relay_preserves_stdout_stderr_and_exit_status() -> None:
+    """Capturing descendants internally must stay transparent to callers."""
+    completed, _ = run_wrapper(
+        [
+            "30",
+            "Two streams",
+            "bash",
+            "-c",
+            'printf "out-one\\nout-two\\n"; printf "err-one\\nerr-two\\n" >&2; exit 7',
+        ],
+        BUDGET_POLL_SECONDS="0.1",
+    )
+
+    assert completed.returncode == 7
+    assert "out-one\nout-two" in completed.stdout
+    assert "err-one\nerr-two" in completed.stderr
+
+
+def test_output_capture_can_be_disabled() -> None:
+    """Commands that need their original descriptors retain an escape hatch."""
+    completed, _ = run_wrapper(
+        ["30", "Direct output", "bash", "-c", "printf direct"],
+        BUDGET_CAPTURE_OUTPUT="0",
+        BUDGET_POLL_SECONDS="0.1",
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert "direct" in completed.stdout
+
+
 def test_overrun_is_terminated_and_reported_as_an_error() -> None:
     """An overrun must fail the job instead of running into the job clock."""
     completed, elapsed = run_wrapper(
@@ -112,6 +153,20 @@ def test_overrun_kills_the_whole_process_tree(tmp_path: Path) -> None:
     assert len(pids) == 2
     for pid in pids:
         assert not is_running(pid), f"process {pid} outlived the budget"
+
+
+def test_overrun_escalates_when_sigterm_is_ignored() -> None:
+    """A stubborn process receives SIGKILL after the bounded grace period."""
+    completed, elapsed = run_wrapper(
+        ["1", "Stubborn step", "bash", "-c", "trap '' TERM; sleep 60 & wait"],
+        BUDGET_GRACE_SECONDS="1",
+        BUDGET_KILL_SECONDS="1",
+        BUDGET_POLL_SECONDS="0.1",
+    )
+
+    assert completed.returncode == 124, completed.stderr
+    assert "sending SIGKILL" in completed.stdout
+    assert elapsed < 10
 
 
 def test_warning_arrives_while_the_command_is_still_running() -> None:
