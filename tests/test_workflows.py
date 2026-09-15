@@ -149,11 +149,9 @@ def test_every_workflow_has_a_terminal_status_gate() -> None:
         assert "run: bash scripts/check-pipeline-status.sh" in gate
         assert "NEEDS_JSON: ${{ toJSON(needs) }}" in gate
         assert (
-            "IS_MAIN: ${{ github.ref == 'refs/heads/main' && "
-            "github.event_name == 'push' }}" in gate
+            "RUN_SHA: ${{ github.event.pull_request.head.sha || github.sha }}" in gate
         )
-        assert "RUN_SHA: ${{ github.sha }}" in gate
-        assert "BRANCH_REF: ${{ github.ref_name }}" in gate
+        assert "BRANCH_NAME: ${{ github.head_ref || github.ref_name }}" in gate
         for job_name in job_names:
             if job_name == "pipeline-status":
                 continue
