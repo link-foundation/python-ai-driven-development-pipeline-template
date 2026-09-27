@@ -31,6 +31,34 @@ def test_detect_python_layout_treats_root_manifest_as_single_language(tmp_path) 
     assert layout.multi_language is False
 
 
+def test_release_notes_find_scriv_bracketed_version(tmp_path) -> None:
+    """Scriv's configured heading must supply the GitHub release notes."""
+    changelog = tmp_path / "CHANGELOG.md"
+    changelog.write_text(
+        "# Changelog\n\n## [0.1.1] - 2026-09-27\n\n"
+        "### Fixed\n\n- Reproduction.\n\n"
+        "## [0.1.0] - 2025-01-01\n\n- Older release.\n",
+        encoding="utf-8",
+    )
+    notes = module.extract_changelog_entry(changelog, "0.1.1")
+    assert "Reproduction." in notes
+    assert "Older release." not in notes
+
+
+def test_release_notes_find_generic_unbracketed_version(tmp_path) -> None:
+    """The release still has notes when there were no fragments to collect."""
+    changelog = tmp_path / "CHANGELOG.md"
+    changelog.write_text(
+        "# Changelog\n\n## 0.1.1 - 2026-09-27\n\n"
+        "### Patch Changes\n\n- Manual patch release.\n\n"
+        "## [0.1.0] - 2025-01-01\n\n- Older release.\n",
+        encoding="utf-8",
+    )
+    notes = module.extract_changelog_entry(changelog, "0.1.1")
+    assert "Manual patch release." in notes
+    assert "Older release." not in notes
+
+
 def test_detect_python_layout_treats_python_subdir_as_multi_language(tmp_path) -> None:
     """A python/pyproject.toml means releases share a multi-language namespace."""
     python_root = tmp_path / "python"

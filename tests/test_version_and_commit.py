@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import importlib.util
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
+
+from scripts.create_github_release import extract_changelog_entry
 
 
 SCRIPT_PATH = (
@@ -46,6 +50,98 @@ def test_get_current_version_reads_file(tmp_path: Path) -> None:
     pyproject = tmp_path / "pyproject.toml"
     pyproject.write_text("[project]\nversion = '3.1.4'\n")
     assert module.get_current_version(pyproject) == "3.1.4"
+
+
+@pytest.mark.parametrize(
+    ("bump_type", "expected_version", "with_fragment"),
+    [
+        ("patch", "0.1.1", True),
+        ("minor", "0.2.0", True),
+        ("major", "1.0.0", True),
+        ("patch", "0.1.1", False),
+    ],
+)
+def test_manual_release_writes_changelog_for_numeric_version(
+    tmp_path: Path, bump_type: str, expected_version: str, with_fragment: bool
+) -> None:
+    """The numeric version and its notes must be committed together."""
+    source_root = SCRIPT_PATH.parents[1]
+    remote = tmp_path / "remote.git"
+    repo = tmp_path / "repo"
+    subprocess.run(
+        ["git", "init", "--bare", "--initial-branch=main", str(remote)], check=True
+    )
+    subprocess.run(["git", "clone", str(remote), str(repo)], check=True)
+    (repo / "scripts").mkdir()
+    for name in ("version_and_commit.py", "bump_version.py"):
+        shutil.copy2(source_root / "scripts" / name, repo / "scripts" / name)
+    (repo / "pyproject.toml").write_text(
+        source_root.joinpath("pyproject.toml").read_text(), encoding="utf-8"
+    )
+    (repo / "CHANGELOG.md").write_text(
+        source_root.joinpath("CHANGELOG.md").read_text(), encoding="utf-8"
+    )
+    (repo / "changelog.d").mkdir()
+    if with_fragment:
+        (repo / "changelog.d" / "repro.fixed.md").write_text(
+            "### Fixed\n\n- Reproduction.\n", encoding="utf-8"
+        )
+    subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repo),
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@example.com",
+            "commit",
+            "-m",
+            "Initial",
+        ],
+        check=True,
+    )
+    subprocess.run(["git", "-C", str(repo), "push", "origin", "main"], check=True)
+
+    result = subprocess.run(
+        [sys.executable, "scripts/version_and_commit.py", "--bump-type", bump_type],
+        cwd=repo,
+        env={
+            **os.environ,
+            "PATH": f"{Path(sys.executable).parent}:{os.environ['PATH']}",
+        },
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    changelog = (repo / "CHANGELOG.md").read_text(encoding="utf-8")
+    if with_fragment:
+        assert changelog.count(f"## [{expected_version}]") == 1
+        assert "## [patch]" not in changelog
+        assert "## [minor]" not in changelog
+        assert "## [major]" not in changelog
+        assert changelog.count("Reproduction.") == 1
+        assert "Reproduction." in extract_changelog_entry(
+            repo / "CHANGELOG.md", expected_version
+        )
+    else:
+        assert changelog.count(f"## {expected_version} -") == 1
+        assert "Manual patch release" in extract_changelog_entry(
+            repo / "CHANGELOG.md", expected_version
+        )
+    assert not (repo / "changelog.d" / "repro.fixed.md").exists()
+    assert module.get_current_version(repo / "pyproject.toml") == expected_version
+    assert (
+        subprocess.run(
+            ["git", "-C", str(repo), "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+        == ""
+    )
 
 
 RULESET_REJECTION = (
