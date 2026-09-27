@@ -153,8 +153,9 @@ categories = [
     "Fixed",
     "Security",
 ]
-# Version header format
-entry_title_template = "## [{{ version }}] - {{ date.strftime('%Y-%m-%d') }}"
+# Scriv supplies the Markdown heading marks; keep the title text separate.
+md_header_level = 2
+entry_title_template = "[{{ version }}] - {{ date.strftime('%Y-%m-%d') }}"
 # Insert marker (where new entries go)
 insert_marker = "<!-- scriv-insert-here -->"
 # Main branch name

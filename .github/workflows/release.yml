@@ -659,7 +659,7 @@ jobs:
 
       - name: Download artifacts
         if: steps.version_check.outputs.should_release == 'true'
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/
@@ -764,20 +764,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Collect changelog fragments
-        env:
-          BUMP_TYPE: ${{ github.event.inputs.bump_type }}
-        run: |
-          cd "${{ steps.python_layout.outputs.root }}"
-          # Check if there are any fragments to collect
-          FRAGMENTS=$(find changelog.d -name "*.md" ! -name "README.md" ! -name "*.j2" 2>/dev/null | wc -l)
-          if [ "$FRAGMENTS" -gt 0 ]; then
-            echo "Found $FRAGMENTS changelog fragment(s), collecting..."
-            scriv collect --version "$BUMP_TYPE"
-          else
-            echo "No changelog fragments found, skipping collection"
-          fi
 
       - name: Version and commit
         id: version
@@ -956,7 +942,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Download image digests
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: /tmp/digests
           pattern: docker-digest-*

@@ -219,7 +219,8 @@ def test_release_workflow_action_versions_are_current() -> None:
     assert_action_pin_count(release_workflow, "actions/checkout", "v6", 13)
     assert_action_pin_count(release_workflow, "actions/setup-python", "v6", 7)
     assert_action_pin_count(release_workflow, "actions/upload-artifact", "v7", 2)
-    assert_action_pin_count(release_workflow, "actions/download-artifact", "v7", 2)
+    assert_action_pin_count(release_workflow, "actions/download-artifact", "v8", 2)
+    assert_action_pin_absent(release_workflow, "actions/download-artifact", "v7")
     assert_action_hash_pin(release_workflow, "codecov/codecov-action", 1)
     assert_action_hash_pin(release_workflow, "pypa/gh-action-pypi-publish", 2)
 
@@ -229,6 +230,14 @@ def test_release_workflow_action_versions_are_current() -> None:
     assert_action_pin_absent(
         release_workflow, "pypa/gh-action-pypi-publish", "release/v1"
     )
+
+
+def test_manual_release_collects_changelog_in_version_step() -> None:
+    """Fragments must be collected after the numeric bump is calculated."""
+    manual = workflow_job_block(read_workflow("release.yml"), "manual-release")
+    assert "- name: Collect changelog fragments" not in manual
+    assert 'scriv collect --version "$BUMP_TYPE"' not in manual
+    assert "- name: Version and commit" in manual
 
 
 def test_release_workflow_sets_git_default_branch_before_checkout() -> None:
@@ -490,7 +499,7 @@ def test_release_workflow_publishes_multi_arch_docker_images() -> None:
     assert "name-canonical=true" in build
     assert "uses: actions/upload-artifact@v7" in build
 
-    assert "uses: actions/download-artifact@v7" in publish
+    assert "uses: actions/download-artifact@v8" in publish
     assert "merge-multiple: true" in publish
     assert "docker buildx imagetools create" in publish
     assert '--tag "${IMAGE}:latest"' in publish
