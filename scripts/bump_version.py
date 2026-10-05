@@ -123,6 +123,11 @@ def main() -> int:
         default="",
         help="Description of changes for changelog",
     )
+    parser.add_argument(
+        "--skip-changelog",
+        action="store_true",
+        help="Leave changelog collection to the calling release script",
+    )
 
     args = parser.parse_args()
 
@@ -148,8 +153,9 @@ def main() -> int:
         # Update files
         update_pyproject(pyproject_path, old_version, new_version)
 
-        description = args.description or f"Manual {args.bump_type} release"
-        update_changelog(changelog_path, new_version, args.bump_type, description)
+        if not args.skip_changelog:
+            description = args.description or f"Manual {args.bump_type} release"
+            update_changelog(changelog_path, new_version, args.bump_type, description)
 
         print(f"\n✅ Version bump complete: {old_version} → {new_version}")
         print("\nNext steps:")

@@ -83,8 +83,9 @@ def extract_changelog_entry(changelog_path: Path, version: str) -> str:
 
     content = changelog_path.read_text()
 
-    # Look for version section (e.g., "## 1.2.3" or "## 1.2.3 - 2024-01-15")
-    version_pattern = rf"^## {re.escape(version)}(\s|$)"
+    # Scriv's configured title is "## [1.2.3] - date"; the version bumper's
+    # generic fallback and older changelogs use an unbracketed heading.
+    version_pattern = rf"^## (?:\[{re.escape(version)}\]|{re.escape(version)})(?:\s|$)"
     match = re.search(version_pattern, content, re.MULTILINE)
 
     if not match:
@@ -96,7 +97,11 @@ def extract_changelog_entry(changelog_path: Path, version: str) -> str:
 
     # Extract content until next version section or end of file
     start = match.end()
-    next_version = re.search(r"^## \d+\.\d+\.\d+", content[start:], re.MULTILINE)
+    next_version = re.search(
+        r"^## (?:\[\d+\.\d+\.\d+\]|\d+\.\d+\.\d+)(?:\s|$)",
+        content[start:],
+        re.MULTILINE,
+    )
 
     if next_version:
         entry = content[start : start + next_version.start()].strip()

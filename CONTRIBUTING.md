@@ -222,12 +222,12 @@ Use these categories in your fragments:
 
 Fragments are automatically collected into CHANGELOG.md during the release process. The release workflow:
 
-1. Collects all fragments with `scriv collect`
-2. Updates CHANGELOG.md with the new version entry
-3. Removes processed fragment files
-4. Bumps the version in pyproject.toml
-5. Creates a git tag and GitHub release
-6. Publishes to PyPI
+1. Bumps the version in pyproject.toml
+2. Collects all fragments with `scriv collect --version` using the new version
+3. Updates CHANGELOG.md and removes processed fragment files
+4. Commits the version and changelog together
+5. Publishes to PyPI
+6. Creates a git tag and GitHub release
 
 ## Project Structure
 

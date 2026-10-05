@@ -314,6 +314,11 @@ def main() -> int:
         old_version = get_current_version(pyproject_path)
         print(f"\nCurrent version: {old_version}")
 
+        fragment_dir = project_root / "changelog.d"
+        fragments = [
+            path for path in fragment_dir.glob("*.md") if path.name != "README.md"
+        ]
+
         # Run version bump
         print(f"\nBumping version ({args.bump_type})...")
         bump_cmd = [
@@ -323,12 +328,21 @@ def main() -> int:
         ]
         if args.description:
             bump_cmd.extend(["--description", args.description])
+        if fragments:
+            # Scriv writes the detailed entry. Avoid a second generic heading.
+            bump_cmd.append("--skip-changelog")
 
         run_command(bump_cmd)
 
         # Get new version
         new_version = get_current_version(pyproject_path)
         print(f"New version: {new_version}")
+
+        if fragments:
+            print(f"Collecting {len(fragments)} changelog fragment(s)...")
+            run_command(["scriv", "collect", "--version", new_version])
+        else:
+            print("No changelog fragments found; keeping the generic release entry")
         set_github_output("new_version", new_version)
 
         # Check for changes
