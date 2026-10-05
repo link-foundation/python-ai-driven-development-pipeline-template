@@ -187,6 +187,22 @@ The GitHub Actions workflow provides:
 4. **Building**: Package building and validation
 5. **Coverage**: Automatic upload to Codecov
 
+### Runner and link-check policy
+
+Ubuntu jobs and Linux matrix entries use `ubuntu-24.04`. A workflow regression
+check rejects floating Ubuntu, Windows, and macOS runner aliases; upgrades
+should change the versioned labels in a reviewed pull request.
+
+The Broken Link Checker rechecks transport errors and HTTP 429/5xx responses,
+including cached failures, with exponential backoff capped at 30 seconds under
+`RECHECK_BUDGET_SECONDS` (240 seconds by default). Other HTTP failures remain
+final. Throttled `github.com` blob/tree links also use the GitHub Contents API
+with the workflow's read-only `GITHUB_TOKEN`; only an API 200 confirms recovery.
+Slash-containing refs must be percent-encoded in their URL segment for this
+fallback. Missing content and persistent outages still fail the workflow.
+Set `RECHECK_VERBOSE=true` to log each attempt; `RECHECK_WAIT_MS` adjusts the
+initial backoff (2000 milliseconds by default).
+
 ### API Documentation
 
 API documentation is built with [Sphinx](https://www.sphinx-doc.org/) and can be

@@ -3,7 +3,7 @@
 lychee's --max-retries cannot retry a connection reset during connect
 (lycheeverse/lychee#2297), so a healthy URL behind a RST is reported broken
 without a single retry. The re-check asks those URLs again; a failure
-carrying a status code stays final.
+carrying a non-transient status code stays final.
 """
 
 from __future__ import annotations
@@ -361,7 +361,7 @@ def test_recheck_step_recovers_only_healthy_urls_and_never_reasks_a_404(
         assert sorted(requests) == ["/dead", "/healthy"]
         # One link stayed broken, so the gate must not be released.
         assert not output_path.exists()
-        assert "still without an answer" in result.stdout
+        assert "still broken" in result.stdout
     finally:
         server.shutdown()
         server.server_close()

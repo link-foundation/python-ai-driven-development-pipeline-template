@@ -54,7 +54,7 @@ def split_recovered_urls(
 ) -> tuple[list[str], list[str]]:
     """Drop URLs the link re-check found healthy from the archive lookup.
 
-    A URL that never answered lychee but answers the re-check is not a broken
+    A URL that failed lychee but answers the re-check is not a broken
     link; keeping it in this report would send a healthy URL to the Wayback
     Machine and fail the job on it.
     """
@@ -162,7 +162,7 @@ def main() -> int:
     )
     broken_urls, rechecked_healthy = split_recovered_urls(broken_urls, recovered_text)
     for url in rechecked_healthy:
-        print(f"  {url} never answered lychee but answers the re-check -- not broken")
+        print(f"  {url} failed lychee but answers the re-check -- not broken")
     if not broken_urls:
         print("No broken URLs found in lychee output.")
         set_output("all_archived", "true")

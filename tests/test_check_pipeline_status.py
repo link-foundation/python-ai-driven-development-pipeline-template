@@ -59,7 +59,7 @@ def test_reader_handles_every_job_level_value(
     indented = f"    {declaration}\n" if declaration else ""
     workflow = write_workflow(
         tmp_path,
-        f"  build:\n{indented}    runs-on: ubuntu-latest\n    steps: []\n",
+        f"  build:\n{indented}    runs-on: ubuntu-24.04\n    steps: []\n",
     )
 
     values = read_values(workflow, "build", "renamed-job")
@@ -72,13 +72,13 @@ def test_reader_uses_job_value_before_workflow_value(tmp_path: Path) -> None:
     workflow = write_workflow(
         tmp_path,
         "  inherited:\n"
-        "    runs-on: ubuntu-latest\n"
+        "    runs-on: ubuntu-24.04\n"
         "    steps: []\n"
         "  overridden:\n"
         "    concurrency:\n"
         "      group: overridden\n"
         "      cancel-in-progress: false\n"
-        "    runs-on: ubuntu-latest\n"
+        "    runs-on: ubuntu-24.04\n"
         "    steps: []\n",
         "concurrency:\n  group: all\n  cancel-in-progress: true\n",
     )
@@ -123,13 +123,13 @@ def test_supersede_only_excuses_jobs_that_cancel_in_progress(tmp_path: Path) -> 
         "    concurrency:\n"
         "      group: quick\n"
         "      cancel-in-progress: true\n"
-        "    runs-on: ubuntu-latest\n"
+        "    runs-on: ubuntu-24.04\n"
         "    steps: []\n"
         "  publish:\n"
         "    concurrency:\n"
         "      group: publish\n"
         "      cancel-in-progress: false\n"
-        "    runs-on: ubuntu-latest\n"
+        "    runs-on: ubuntu-24.04\n"
         "    steps: []\n",
     )
 
@@ -145,12 +145,12 @@ def test_supersede_only_excuses_jobs_that_cancel_in_progress(tmp_path: Path) -> 
 @pytest.mark.parametrize(
     "jobs",
     [
-        "  build:\n    runs-on: ubuntu-latest\n    steps: []\n",
+        "  build:\n    runs-on: ubuntu-24.04\n    steps: []\n",
         "  build:\n"
         "    concurrency:\n"
         "      group: build\n"
         "      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}\n"
-        "    runs-on: ubuntu-latest\n"
+        "    runs-on: ubuntu-24.04\n"
         "    steps: []\n",
     ],
 )
@@ -173,7 +173,7 @@ def test_github_workflow_ref_resolves_the_active_file(tmp_path: Path) -> None:
         "    concurrency:\n"
         "      group: build\n"
         "      cancel-in-progress: false\n"
-        "    runs-on: ubuntu-latest\n"
+        "    runs-on: ubuntu-24.04\n"
         "    steps: []\n",
     )
     workflow.rename(workflow_dir / "ci.yml")
