@@ -488,7 +488,7 @@ def test_release_workflow_publishes_multi_arch_docker_images() -> None:
 
     assert "fail-fast: false" in build
     assert "platform: linux/amd64" in build
-    assert "runner: ubuntu-latest" in build
+    assert "runner: ubuntu-24.04" in build
     assert "platform: linux/arm64" in build
     assert "runner: ubuntu-24.04-arm" in build
     assert "runs-on: ${{ matrix.runner }}" in build

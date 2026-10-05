@@ -1,34 +1,22 @@
 #!/usr/bin/env python3
-"""Re-check the lychee failures where no host ever answered.
+"""Re-check transport failures and transient HTTP failures from lychee.
 
-lychee's ``--max-retries`` cannot retry a connection reset during connect
-(lycheeverse/lychee#2297: the error is classified by its phase, and the
-connect phase is answered ``false``), so a healthy URL that answers a RST --
-a normal event for a rate-limiting or load-shedding host seen from a CI
-address range -- is reported as broken without a single retry. This script
-asks those URLs again, outside lychee.
-
-The rule that keeps this from hiding real breakage: a failure carrying a
-status code means a host answered, and that answer is final -- a 404 is
-never re-checked.
+429 and 5xx responses (including cached errors) are retried with exponential
+backoff capped at 30 seconds. Other status-coded failures remain final.
+Throttled github.com blob/tree pages can recover through a successful
+Contents API GET, authenticated when GITHUB_TOKEN is available.
 
 Environment variables:
-    LYCHEE_OUTPUT: path to the lychee markdown report (default lychee/out.md)
-    RECOVERED_OUTPUT: where to write the URLs the re-check found healthy
-        (default lychee/recovered.txt)
-    RECHECK_BUDGET_SECONDS: total wall-clock budget for the re-check
-        (default 240; must expire before the job's 10-minute cap)
-    RECHECK_WAIT_MS: initial wait between rounds; doubles every round
-        (default 2000)
+    LYCHEE_OUTPUT: report path (default lychee/out.md)
+    RECOVERED_OUTPUT: recovered URLs (default lychee/recovered.txt)
+    RECHECK_BUDGET_SECONDS: shared wall-clock budget (default 240)
+    RECHECK_WAIT_MS: initial backoff between rounds (default 2000)
+    RECHECK_VERBOSE: true enables per-attempt diagnostics (default off)
+    GITHUB_TOKEN: optional token sent only to the GitHub Contents API
 
-GitHub Actions outputs:
-    all_recovered: 'true' when every unanswered link answered healthy on
-        re-check. Consumers must test ``!= 'true'``, never ``== 'false'``:
-        a skipped or crashed step leaves the output empty, and only the
-        ``!=`` form fails safe.
-
-Exit codes: 0 in every case. This script downgrades failures; it never
-raises them, so a bug here cannot turn a green run red.
+The all_recovered output is true only when every failure recovers. Consumers
+must test != 'true' so a skipped or crashed step fails safe. Exit code 0
+preserves the existing workflow's responsibility for the final failure gate.
 """
 
 from __future__ import annotations
@@ -38,6 +26,7 @@ import re
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
@@ -68,6 +57,12 @@ class LycheeFailure:
     url: str
     detail: str
     answered: bool
+    status: int | None = None
+
+    @property
+    def retryable(self) -> bool:
+        """Transport errors and 429/5xx answers can be retried."""
+        return not self.answered or is_transient_status(self.status)
 
 
 @dataclass(frozen=True)
@@ -81,20 +76,14 @@ class StillBroken:
 
 @dataclass(frozen=True)
 class RecheckResult:
-    """Outcome of re-asking the URLs that never answered lychee."""
+    """Outcome of retrying transport and transient HTTP failures."""
 
     recovered: list[str]
     still_broken: list[StillBroken]
 
 
 def parse_lychee_failures(content: str) -> list[LycheeFailure]:
-    """Split the report into failures, marking the answered ones final.
-
-    A failure is "answered" when a numeric status marker is present ([404])
-    or the detail says "Rejected status code" -- a host answered, and the
-    answer is final. Everything else ([ERROR], [TIMEOUT], [UNKNOWN]) is a
-    failure where no host ever answered.
-    """
+    """Parse status-coded and transport errors, including cached failures."""
     failures: list[LycheeFailure] = []
     for match in ENTRY_PATTERN.finditer(content):
         marker = match.group(1).strip()
@@ -105,7 +94,15 @@ def parse_lychee_failures(content: str) -> list[LycheeFailure]:
         answered = bool(re.fullmatch(r"\d{3}", marker)) or bool(
             re.search(r"rejected status code", detail, re.IGNORECASE)
         )
-        failures.append(LycheeFailure(marker, url, detail, answered))
+        status_match = re.fullmatch(r"\d{3}", marker) or re.search(
+            r"rejected status code:\s*(\d{3})", detail, re.IGNORECASE
+        )
+        status = (
+            int(status_match.group(0) if marker.isdigit() else status_match.group(1))
+            if status_match
+            else None
+        )
+        failures.append(LycheeFailure(marker, url, detail, answered, status))
     return failures
 
 
@@ -143,23 +140,79 @@ def extract_lychee_request_options(workflow_text: str) -> tuple[str, str]:
     )
 
 
-def default_fetch(url: str, user_agent: str) -> int:
-    """HEAD one URL once and return its final status.
+def is_transient_status(status: int | None) -> bool:
+    """429 and server errors mean try again, rather than a final rejection."""
+    return status is not None and (status == 429 or 500 <= status <= 599)
 
-    Follows redirects like lychee; a rejected status (4xx/5xx) arrives as an
-    HTTPError carrying the code, which is a host's answer, not a transport
-    failure. Transport failures (reset, timeout, DNS) raise.
+
+def github_contents_api_url(url: str) -> str | None:
+    """Map a GitHub blob/tree URL to a file/directory lookup at its ref.
+
+    Slash-containing refs must be percent-encoded in their URL segment;
+    unencoded slash-containing refs are ambiguous and are not guessed.
     """
+    parsed = urllib.parse.urlsplit(url)
+    if parsed.scheme != "https" or parsed.netloc.lower() != "github.com":
+        return None
+    parts = parsed.path.strip("/").split("/")
+    if len(parts) < 4 or parts[2] not in {"blob", "tree"}:
+        return None
+    owner, repo, _, ref, *path = parts
+    if not owner or not repo or not ref or (parts[2] == "blob" and not path):
+        return None
+
+    def quote_segment(value: str) -> str:
+        return urllib.parse.quote(urllib.parse.unquote(value), safe="")
+
+    contents = "/".join(quote_segment(part) for part in path)
+    return (
+        f"https://api.github.com/repos/{quote_segment(owner)}/{quote_segment(repo)}"
+        f"/contents/{contents}?ref={quote_segment(ref)}"
+    )
+
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Do not forward an API credential to a redirect target."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def default_fetch(
+    url: str, user_agent: str, timeout: float = REQUEST_TIMEOUT_SECONDS
+) -> int:
+    """HEAD a URL, using the Contents API when a GitHub page is throttled."""
+    deadline = time.monotonic() + timeout
     request = urllib.request.Request(
         url, method="HEAD", headers={"User-Agent": user_agent}
     )
     try:
         with urllib.request.urlopen(  # noqa: S310 - URL comes from the lychee report
-            request, timeout=REQUEST_TIMEOUT_SECONDS
+            request, timeout=timeout
         ) as response:
-            return response.status
+            status = response.status
     except urllib.error.HTTPError as error:
-        return error.code
+        status = error.code
+        error.close()
+    api_url = github_contents_api_url(url) if is_transient_status(status) else None
+    remaining = deadline - time.monotonic()
+    if api_url and remaining > 0:
+        headers = {"User-Agent": user_agent, "Accept": "application/vnd.github+json"}
+        token = os.environ.get("GITHUB_TOKEN")
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        api_request = urllib.request.Request(api_url, method="GET", headers=headers)
+        try:
+            with urllib.request.build_opener(NoRedirect()).open(
+                api_request, timeout=remaining
+            ) as response:
+                if response.status == 200:
+                    return 200
+        except urllib.error.HTTPError as error:
+            error.close()
+        except (OSError, ValueError):
+            pass  # A failed fallback never proves the original URL healthy.
+    return status
 
 
 def recheck_unanswered(
@@ -171,38 +224,52 @@ def recheck_unanswered(
     initial_wait_ms: float = INITIAL_WAIT_MS_DEFAULT,
     fetch: Callable[[str, str], int] | None = None,
 ) -> RecheckResult:
-    """Ask every URL once more, round-robin with a doubling wait.
-
-    Runs until everything either answers accepted or the budget runs out.
-    Any answer is final: an accepted status recovers the URL, a rejected
-    status fails it for good, and only a URL that keeps refusing to answer
-    is retried.
-    """
+    """Retry round-robin within a shared budget, backing off between rounds."""
     is_accepted = parse_accept_ranges(accept)
-    ask = fetch or default_fetch
     deadline = time.monotonic() + budget_seconds
     wait_ms = initial_wait_ms
 
     recovered: list[str] = []
     rejected: list[StillBroken] = []
     pending = list(dict.fromkeys(urls))
+    first_round = True
+    last_status: dict[str, int] = {}
 
     while pending and time.monotonic() < deadline:
-        if wait_ms != initial_wait_ms:
-            if time.monotonic() + wait_ms / 1000 > deadline:
+        if not first_round:
+            delay = min(wait_ms / 1000, 30)
+            if time.monotonic() + delay >= deadline:
                 break
-            time.sleep(wait_ms / 1000)
+            time.sleep(delay)
             wait_ms *= 2
+        first_round = False
 
         still_pending: list[str] = []
-        for url in pending:
+        for index, url in enumerate(pending):
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                still_pending.extend(pending[index:])
+                break
             try:
-                status = ask(url, user_agent)
+                status = (
+                    fetch(url, user_agent)
+                    if fetch
+                    else default_fetch(
+                        url, user_agent, min(REQUEST_TIMEOUT_SECONDS, remaining)
+                    )
+                )
             except Exception:  # noqa: BLE001 - no answer this round, whatever the cause
+                if os.environ.get("RECHECK_VERBOSE") == "true":
+                    print(f"Re-check: {url}: transport failure")
                 still_pending.append(url)
                 continue
+            last_status[url] = status
+            if os.environ.get("RECHECK_VERBOSE") == "true":
+                print(f"Re-check: {url}: status {status}")
             if is_accepted(status):
                 recovered.append(url)
+            elif is_transient_status(status):
+                still_pending.append(url)
             else:
                 rejected.append(
                     StillBroken(
@@ -215,7 +282,11 @@ def recheck_unanswered(
         recovered=recovered,
         still_broken=rejected
         + [
-            StillBroken(url, None, "no answer within the re-check budget")
+            StillBroken(
+                url,
+                last_status.get(url),
+                "no answer accepted within the re-check budget",
+            )
             for url in pending
         ],
     )
@@ -230,7 +301,7 @@ def set_github_output(name: str, value: str) -> None:
 
 
 def main() -> int:
-    """Re-ask every unanswered URL in the configured lychee report."""
+    """Retry every eligible failure in the configured lychee report."""
     lychee_output = Path(os.environ.get("LYCHEE_OUTPUT", "lychee/out.md"))
     recovered_output = Path(os.environ.get("RECOVERED_OUTPUT", "lychee/recovered.txt"))
     accept, user_agent = extract_lychee_request_options(
@@ -241,19 +312,27 @@ def main() -> int:
     final = [
         failure
         for failure in failures
-        if failure.answered
+        if not failure.retryable
         or not failure.url.lower().startswith(("http://", "https://"))
     ]
-    unanswered = [
-        failure.url
-        for failure in failures
-        if not failure.answered
-        and failure.url.lower().startswith(("http://", "https://"))
-    ]
-    print(
-        f"Re-check: {len(failures)} lychee failure(s), {len(final)} answered and "
-        f"final, {len(unanswered)} never got an answer"
+    final_urls = {failure.url for failure in final}
+    unanswered = list(
+        dict.fromkeys(
+            [
+                failure.url
+                for failure in failures
+                if failure.retryable
+                and failure.url not in final_urls
+                and failure.url.lower().startswith(("http://", "https://"))
+            ]
+        )
     )
+    print(
+        f"Re-check: {len(failures)} lychee failure(s), {len(final)} "
+        f"final, {len(unanswered)} eligible for retry"
+    )
+    if recovered_output.exists():
+        recovered_output.write_text("", encoding="utf-8")
     if not unanswered:
         print("Re-check: nothing to re-ask.")
         return 0
@@ -272,19 +351,24 @@ def main() -> int:
 
     for url in result.recovered:
         print(
-            f"::notice::{url} never answered lychee but answers {accept} now "
+            f"::notice::{url} failed lychee but answers {accept} now "
             "-- not a broken link"
         )
     if result.recovered:
+        recovered_output.parent.mkdir(parents=True, exist_ok=True)
         recovered_output.write_text(
             "\n".join(result.recovered) + "\n", encoding="utf-8"
         )
     print(
         f"Re-check finished: {len(result.recovered)} recovered, "
-        f"{len(result.still_broken)} still without an answer"
+        f"{len(result.still_broken)} still broken"
     )
 
-    if not result.still_broken and len(result.recovered) == len(unanswered):
+    if (
+        not final
+        and not result.still_broken
+        and len(result.recovered) == len(unanswered)
+    ):
         set_github_output("all_recovered", "true")
     return 0
 

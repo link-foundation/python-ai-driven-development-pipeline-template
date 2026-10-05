@@ -98,7 +98,7 @@ def test_links_workflow_fails_for_every_broken_live_link() -> None:
     link_job = workflow_job_block(workflow, "link-checker")
     lychee_step = workflow_step_block(link_job, "Check links with lychee")
     recheck_step = workflow_step_block(
-        link_job, "Re-check links that never got an answer"
+        link_job, "Re-check transient and unanswered links"
     )
     archive_step = workflow_step_block(
         link_job, "Check broken links against Web Archive"
@@ -124,6 +124,7 @@ def test_links_workflow_fails_for_every_broken_live_link() -> None:
     assert "if: steps.lychee.outputs.exit_code != 0" in recheck_step
     assert "python scripts/recheck_broken_links.py" in recheck_step
     assert "RECOVERED_OUTPUT: lychee/recovered.txt" in recheck_step
+    assert "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}" in recheck_step
     # `!= 'true'`, never `== 'false'`: a skipped re-check leaves the output
     # empty, and only the != form fails safe.
     assert "steps.lychee.outputs.exit_code != 0" in archive_step

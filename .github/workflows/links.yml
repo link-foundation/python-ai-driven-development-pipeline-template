@@ -31,7 +31,7 @@ env:
 jobs:
   link-checker:
     name: Check Links
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-link-checker
@@ -63,18 +63,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Re-check links that never got an answer
-        # --max-retries never retries a failure during the connect phase
-        # (lycheeverse/lychee#2297), so a healthy URL behind a connection
-        # reset is reported broken without one retry. Ask those URLs again
-        # outside lychee. A failure carrying a status code is a host's
-        # answer and stays final.
+      - name: Re-check transient and unanswered links
+        # Retry transport failures and 429/5xx responses with backoff.
+        # Throttled GitHub blob/tree pages also use the Contents API.
+        # Other status-coded failures remain final.
         if: steps.lychee.outputs.exit_code != 0
         id: recheck
         run: python scripts/recheck_broken_links.py
         env:
           LYCHEE_OUTPUT: lychee/out.md
           RECOVERED_OUTPUT: lychee/recovered.txt
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check broken links against Web Archive
         # `!= 'true'`, never `== 'false'`: a skipped re-check leaves the
@@ -117,7 +116,7 @@ jobs:
     needs:
       - link-checker
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6

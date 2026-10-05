@@ -22,7 +22,7 @@ permissions:
 jobs:
   actionlint:
     name: Lint Workflows
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-actionlint
@@ -65,7 +65,7 @@ jobs:
   #     --config .github/zizmor.yml .github/workflows
   zizmor:
     name: Audit Workflows
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-zizmor
@@ -123,7 +123,7 @@ jobs:
       - actionlint
       - zizmor
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
