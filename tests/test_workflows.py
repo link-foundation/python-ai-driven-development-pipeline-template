@@ -357,20 +357,18 @@ def test_workflow_audit_job_runs_zizmor() -> None:
     assert "timeout-minutes:" in job
     assert "uses: zizmorcore/zizmor-action@" in job
     assert "config: .github/zizmor.yml" in job
-    assert "min-confidence: medium" in job
+    assert "min-confidence: low" in job
     # SARIF upload needs code scanning, which forks of this template do not
     # necessarily have; annotations fail the job either way.
     assert "advanced-security: false" in job
     assert "annotations: true" in job
-    # Named, not left at the action's default (issue #76): the action's
-    # `latest` table freezes zizmor at 1.29.0, so an unversioned run is a
-    # silent downgrade, not the newest analyser.
-    assert "version: 1.29.0" in job
+    # Both passes share an explicit version supported by the action.
+    assert "version: ${{ env.ZIZMOR_VERSION }}" in job
     # The pedantic-only pass (issue #75): audits like `unpinned-images` do not
     # run in the regular persona, so a digest-pin regression in
     # `uses: docker://` would otherwise go unnoticed.
     assert "Audit for pedantic-only high-severity findings" in job
-    assert "pipx run zizmor==1.29.0" in job
+    assert 'pipx run "zizmor==$ZIZMOR_VERSION"' in job
     assert "--persona pedantic" in job
     assert "--min-severity high" in job
     assert "--min-confidence high" in job

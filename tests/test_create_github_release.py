@@ -8,6 +8,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 SCRIPT_PATH = (
     Path(__file__).resolve().parent.parent / "scripts" / "create_github_release.py"
@@ -16,6 +18,31 @@ spec = importlib.util.spec_from_file_location("create_github_release", SCRIPT_PA
 module = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = module
 spec.loader.exec_module(module)  # type: ignore[union-attr]
+
+
+@pytest.fixture(autouse=True)
+def absent_github_release(monkeypatch):
+    """Keep release creation tests offline unless they supply an existing release."""
+    monkeypatch.setattr(module, "get_github_release", lambda *args: None, raising=False)
+
+
+def test_create_release_keeps_an_already_published_release(monkeypatch) -> None:
+    """Repairing a missing PyPI version must not recreate its GitHub release."""
+    commands = []
+    monkeypatch.setattr(module, "get_github_release", lambda *args: {"draft": False})
+    monkeypatch.setattr(module, "run_command", lambda cmd: commands.append(cmd))
+    module.create_release("1.2.3", "owner/repo", "Release notes")
+    assert commands == []
+
+
+def test_create_release_publishes_an_existing_draft(monkeypatch) -> None:
+    """A draft is repaired by editing it instead of creating a duplicate tag."""
+    commands = []
+    monkeypatch.setattr(module, "get_github_release", lambda *args: {"draft": True})
+    monkeypatch.setattr(module, "run_command", lambda cmd: commands.append(cmd))
+    module.create_release("1.2.3", "owner/repo", "Release notes")
+    assert commands[0][:4] == ["gh", "release", "edit", "v1.2.3"]
+    assert "--draft=false" in commands[0]
 
 
 def test_detect_python_layout_treats_root_manifest_as_single_language(tmp_path) -> None:

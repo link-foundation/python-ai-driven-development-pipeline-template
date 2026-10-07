@@ -99,7 +99,7 @@ def publish_package(dist_dir: Path, dry_run: bool = False) -> None:
     print("\nPublishing to PyPI...")
 
     # Use twine upload with OIDC if in CI, otherwise use credentials
-    cmd = [sys.executable, "-m", "twine", "upload"]
+    cmd = [sys.executable, "-m", "twine", "upload", "--skip-existing"]
     cmd.extend([str(f) for f in dist_files])
 
     run_command(cmd)

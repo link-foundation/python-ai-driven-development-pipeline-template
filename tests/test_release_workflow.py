@@ -29,10 +29,7 @@ def test_changelog_check_safely_requires_a_fragment() -> None:
     assert "fetch-depth: 0" in changelog_job
     assert "GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}" in check_step
     assert "GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}" in check_step
-    assert (
-        'run: python "${{ steps.python_layout.outputs.root }}/scripts/validate_changeset.py"'
-        in check_step
-    )
+    assert 'run: python "$PYTHON_ROOT/scripts/validate_changeset.py"' in check_step
     assert "find " not in check_step
     assert "Install scriv" not in changelog_job
 
@@ -289,22 +286,20 @@ def test_release_workflow_namespaces_multi_language_python_tags() -> None:
     workflow = read_workflow("release.yml")
     auto_release = workflow_job_block(workflow, "auto-release")
 
-    assert 'TAG="py_v$CURRENT_VERSION"' in auto_release
-    assert 'TAG="v$CURRENT_VERSION"' in auto_release
-    assert 'git rev-parse "$TAG"' in auto_release
+    assert "scripts/check_release.py" in auto_release
+    assert 'git rev-parse "$TAG"' not in auto_release
+    # The shared helper's decision matrix tests verify v/py_v in both layouts.
 
 
 def test_release_workflow_runs_python_steps_from_detected_root() -> None:
     """Package build and release commands should run against the detected root."""
     workflow = read_workflow("release.yml")
 
-    assert 'cd "${{ steps.python_layout.outputs.root }}"' in workflow
+    assert 'cd "$PYTHON_ROOT"' in workflow
+    assert 'echo "PYTHON_ROOT=$PYTHON_ROOT" >> "$GITHUB_ENV"' in workflow
     assert "path: ${{ steps.python_layout.outputs.dist_dir }}" in workflow
     assert "packages-dir: ${{ steps.python_layout.outputs.dist_dir }}" in workflow
-    assert (
-        'python "${{ steps.python_layout.outputs.root }}/scripts/create_github_release.py"'
-        in workflow
-    )
+    assert 'python "$PYTHON_ROOT/scripts/create_github_release.py"' in workflow
 
 
 def test_dispatch_dependent_jobs_use_status_check_function() -> None:
@@ -448,8 +443,8 @@ def test_release_workflow_checks_fresh_merge_and_secrets() -> None:
     assert "run: bash scripts/simulate-fresh-merge.sh" in lint
     assert "- name: Check for secrets" in lint
     assert (
-        "npx --yes -p secretlint -p "
-        '@secretlint/secretlint-rule-preset-recommend secretlint "**/*"' in lint
+        "npx --yes -p secretlint@13.0.7 -p "
+        '@secretlint/secretlint-rule-preset-recommend@13.0.7 secretlint "**/*"' in lint
     )
     secretlint_config = (ROOT / ".secretlintrc.json").read_text(encoding="utf-8")
     assert '"id": "@secretlint/secretlint-rule-preset-recommend"' in secretlint_config
@@ -543,14 +538,15 @@ def test_release_jobs_smoke_test_published_package_before_github_release() -> No
 
     expected_version_outputs = {
         "auto-release": "steps.version_check.outputs.current_version",
-        "manual-release": "steps.version.outputs.new_version",
+        "manual-release": "steps.version_check.outputs.current_version",
     }
 
     for job_name, version_output in expected_version_outputs.items():
         block = workflow_job_block(workflow, job_name)
         assert "- name: Smoke test published package" in block
-        assert "python scripts/smoke_test_published_package.py" in block
-        assert f'--version "${{{{ {version_output} }}}}"' in block
+        assert 'python "$PYTHON_ROOT/scripts/smoke_test_published_package.py"' in block
+        assert f"RELEASE_VERSION: ${{{{ {version_output} }}}}" in block
+        assert '--version "$RELEASE_VERSION"' in block
 
         publish_index = block.index("- name: Publish to PyPI")
         smoke_index = block.index("- name: Smoke test published package")

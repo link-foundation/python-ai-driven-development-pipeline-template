@@ -1,0 +1,4 @@
+name: Shipped code and workflows
+paths-ignore:
+  - experiments
+  - python/experiments

@@ -258,10 +258,12 @@ When such a surface is added, use the Python porting checklist in
 The release workflow (`release.yml`) provides:
 
 1. **Integrated CI checks**: Runs lint, test, and build before any release
-2. **Auto-release on push**: Detects version changes and publishes automatically
+2. **Auto-release on push**: Publishes when the current PyPI version or GitHub
+   release is missing, so interrupted releases can resume
 3. **Manual release**: Trigger releases via workflow_dispatch
 4. **Fragment collection**: Automatically collects changelog fragments
-5. **PyPI publishing**: OIDC trusted publishing (no tokens needed)
+5. **PyPI publishing**: OIDC trusted publishing (no tokens needed); existing
+   uploads are skipped when retrying a partial release
 6. **Published package smoke test**: Installs the just-published PyPI package
    into a clean virtualenv and verifies imports/console scripts
 7. **GitHub releases**: Automatic creation with CHANGELOG content
@@ -271,6 +273,28 @@ The release workflow (`release.yml`) provides:
    `linux/arm64` images after each GitHub release
 
 **Important**: All releases require passing CI checks (lint + test + build). No release will ever happen without passing tests, ensuring code quality and stability.
+
+Both automatic and manual releases wait up to ten minutes for the exact PyPI
+version to appear before running the installation smoke test. A timeout explains
+that the upload step succeeded and the release can be retried safely. A tag by
+itself does not satisfy the release gate. Published GitHub releases are preserved;
+an existing draft is published when recovery reaches that step. Root packages
+use `v` tags; packages under `python/` use `py_v` tags.
+
+For local propagation diagnostics, enable optional retry tracing:
+
+```bash
+python scripts/check_release.py wait --package-name my-package --version 0.1.0 --verbose
+```
+
+Every checkout inherits Git's `init.defaultBranch=main` configuration. Workflow
+shell steps receive layout and release values through environment variables.
+The workflow audit uses one pinned zizmor version at low confidence, and the
+secretlint CLI and preset have matching exact versions. CodeQL excludes
+`experiments/` and `python/experiments/` while retaining shipped code and workflows.
+Lychee limits `github.com` to two simultaneous requests with a one-second request
+interval. Its commented `.lycheeignore` starts empty; transient 429/5xx responses
+still require successful recovery and otherwise fail the existing link gate.
 
 ## Configuration
 
