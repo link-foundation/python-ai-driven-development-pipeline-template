@@ -129,6 +129,36 @@ def test_new_valid_fragment_passes(project: Path) -> None:
     assert "[OK] new fragment.md" in result.stdout
 
 
+@pytest.mark.parametrize("description", ["- Fix another bug.", "-"])
+def test_replacement_fragment_is_validated(project: Path, description: str) -> None:
+    """A similar replacement counts as new and must pass content validation."""
+    repo = repo_root(project)
+    frontmatter = "---\nbump: patch\n---\n\n### Fixed\n\n"
+    old_fragment = project / "changelog.d/old.md"
+    old_fragment.write_text(frontmatter + "- Fix a bug.\n", encoding="utf-8")
+    commit(repo)
+    git(repo, "branch", "-f", "base", "HEAD")
+    change_source(project)
+    old_fragment.unlink()
+    (project / "changelog.d/new.md").write_text(
+        frontmatter + description + "\n", encoding="utf-8"
+    )
+    commit(repo)
+
+    # Confirm the fixture exercises Git's default similarity-based pairing.
+    diff = git(repo, "diff", "--name-status", "--find-renames", "base", "HEAD")
+    assert any(line.startswith("R") for line in diff.splitlines()), diff
+
+    result = run_validator(project, "--verbose")
+    assert "1 new fragment(s)" in result.stdout, result.stdout + result.stderr
+    if description == "-":
+        assert result.returncode == 1, result.stdout + result.stderr
+        assert "[FAIL] Fragment new.md has no content" in result.stdout
+    else:
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "[OK] new.md" in result.stdout
+
+
 def test_untracked_fragment_does_not_count(project: Path) -> None:
     """A local file absent from the PR commit must not bypass enforcement."""
     change_source(project)

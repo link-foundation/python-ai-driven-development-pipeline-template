@@ -60,9 +60,11 @@ This is handled automatically by the release workflow.
 
 Changes under `src/`, `tests/`, or `scripts/` require a newly added, committed
 `changelog.d/*.md` fragment. Markdown documentation, `docs/`, `examples/`, and
-`experiments/` remain exempt. Existing, modified, renamed, and untracked fragments
-do not satisfy this requirement. Each new fragment must have a visible category
-heading and a description below it; commented templates are invalid.
+`experiments/` remain exempt. Existing, modified-in-place, unchanged moved, and
+untracked fragments do not satisfy this requirement. Deleting a pending fragment
+and adding one with different content counts as a new fragment, even when the
+two files are similar. Each new fragment must have a visible category heading
+and a description below it; commented templates are invalid.
 
 CI runs `scripts/validate_changeset.py` against the pull request's head commit
 and its verified merge base with the base commit. It checks only newly added
