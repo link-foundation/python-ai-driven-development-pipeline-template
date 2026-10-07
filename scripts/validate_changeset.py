@@ -3,7 +3,8 @@
 
 Source changes under src/, tests/ or scripts/ require a new changelog.d/*.md
 fragment. Markdown documentation, examples and experiments remain exempt.
-Only committed additions count; inherited, edited and renamed fragments do not.
+Only committed additions count; inherited, edited-in-place and unchanged moved
+fragments do not. Replacements with different content count as additions.
 Every added fragment must contain a visible category and a description.
 
 Usage:
@@ -120,7 +121,10 @@ def get_diff_files(
     verbose: bool = False,
 ) -> list[str]:
     """Read NUL-delimited paths, retaining both endpoints of source renames."""
-    options = ("--find-renames", "--diff-filter=A") if additions else ("--no-renames",)
+    # Exclude unchanged moves without hiding similar replacement fragments.
+    options = (
+        ("--find-renames=100%", "--diff-filter=A") if additions else ("--no-renames",)
+    )
     output = run_git(
         repo_root,
         "diff",
