@@ -26,14 +26,15 @@ def test_changelog_check_safely_requires_a_fragment() -> None:
     changelog_job = workflow_job_block(workflow, "changelog")
     check_step = workflow_step_block(changelog_job, "Check for changelog fragments")
 
-    assert "GITHUB_BASE_REF: ${{ github.base_ref }}" in check_step
-    assert "set -euo pipefail" in check_step
-    assert 'git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD"' in check_step
-    assert 'grep -cE "$SOURCE_PATTERN" || true' in check_step
-    assert "::error::No changelog fragment found." in check_step
-    assert "::warning::No changelog fragment found." not in check_step
-    assert "exit 1" in check_step
-    assert "exit 0" not in check_step
+    assert "fetch-depth: 0" in changelog_job
+    assert "GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}" in check_step
+    assert "GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}" in check_step
+    assert (
+        'run: python "${{ steps.python_layout.outputs.root }}/scripts/validate_changeset.py"'
+        in check_step
+    )
+    assert "find " not in check_step
+    assert "Install scriv" not in changelog_job
 
 
 def test_release_workflow_separates_check_and_write_concurrency() -> None:
