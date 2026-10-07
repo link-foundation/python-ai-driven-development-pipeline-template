@@ -55,3 +55,30 @@ scriv collect --version X.Y.Z
 ```
 
 This is handled automatically by the release workflow.
+
+## Pull Request Validation
+
+Changes under `src/`, `tests/`, or `scripts/` require a newly added, committed
+`changelog.d/*.md` fragment. Markdown documentation, `docs/`, `examples/`, and
+`experiments/` remain exempt. Existing, modified, renamed, and untracked fragments
+do not satisfy this requirement. Each new fragment must have a visible category
+heading and a description below it; commented templates are invalid.
+
+CI runs `scripts/validate_changeset.py` against the pull request's head commit
+and its verified merge base with the base commit. It checks only newly added
+fragments and reads their committed content. Missing refs, unrelated histories,
+and failed Git commands return exit 1 rather than skipping validation.
+
+To run the same check locally after committing your changes:
+
+```bash
+git fetch origin main
+python scripts/validate_changeset.py --base-ref origin/main --head-ref HEAD
+```
+
+The default refs are `origin/main` and `HEAD`. CI can provide `GITHUB_BASE_SHA`
+and `GITHUB_HEAD_SHA`; `GITHUB_BASE_REF` is also supported as an `origin/` branch
+fallback. Explicit command-line refs override these defaults. The script uses
+local Git history, so a full-history checkout is required. Add `--verbose` to
+print Git commands when investigating a failed comparison. In a multi-language
+repository, invoke `python/scripts/validate_changeset.py` with the same refs.

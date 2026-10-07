@@ -182,7 +182,7 @@ ls changelog.d/*.md
 The GitHub Actions workflow provides:
 
 1. **Linting**: Ruff linting, formatting, and mypy type checking
-2. **Changelog check**: Fails source-changing PRs that omit changelog fragments
+2. **Changelog check**: Requires a newly added, valid fragment for source-changing PRs, using a verified Git merge base (see [validation details](changelog.d/README.md#pull-request-validation))
 3. **Testing**: Python 3.13 test suite
 4. **Building**: Package building and validation
 5. **Coverage**: Automatic upload to Codecov
