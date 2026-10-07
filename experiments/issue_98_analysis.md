@@ -68,7 +68,7 @@ verification and duplicate-file handling makes later retries safe.
   confidence floor. The [v0.6.4 action table](https://github.com/zizmorcore/zizmor-action/blob/v0.6.4/support/versions)
   contains 1.30.1; the action's table, not PyPI's latest package, determines what
   it can install.
-- [secretlint 13.0.7](https://www.npmjs.com/package/secretlint/v/13.0.7)
+- [secretlint 13.0.7](https://registry.npmjs.org/secretlint/13.0.7)
   and its matching preset exist in the npm registry and require Node >=22.
   Ubuntu 24.04's hosted environment satisfies this; a new Node dependency
   manager is unnecessary for this scanner-only use.
