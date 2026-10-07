@@ -8,6 +8,8 @@ on:
       - '**.md'
       - '**.html'
       - '.github/workflows/links.yml'
+      - 'lychee.toml'
+      - '.lycheeignore'
       - 'scripts/check_web_archive.py'
       - 'scripts/recheck_broken_links.py'
   pull_request:
@@ -16,6 +18,8 @@ on:
       - '**.md'
       - '**.html'
       - '.github/workflows/links.yml'
+      - 'lychee.toml'
+      - '.lycheeignore'
       - 'scripts/check_web_archive.py'
       - 'scripts/recheck_broken_links.py'
   workflow_dispatch:
@@ -48,6 +52,7 @@ jobs:
         uses: lycheeverse/lychee-action@v2
         with:
           args: >-
+            --config lychee.toml
             --verbose
             --no-progress
             --cache

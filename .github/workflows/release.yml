@@ -83,6 +83,7 @@ jobs:
           else
             echo "dist_dir=$PYTHON_ROOT/dist" >> "$GITHUB_OUTPUT"
           fi
+          echo "PYTHON_ROOT=$PYTHON_ROOT" >> "$GITHUB_ENV"
           echo "Detected Python layout: root=$PYTHON_ROOT, multi_language=$MULTI_LANGUAGE"
 
       - name: Detect changes
@@ -91,7 +92,7 @@ jobs:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: python "${{ steps.python_layout.outputs.root }}/scripts/detect_code_changes.py"
+        run: python "$PYTHON_ROOT/scripts/detect_code_changes.py"
 
   # REQUIRED CI CHECKS - All must pass before release
   # These jobs ensure code quality and tests pass before any release
@@ -154,13 +155,14 @@ jobs:
           else
             echo "dist_dir=$PYTHON_ROOT/dist" >> "$GITHUB_OUTPUT"
           fi
+          echo "PYTHON_ROOT=$PYTHON_ROOT" >> "$GITHUB_ENV"
           echo "Detected Python layout: root=$PYTHON_ROOT, multi_language=$MULTI_LANGUAGE"
 
       - name: Install dependencies
         env:
           INSTALL_BUDGET_SECONDS: 300
         run: |
-          cd "${{ steps.python_layout.outputs.root }}"
+          cd "$PYTHON_ROOT"
           bash scripts/run-with-budget-warning.sh \
             "$INSTALL_BUDGET_SECONDS" "Install dependencies" \
             bash -euo pipefail -c '
@@ -170,31 +172,31 @@ jobs:
 
       - name: Run Ruff linting
         run: |
-          cd "${{ steps.python_layout.outputs.root }}"
+          cd "$PYTHON_ROOT"
           ruff check .
 
       - name: Check Ruff formatting
         run: |
-          cd "${{ steps.python_layout.outputs.root }}"
+          cd "$PYTHON_ROOT"
           ruff format --check .
 
       - name: Run mypy
         run: |
-          cd "${{ steps.python_layout.outputs.root }}"
+          cd "$PYTHON_ROOT"
           mypy src
 
       - name: Check file size limit
         run: |
-          cd "${{ steps.python_layout.outputs.root }}"
+          cd "$PYTHON_ROOT"
           python scripts/check_file_size.py
 
       - name: Check for secrets
         env:
           SECRETLINT_BUDGET_SECONDS: 300
         run: |
-          bash "${{ steps.python_layout.outputs.root }}/scripts/run-with-budget-warning.sh" \
+          bash "$PYTHON_ROOT/scripts/run-with-budget-warning.sh" \
             "$SECRETLINT_BUDGET_SECONDS" "Check for secrets" \
-            npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint "**/*"
+            npx --yes -p secretlint@13.0.7 -p @secretlint/secretlint-rule-preset-recommend@13.0.7 secretlint "**/*"
 
   # === DOCUMENTATION VALIDATION ===
   # Principle 12 (issue #72): documentation-only pull requests skip the
@@ -317,13 +319,14 @@ jobs:
           else
             echo "dist_dir=$PYTHON_ROOT/dist" >> "$GITHUB_OUTPUT"
           fi
+          echo "PYTHON_ROOT=$PYTHON_ROOT" >> "$GITHUB_ENV"
           echo "Detected Python layout: root=$PYTHON_ROOT, multi_language=$MULTI_LANGUAGE"
 
       - name: Install dependencies
         env:
           INSTALL_BUDGET_SECONDS: 300
         run: |
-          cd "${{ steps.python_layout.outputs.root }}"
+          cd "$PYTHON_ROOT"
           bash scripts/run-with-budget-warning.sh \
             "$INSTALL_BUDGET_SECONDS" "Install dependencies" \
             bash -euo pipefail -c '
@@ -335,7 +338,7 @@ jobs:
         env:
           TEST_BUDGET_SECONDS: 900
         run: |
-          cd "${{ steps.python_layout.outputs.root }}"
+          cd "$PYTHON_ROOT"
           bash scripts/run-with-budget-warning.sh \
             "$TEST_BUDGET_SECONDS" "Run tests" \
             pytest tests/ -v --cov=src --cov-report=xml --cov-report=term
@@ -405,6 +408,7 @@ jobs:
           else
             echo "dist_dir=$PYTHON_ROOT/dist" >> "$GITHUB_OUTPUT"
           fi
+          echo "PYTHON_ROOT=$PYTHON_ROOT" >> "$GITHUB_ENV"
           echo "Detected Python layout: root=$PYTHON_ROOT, multi_language=$MULTI_LANGUAGE"
 
       - name: Install build dependencies
@@ -414,12 +418,12 @@ jobs:
 
       - name: Build package
         run: |
-          cd "${{ steps.python_layout.outputs.root }}"
+          cd "$PYTHON_ROOT"
           python -m build
 
       - name: Check package
         run: |
-          cd "${{ steps.python_layout.outputs.root }}"
+          cd "$PYTHON_ROOT"
           twine check dist/*
 
       - name: Upload artifacts
@@ -473,13 +477,14 @@ jobs:
           else
             echo "dist_dir=$PYTHON_ROOT/dist" >> "$GITHUB_OUTPUT"
           fi
+          echo "PYTHON_ROOT=$PYTHON_ROOT" >> "$GITHUB_ENV"
           echo "Detected Python layout: root=$PYTHON_ROOT, multi_language=$MULTI_LANGUAGE"
 
       - name: Check for changelog fragments
         env:
           GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: python "${{ steps.python_layout.outputs.root }}/scripts/validate_changeset.py"
+        run: python "$PYTHON_ROOT/scripts/validate_changeset.py"
 
   # === DOCKER IMAGE BUILD CHECK (pull requests) ===
   # Build without pushing so a broken Dockerfile fails before package publish.
@@ -585,6 +590,7 @@ jobs:
           else
             echo "dist_dir=$PYTHON_ROOT/dist" >> "$GITHUB_OUTPUT"
           fi
+          echo "PYTHON_ROOT=$PYTHON_ROOT" >> "$GITHUB_ENV"
           echo "Detected Python layout: root=$PYTHON_ROOT, multi_language=$MULTI_LANGUAGE"
 
       - name: Install dependencies
@@ -592,35 +598,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install build twine
 
-      - name: Check if version changed
+      - name: Check release artifacts
         id: version_check
-        run: |
-          PYTHON_ROOT="${{ steps.python_layout.outputs.root }}"
-          PYPROJECT="$PYTHON_ROOT/pyproject.toml"
-
-          # Read project.version by its table path (issue #67): a grep cannot
-          # see TOML tables, so a `version` key in any other table -- the one
-          # scriv's documentation recommends adding to [tool.scriv], for
-          # instance -- used to surface as a second match and break this step
-          # with a multi-line $GITHUB_OUTPUT value.
-          CURRENT_VERSION=$(python scripts/read_manifest.py "$PYPROJECT" --field project.version)
-          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
-
-          if [ "${{ steps.python_layout.outputs.multi_language }}" = "true" ]; then
-            TAG="py_v$CURRENT_VERSION"
-          else
-            TAG="v$CURRENT_VERSION"
-          fi
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-
-          # Check if tag exists
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists, skipping release"
-            echo "should_release=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "New version detected: $CURRENT_VERSION ($TAG)"
-            echo "should_release=true" >> "$GITHUB_OUTPUT"
-          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python "$PYTHON_ROOT/scripts/check_release.py" check --repository "$GITHUB_REPOSITORY"
 
       - name: Download artifacts
         if: steps.version_check.outputs.should_release == 'true'
@@ -632,12 +614,24 @@ jobs:
       - name: Publish to PyPI
         if: steps.version_check.outputs.should_release == 'true'
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33  # v1.14.2 @ 2026-07-29
+        with:
+          skip-existing: true
+
+      - name: Wait for PyPI
+        if: steps.version_check.outputs.should_release == 'true'
+        timeout-minutes: 11
+        env:
+          PACKAGE_NAME: ${{ steps.version_check.outputs.package_name }}
+          RELEASE_VERSION: ${{ steps.version_check.outputs.current_version }}
+        run: python "$PYTHON_ROOT/scripts/check_release.py" wait --package-name "$PACKAGE_NAME" --version "$RELEASE_VERSION"
 
       - name: Smoke test published package
         if: steps.version_check.outputs.should_release == 'true'
+        env:
+          RELEASE_VERSION: ${{ steps.version_check.outputs.current_version }}
         run: |
-          python scripts/smoke_test_published_package.py \
-            --version "${{ steps.version_check.outputs.current_version }}"
+          python "$PYTHON_ROOT/scripts/smoke_test_published_package.py" \
+            --project-root "$PYTHON_ROOT" --version "$RELEASE_VERSION"
 
       - name: Create GitHub Release
         id: github_release
@@ -646,9 +640,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_VERSION: ${{ steps.version_check.outputs.current_version }}
         run: |
-          python "${{ steps.python_layout.outputs.root }}/scripts/create_github_release.py" \
+          python "$PYTHON_ROOT/scripts/create_github_release.py" \
             --version "$RELEASE_VERSION" \
-            --repository "${{ github.repository }}" \
+            --repository "$GITHUB_REPOSITORY" \
             --repository-root "."
           echo "released=true" >> "$GITHUB_OUTPUT"
           echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
@@ -717,11 +711,12 @@ jobs:
           else
             echo "dist_dir=$PYTHON_ROOT/dist" >> "$GITHUB_OUTPUT"
           fi
+          echo "PYTHON_ROOT=$PYTHON_ROOT" >> "$GITHUB_ENV"
           echo "Detected Python layout: root=$PYTHON_ROOT, multi_language=$MULTI_LANGUAGE"
 
       - name: Install dependencies
         run: |
-          cd "${{ steps.python_layout.outputs.root }}"
+          cd "$PYTHON_ROOT"
           python -m pip install --upgrade pip
           pip install build twine "scriv[toml]"
 
@@ -736,45 +731,63 @@ jobs:
           BUMP_TYPE: ${{ github.event.inputs.bump_type }}
           DESCRIPTION: ${{ github.event.inputs.description }}
         run: |
-          cd "${{ steps.python_layout.outputs.root }}"
+          cd "$PYTHON_ROOT"
           python scripts/version_and_commit.py \
             --bump-type "$BUMP_TYPE" \
             --description "$DESCRIPTION"
 
-      - name: Build package
-        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
-        run: |
-          cd "${{ steps.python_layout.outputs.root }}"
-          python -m build
-
-      - name: Check package
-        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
-        run: |
-          cd "${{ steps.python_layout.outputs.root }}"
-          twine check dist/*
-
-      - name: Publish to PyPI
-        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33  # v1.14.2 @ 2026-07-29
-        with:
-          packages-dir: ${{ steps.python_layout.outputs.dist_dir }}
-
-      - name: Smoke test published package
-        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
-        run: |
-          python scripts/smoke_test_published_package.py \
-            --version "${{ steps.version.outputs.new_version }}"
-
-      - name: Create GitHub Release
-        id: github_release
+      - name: Check release artifacts
+        id: version_check
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_VERSION: ${{ steps.version.outputs.new_version }}
+        run: python "$PYTHON_ROOT/scripts/check_release.py" check --repository "$GITHUB_REPOSITORY"
+
+      - name: Build package
+        if: steps.version_check.outputs.should_release == 'true'
         run: |
-          python "${{ steps.python_layout.outputs.root }}/scripts/create_github_release.py" \
+          cd "$PYTHON_ROOT"
+          python -m build
+
+      - name: Check package
+        if: steps.version_check.outputs.should_release == 'true'
+        run: |
+          cd "$PYTHON_ROOT"
+          twine check dist/*
+
+      - name: Publish to PyPI
+        if: steps.version_check.outputs.should_release == 'true'
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33  # v1.14.2 @ 2026-07-29
+        with:
+          packages-dir: ${{ steps.python_layout.outputs.dist_dir }}
+          skip-existing: true
+
+      - name: Wait for PyPI
+        if: steps.version_check.outputs.should_release == 'true'
+        timeout-minutes: 11
+        env:
+          PACKAGE_NAME: ${{ steps.version_check.outputs.package_name }}
+          RELEASE_VERSION: ${{ steps.version_check.outputs.current_version }}
+        run: python "$PYTHON_ROOT/scripts/check_release.py" wait --package-name "$PACKAGE_NAME" --version "$RELEASE_VERSION"
+
+      - name: Smoke test published package
+        if: steps.version_check.outputs.should_release == 'true'
+        env:
+          RELEASE_VERSION: ${{ steps.version_check.outputs.current_version }}
+        run: |
+          python "$PYTHON_ROOT/scripts/smoke_test_published_package.py" \
+            --project-root "$PYTHON_ROOT" --version "$RELEASE_VERSION"
+
+      - name: Create GitHub Release
+        id: github_release
+        if: steps.version_check.outputs.should_release == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ steps.version_check.outputs.current_version }}
+        run: |
+          python "$PYTHON_ROOT/scripts/create_github_release.py" \
             --version "$RELEASE_VERSION" \
-            --repository "${{ github.repository }}" \
+            --repository "$GITHUB_REPOSITORY" \
             --repository-root "."
           echo "released=true" >> "$GITHUB_OUTPUT"
           echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"

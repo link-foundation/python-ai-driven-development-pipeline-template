@@ -19,6 +19,12 @@ on:
 permissions:
   contents: read
 
+env:
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: init.defaultBranch
+  GIT_CONFIG_VALUE_0: main
+  ZIZMOR_VERSION: '1.30.1'
+
 jobs:
   actionlint:
     name: Lint Workflows
@@ -60,8 +66,8 @@ jobs:
   # actionlint validates workflow schema and shell; it does not detect
   # credential persistence, template injection or unpinned actions. zizmor
   # covers exactly those, so both linters run on every change under .github/.
-  # Reproduce locally with:
-  #   pipx run zizmor==1.29.0 --min-confidence medium --persona regular \
+  # Reproduce locally with ZIZMOR_VERSION set to the env pin above:
+  #   pipx run "zizmor==$ZIZMOR_VERSION" --min-confidence low --persona regular \
   #     --config .github/zizmor.yml .github/workflows
   zizmor:
     name: Audit Workflows
@@ -80,21 +86,15 @@ jobs:
       # Annotations instead of SARIF: forks of this template do not necessarily
       # have code scanning enabled, and the job should fail loudly either way.
       #
-      # `version` is named rather than left at the default, because the
-      # action's `latest` entry is its own frozen table (v0.6.2 -> zizmor
-      # 1.29.0), not the latest zizmor -- the comment beside this step used to
-      # name 1.30.0, a version the action cannot install (issue #76). Naming
-      # the version keeps the next bump a visible line in the diff rather than
-      # a side effect of bumping the action, and documents exactly which
-      # analyser reproduces a finding.
+      # The action and CLI share one pin supported by this action's digest table.
       - name: Audit workflow files
-        uses: zizmorcore/zizmor-action@v0.6.2
+        uses: zizmorcore/zizmor-action@v0.6.4
         with:
           advanced-security: false
           annotations: true
           config: .github/zizmor.yml
-          min-confidence: medium
-          version: 1.29.0
+          min-confidence: low
+          version: ${{ env.ZIZMOR_VERSION }}
 
       # The step above runs `--persona regular`, which is the right default:
       # pedantic surfaces dozens of stylistic findings. But the audits that
@@ -109,7 +109,7 @@ jobs:
       - name: Audit for pedantic-only high-severity findings
         timeout-minutes: 5
         run: |
-          pipx run zizmor==1.29.0 --config .github/zizmor.yml \
+          pipx run "zizmor==$ZIZMOR_VERSION" --config .github/zizmor.yml \
             --persona pedantic --min-severity high --min-confidence high \
             .github/workflows
 

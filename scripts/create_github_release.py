@@ -25,6 +25,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
+from check_release import get_github_release  # noqa: E402
 from release_naming import (  # noqa: E402
     PYPROJECT_FILE,
     PythonLayout,
@@ -179,8 +180,12 @@ def create_release(
     distribution_name: str = "my-package",
     multi_language: bool = False,
 ) -> None:
-    """Create a GitHub release using gh CLI."""
+    """Create or publish a draft release, preserving an already published release."""
     tag = build_release_tag(version, multi_language)
+    existing = get_github_release(repository, tag)
+    if existing is not None and not existing.get("draft", False):
+        print(f"GitHub release {tag} already exists; keeping the published release")
+        return
     title = build_release_title(version, distribution_name, multi_language)
     original_notes_size = release_notes_size(release_notes)
     release_notes = cap_release_notes(release_notes, repository, tag)
@@ -202,7 +207,7 @@ def create_release(
     cmd = [
         "gh",
         "release",
-        "create",
+        "edit" if existing is not None else "create",
         tag,
         "--repo",
         repository,
@@ -211,6 +216,9 @@ def create_release(
         "--notes",
         release_notes,
     ]
+
+    if existing is not None:
+        cmd.append("--draft=false")
 
     if prerelease:
         cmd.append("--prerelease")
