@@ -66,9 +66,11 @@ jobs:
   # actionlint validates workflow schema and shell; it does not detect
   # credential persistence, template injection or unpinned actions. zizmor
   # covers exactly those, so both linters run on every change under .github/.
+  # Scan the repository to match the action's default inputs, including
+  # .github/dependabot.yml when present.
   # Reproduce locally with ZIZMOR_VERSION set to the env pin above:
   #   pipx run "zizmor==$ZIZMOR_VERSION" --min-confidence low --persona regular \
-  #     --config .github/zizmor.yml .github/workflows
+  #     --config .github/zizmor.yml .
   zizmor:
     name: Audit Workflows
     runs-on: ubuntu-24.04

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import re
+import shlex
+from pathlib import PurePosixPath
 
 from tests.workflow_helpers import (
     MAX_BUDGET_SHARE_PERCENT,
@@ -380,6 +382,22 @@ def test_workflow_audit_job_runs_zizmor() -> None:
         job,
         re.MULTILINE | re.DOTALL,
     )
+
+
+def test_zizmor_reproduction_covers_dependabot() -> None:
+    """The local regular scan must include Dependabot findings from CI (#102)."""
+    workflow = read_workflow("workflows.yml")
+    command = re.search(
+        r"^  #   (pipx run[^\n]+)\\\n  #     ([^\n]+)$", workflow, re.MULTILINE
+    )
+    assert command, "missing local zizmor reproduction command"
+    arguments = shlex.split(command.group(1) + command.group(2))
+    scan_path = PurePosixPath(arguments[-1])
+    dependabot_path = PurePosixPath(".github/dependabot.yml")
+
+    assert (
+        scan_path in dependabot_path.parents
+    ), f"local scan of {scan_path} misses {dependabot_path}, which CI audits"
 
 
 def test_zizmor_config_requires_hash_pins_by_default() -> None:
