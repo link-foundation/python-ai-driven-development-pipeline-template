@@ -9,6 +9,12 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BRANCH_NAME="${BRANCH_NAME:-${BRANCH_REF:-main}}"
+HEAD_REF="${HEAD_REF:-${GITHUB_REF:-refs/heads/$BRANCH_NAME}}"
+# A PR's merge ref is synthetic; the base repository's head ref tracks the
+# actual contributor branch, including fork branches with colliding names.
+if [[ "$HEAD_REF" == refs/pull/*/merge ]]; then
+  HEAD_REF="${HEAD_REF%/merge}/head"
+fi
 GIT_REMOTE="${GIT_REMOTE:-origin}"
 
 select_by_result() {
@@ -48,13 +54,13 @@ resolve_workflow_file() {
 
 run_is_superseded() {
   local run_sha="${RUN_SHA:-${GITHUB_SHA:-}}"
-  if [[ -z "$run_sha" || -z "$BRANCH_NAME" ]]; then
+  if [[ -z "$run_sha" || -z "$HEAD_REF" ]]; then
     return 1
   fi
 
   local branch_head="${BRANCH_HEAD_SHA:-}"
   if [[ -z "$branch_head" ]]; then
-    branch_head="$(git ls-remote "$GIT_REMOTE" "refs/heads/$BRANCH_NAME" 2>/dev/null | awk 'NR == 1 {print $1}')"
+    branch_head="$(git ls-remote "$GIT_REMOTE" "$HEAD_REF" 2>/dev/null | awk 'NR == 1 {print $1}' || true)"
   fi
   [[ -n "$branch_head" && "$branch_head" != "$run_sha" ]]
 }
@@ -113,7 +119,7 @@ fi
 
 if (( ${#superseded_jobs[@]} > 0 )); then
   joined="$(printf '%s\n' "${superseded_jobs[@]}" | join_names)"
-  echo "::warning title=Cancelled jobs in a superseded run::${joined}. This run is no longer the head of ${BRANCH_NAME} and these jobs cancel in progress."
+  echo "::warning title=Cancelled jobs in a superseded run::${joined}. This run is no longer the head of ${HEAD_REF} and these jobs cancel in progress."
 fi
 
 if (( ${#unexpected_jobs[@]} > 0 )); then

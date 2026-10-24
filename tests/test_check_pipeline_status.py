@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import json
 import subprocess
 from pathlib import Path
 
@@ -195,3 +196,79 @@ def test_github_workflow_ref_resolves_the_active_file(tmp_path: Path) -> None:
 
     assert completed.returncode == 1, completed.stdout
     assert "effective cancel-in-progress is false" in completed.stdout
+
+
+@pytest.mark.parametrize("branch_name", ["main", "fork-only"])
+@pytest.mark.parametrize(
+    "ref_state", ["current", "superseded", "missing", "unreachable"]
+)
+def test_fork_cancellation_uses_exact_pr_head(tmp_path, branch_name, ref_state) -> None:
+    """The base branch must never stand in for a fork's branch of the same name."""
+
+    def git(*args):
+        return subprocess.run(
+            ["git", "-C", str(tmp_path), *args],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+
+    git("init", "-q", "-b", "main")
+    git(
+        "-c",
+        "user.name=t",
+        "-c",
+        "user.email=t@e",
+        "commit",
+        "-q",
+        "--allow-empty",
+        "-m",
+        "base",
+    )
+    base = git("rev-parse", "HEAD")
+    git(
+        "-c",
+        "user.name=t",
+        "-c",
+        "user.email=t@e",
+        "commit",
+        "-q",
+        "--allow-empty",
+        "-m",
+        "fork",
+    )
+    fork = git("rev-parse", "HEAD")
+    git("update-ref", "refs/heads/main", base)
+    if ref_state not in {"missing", "unreachable"}:
+        git("update-ref", "refs/pull/7/head", fork if ref_state == "current" else base)
+    workflow = write_workflow(
+        tmp_path,
+        "  build:\n    concurrency:\n      group: check\n      cancel-in-progress: true\n    steps: []\n",
+    )
+    completed = subprocess.run(
+        ["bash", str(GATE)],
+        cwd=tmp_path,
+        env={
+            **os.environ,
+            "NEEDS_JSON": json.dumps({"build": {"result": "cancelled"}}),
+            "RUN_SHA": fork,
+            "BRANCH_HEAD_SHA": "",
+            "BRANCH_NAME": branch_name,
+            "GIT_REMOTE": str(tmp_path / "missing")
+            if ref_state == "unreachable"
+            else str(tmp_path),
+            "GITHUB_REF": "refs/pull/7/merge",
+            "HEAD_REF": "refs/pull/7/head",
+            "WORKFLOW_FILE": str(workflow),
+        },
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    assert completed.returncode == (0 if ref_state == "superseded" else 1), (
+        completed.stdout + completed.stderr
+    )
+    if ref_state == "superseded":
+        assert "Cancelled jobs in a superseded run" in completed.stdout
+    else:
+        assert "Pipeline has cancelled jobs" in completed.stdout
