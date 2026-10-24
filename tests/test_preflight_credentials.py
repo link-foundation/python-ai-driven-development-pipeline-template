@@ -26,6 +26,8 @@ class FakeEndpoints:
     def __init__(self) -> None:
         self.oidc_status = 200
         self.mint_status = 200
+        self.mint_body = "{}"
+        self.project_status = 200
         self.auth_status = 200
         self.blob_status = 202
         self.requests: list[tuple[str, str]] = []
@@ -74,6 +76,8 @@ class FakeEndpoints:
                         self._respond(200, json.dumps({"token": "registry-jwt"}))
                     else:
                         self._respond(fake.auth_status)
+                elif self.path.startswith("/pypi/"):
+                    self._respond(fake.project_status)
                 else:
                     self._respond(404)
 
@@ -88,7 +92,7 @@ class FakeEndpoints:
                             200, json.dumps({"token": "pypi-short-lived-token"})
                         )
                     else:
-                        self._respond(fake.mint_status, json.dumps({}))
+                        self._respond(fake.mint_status, fake.mint_body)
                 elif "/blobs/uploads/" in self.path:
                     headers = {}
                     if fake.blob_status == 202:
@@ -131,6 +135,7 @@ def run_script(env: dict[str, str]) -> subprocess.CompletedProcess[str]:
         env=merged_env,
         capture_output=True,
         text=True,
+        timeout=20,
     )
 
 
@@ -272,3 +277,83 @@ def test_step_summary_receives_the_verdict(fake_endpoints, tmp_path: Path) -> No
     written = summary.read_text()
     assert "### Release preflight (release mode)" in written
     assert "| verified | 1 |" in written
+    assert "**Verdict: passed**" in written
+
+
+@pytest.mark.parametrize("code", ["invalid-publisher", "invalid-pending-publisher"])
+@pytest.mark.parametrize("project_status", [200, 404, 503])
+def test_missing_pypi_publisher_is_actionable(
+    fake_endpoints, code, project_status
+) -> None:
+    fake = fake_endpoints
+    fake.mint_status = 422
+    fake.project_status = project_status
+    fake.mint_body = json.dumps(
+        {"errors": [{"code": code, "description": "no corresponding publisher"}]},
+        indent=2,
+    )
+    result = run_script(
+        {
+            **pypi_only_env(fake),
+            "GITHUB_REPOSITORY": "owner/template",
+            "GITHUB_WORKFLOW_REF": "owner/template/.github/workflows/release.yml@refs/heads/main",
+        }
+    )
+    assert result.returncode == 1
+    assert f"FAIL: PyPI refused to mint an upload token (422 {code}" in result.stdout
+    assert (
+        "owner=owner, repository=template, workflow=release.yml, environment=(blank)"
+        in result.stdout
+    )
+    if project_status == 200:
+        assert "/manage/project/my-package/settings/publishing/" in result.stdout
+        assert "rename [project].name in pyproject.toml" in result.stdout
+    elif project_status == 404:
+        assert "/manage/account/publishing/" in result.stdout
+    else:
+        assert "project lookup answered 503" in result.stdout
+    assert ("GET", "/pypi/my-package/json") in fake.requests
+    assert "fake-oidc-jwt" not in result.stdout
+    assert "pypi-short-lived-token" not in result.stdout
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "",
+        "not JSON",
+        "{}",
+        '{"errors":null}',
+        '{"errors":[{}]}',
+        *[
+            json.dumps({"errors": [{"code": code}]})
+            for code in (
+                "rate-limited",
+                "not-enabled",
+                "invalid-token",
+                "invalid-reuse-token",
+                "invalid-payload",
+            )
+        ],
+    ],
+)
+def test_uncertain_pypi_422_remains_unknown(fake_endpoints, body) -> None:
+    fake_endpoints.mint_status = 422
+    fake_endpoints.mint_body = body
+    result = run_script(pypi_only_env(fake_endpoints))
+    assert result.returncode == 1
+    assert "UNKNOWN: PyPI answered 422" in result.stdout
+    assert "verified nothing (1 unknown)" in result.stdout
+    assert "add a GitHub trusted publisher" not in result.stdout
+
+
+@pytest.mark.parametrize(
+    ("status", "verdict"), [(200, "passed"), (403, "failed"), (422, "unverified")]
+)
+def test_summary_prints_each_overall_verdict(
+    fake_endpoints, tmp_path, status, verdict
+) -> None:
+    fake_endpoints.mint_status = status
+    summary = tmp_path / "summary.md"
+    run_script({**pypi_only_env(fake_endpoints), "GITHUB_STEP_SUMMARY": str(summary)})
+    assert f"**Verdict: {verdict}**" in summary.read_text()

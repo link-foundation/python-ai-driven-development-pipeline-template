@@ -189,9 +189,16 @@ command_is_running() {
   group_is_populated
 }
 
+# SECONDS counts wall-clock second boundaries and can overread elapsed time
+# by almost one second. Only a value strictly greater than the deadline proves
+# the full budget (or signal grace period) has elapsed. Warnings may be early.
+has_elapsed() {
+  [ "$SECONDS" -gt "$1" ]
+}
+
 wait_while_running() {
   local deadline=$((SECONDS + $1))
-  while group_is_populated && [ "$SECONDS" -lt "$deadline" ]; do
+  while group_is_populated && ! has_elapsed "$deadline"; do
     relay_output
     sleep "$poll_seconds"
   done
@@ -244,7 +251,7 @@ while command_is_running; do
     last_heartbeat="$SECONDS"
     echo "[budget] ${label} has been running for ${SECONDS}s of its ${budget_seconds}s budget." >&2
   fi
-  if [ "$enforce" = true ] && [ "$SECONDS" -ge "$budget_seconds" ]; then
+  if [ "$enforce" = true ] && has_elapsed "$budget_seconds"; then
     terminate_over_budget
   fi
   relay_output

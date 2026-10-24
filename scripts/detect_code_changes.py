@@ -44,7 +44,7 @@ EXCLUDED_FOLDERS = (
     "examples/",
     "experiments/",
 )
-CODE_EXTENSIONS = (".py", ".toml", ".yml", ".yaml")
+CODE_EXTENSIONS = (".py", ".sh", ".json", ".toml", ".yml", ".yaml")
 
 
 def exec_command(command: str) -> str:

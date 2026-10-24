@@ -80,6 +80,61 @@ json_string() {
   printf '%s' "$1" | sed -n "s/.*\"$2\" *: *\"\([^\"]*\)\".*/\1/p" | head -n 1
 }
 
+# Warehouse's 422 body is structured JSON, often with multiple lines. Decode
+# only the first error; never print the raw response or any minted token.
+pypi_error() {
+  PYPI_ERROR_BODY="$1" python3 - <<'PY'
+import json
+import os
+
+try:
+    error = json.loads(os.environ['PYPI_ERROR_BODY'])['errors'][0]
+    code = error['code']
+    if not isinstance(code, str):
+        raise ValueError('invalid error code')
+    print(code)
+    if code in {'invalid-publisher', 'invalid-pending-publisher'}:
+        description = error.get('description', '')
+        if isinstance(description, str):
+            print(' '.join(description.split()))
+except (ValueError, KeyError, IndexError, TypeError):
+    pass
+PY
+}
+
+pypi_publisher_help() {
+  local repo="${GITHUB_REPOSITORY:-unknown/unknown}"
+  local workflow="${GITHUB_WORKFLOW_REF:-release.yml}"
+  local script_dir manifest project response status
+  workflow="${workflow%@*}"
+  workflow="${workflow##*/}"
+  printf 'A PyPI maintainer must add a GitHub trusted publisher with owner=%s, repository=%s, workflow=%s, environment=(blank). ' \
+    "${repo%%/*}" "${repo#*/}" "$workflow"
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  manifest=pyproject.toml
+  [ -f "$manifest" ] || manifest=python/pyproject.toml
+  project="$(python3 "$script_dir/read_manifest.py" "$manifest" --field project.name 2>/dev/null)"
+  if [ -z "$project" ]; then
+    printf 'Read [project].name in pyproject.toml to choose the project publishing settings, or create a pending publisher at %s/manage/account/publishing/.' "$PYPI_API"
+    return
+  fi
+  response="$(http -A "$CURL_USER_AGENT" "$PYPI_API/pypi/$project/json")"
+  status="${response##*"$NEWLINE"}"
+  case "$status" in
+    200)
+      printf 'Add it to the existing project "%s" at %s/manage/project/%s/settings/publishing/. If that project is not yours, rename [project].name in pyproject.toml first.' \
+        "$project" "$PYPI_API" "$project"
+      ;;
+    404)
+      printf 'Create a pending publisher for "%s" at %s/manage/account/publishing/.' "$project" "$PYPI_API"
+      ;;
+    *)
+      printf 'The project lookup answered %s, so project existence is unknown. If "%s" exists, use %s/manage/project/%s/settings/publishing/; otherwise create a pending publisher at %s/manage/account/publishing/.' \
+        "${status:-no status}" "$project" "$PYPI_API" "$project" "$PYPI_API"
+      ;;
+  esac
+}
+
 # The publishing jobs use PyPI trusted publishing (pypa/gh-action-pypi-publish
 # with no password): GitHub mints an OIDC token for the job, and PyPI exchanges
 # it for a short-lived upload token. The exchange IS the publish credential
@@ -134,6 +189,20 @@ check_pypi() {
       ;;
     400 | 401 | 403)
       bad "PyPI refused to mint an upload token (${status}) -- the trusted-publisher mapping for this repository/workflow is missing or does not match, and the publish step would be rejected"
+      ;;
+    422)
+      local details code description
+      details="$(pypi_error "${response%"${NEWLINE}"*}")"
+      code="${details%%"$NEWLINE"*}"
+      description="${details#*"$NEWLINE"}"
+      case "$code" in
+        invalid-publisher | invalid-pending-publisher)
+          bad "PyPI refused to mint an upload token (422 ${code}: ${description}) -- the publish step would be rejected the same way. $(pypi_publisher_help)"
+          ;;
+        *)
+          unknown "PyPI answered 422${code:+ ($code)} to the mint-token probe (no verdict on trusted publishing)"
+          ;;
+      esac
       ;;
     '')
       unknown 'PyPI was unreachable during the mint-token probe'
@@ -225,6 +294,7 @@ append_summary() {
   [ -n "${GITHUB_STEP_SUMMARY:-}" ] || return 0
   {
     printf '### Release preflight (%s mode)\n\n' "$MODE"
+    printf '**Verdict: %s**\n\n' "$verdict"
     printf '| verdict | count |\n| --- | --- |\n'
     printf '| verified | %d |\n' "$verified"
     printf '| failed | %d |\n' "$n_fail"

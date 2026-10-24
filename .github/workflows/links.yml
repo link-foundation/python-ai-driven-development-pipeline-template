@@ -43,9 +43,16 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
+
+      - name: Restore lychee cache
+        uses: actions/cache@v5
+        with:
+          path: .lycheecache
+          key: cache-lychee-${{ github.sha }}
+          restore-keys: cache-lychee-
 
       - name: Check links with lychee
         id: lychee
@@ -59,9 +66,11 @@ jobs:
             --max-cache-age 1d
             --max-retries 3
             --timeout 30
+            --hidden
+            --extensions md,html
             --exclude-path docs/case-studies
-            './**/*.md'
-            './**/*.html'
+            --exclude-path scripts/fixtures
+            .
           fail: false
           output: lychee/out.md
           jobSummary: true
@@ -112,6 +121,14 @@ jobs:
           echo "Report location: lychee/out.md."
           exit 1
 
+      - name: Upload lychee report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lychee-report
+          path: lychee/out.md
+          if-no-files-found: error
+
   # Terminal status gate (issue #69): GitHub reports jobs killed by
   # timeout-minutes as cancelled. Observe every other job so a timeout on main
   # becomes a visible failure instead of a grey run, while a run that was
@@ -124,7 +141,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -132,5 +149,5 @@ jobs:
         env:
           NEEDS_JSON: ${{ toJSON(needs) }}
           RUN_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+          HEAD_REF: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/head', github.event.pull_request.number) || github.ref }}
         run: bash scripts/check-pipeline-status.sh

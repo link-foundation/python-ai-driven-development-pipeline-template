@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import tomllib
 
 from packaging.requirements import Requirement
 
@@ -24,3 +25,10 @@ def test_mypy_dependency_supports_configured_python_target() -> None:
 
     assert "1.13.0" in mypy.specifier
     assert "2.0" not in mypy.specifier
+
+
+def test_mypy_uses_extra_checks_without_deprecated_concatenate() -> None:
+    """Keep the stricter checks without a deprecation warning (#109)."""
+    config = tomllib.loads((ROOT / "pyproject.toml").read_text())["tool"]["mypy"]
+    assert config["extra_checks"] is True
+    assert "strict_concatenate" not in config

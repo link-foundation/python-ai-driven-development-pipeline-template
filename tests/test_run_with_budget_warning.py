@@ -14,6 +14,8 @@ import subprocess
 import time
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "run-with-budget-warning.sh"
 
@@ -238,3 +240,31 @@ def test_missing_arguments_are_rejected() -> None:
         completed, _ = run_wrapper(arguments)
         assert completed.returncode != 0
         assert completed.returncode != 124
+
+
+def test_never_terminates_a_command_that_finishes_inside_its_budget() -> None:
+    """Start near a second boundary where SECONDS overreads elapsed time."""
+    deadline = time.monotonic() + 3
+    while not 0.75 <= time.time() % 1 <= 0.78:
+        assert time.monotonic() < deadline, "could not align boundary probe"
+        time.sleep(0.001)
+    completed, _ = run_wrapper(
+        ["2", "Aligned step", "sleep", "1.4"],
+        BUDGET_POLL_SECONDS="0.05",
+        BUDGET_GRACE_SECONDS="1",
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+
+
+@pytest.mark.parametrize("seconds", ["0", "1", "2"])
+def test_elapsed_deadlines_require_strictly_greater_seconds(seconds) -> None:
+    """The same conservative comparison protects the grace and kill waits."""
+    text = SCRIPT.read_text()
+    helper = text[text.index("has_elapsed() {") :].split("\n}", 1)[0] + "\n}"
+    result = subprocess.run(
+        ["bash", "-c", helper + f"\nSECONDS={seconds}; has_elapsed {seconds}"],
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    assert result.returncode == 1

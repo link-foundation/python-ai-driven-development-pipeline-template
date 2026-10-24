@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ROOT / ".github" / "workflows"
 
-SUPPORTED_CONCURRENCY_KEYS = frozenset({"group", "cancel-in-progress"})
+SUPPORTED_CONCURRENCY_KEYS = frozenset({"group", "cancel-in-progress", "queue"})
 
 # The share of a job's `timeout-minutes` cap that its step deadlines may claim.
 # The remainder pays for the work outside them -- checkout, Python setup, cache

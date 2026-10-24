@@ -1,19 +1,22 @@
 name: Workflows
 
-# GitHub Actions ignores unknown workflow keys instead of rejecting them, so a
-# typo such as `queue: max` inside a `concurrency:` block silently does nothing
-# (issue #62). actionlint validates the schema and, through shellcheck, every
-# `run:` block as well.
+# actionlint validates workflow schema and shellchecks inline run blocks.
+# Documented queue: max syntax is temporarily exempted in .github/actionlint.yaml
+# until rhysd/actionlint#654 ships; all other unknown keys remain errors.
 on:
   push:
     branches:
       - main
     paths:
       - '.github/**'
+      - '**.sh'
+      - '.pre-commit-config.yaml'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
       - '.github/**'
+      - '**.sh'
+      - '.pre-commit-config.yaml'
   workflow_dispatch:
 
 permissions:
@@ -36,7 +39,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -81,7 +84,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -110,10 +113,28 @@ jobs:
       # someone reintroduces a mutable image reference (issue #75).
       - name: Audit for pedantic-only high-severity findings
         timeout-minutes: 5
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           pipx run "zizmor==$ZIZMOR_VERSION" --config .github/zizmor.yml \
             --persona pedantic --min-severity high --min-confidence high \
             .github/workflows
+
+  # actionlint checks inline workflow shells; standalone scripts need this pass.
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-shellcheck
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Shellcheck every tracked shell script
+        run: git ls-files -z '*.sh' | xargs -0 pipx run --spec shellcheck-py==0.11.0.1 shellcheck
 
   # Terminal status gate (issue #69): GitHub reports jobs killed by
   # timeout-minutes as cancelled. Observe every other job so a timeout on main
@@ -124,11 +145,12 @@ jobs:
     needs:
       - actionlint
       - zizmor
+      - shellcheck
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -136,5 +158,5 @@ jobs:
         env:
           NEEDS_JSON: ${{ toJSON(needs) }}
           RUN_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+          HEAD_REF: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/head', github.event.pull_request.number) || github.ref }}
         run: bash scripts/check-pipeline-status.sh

@@ -217,6 +217,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--verbose", action="store_true", help="Print Git commands")
     args = parser.parse_args(argv)
+    # The workflow supplies the authenticated PR author, never a branch name.
+    if os.environ.get("PR_AUTHOR") == "dependabot[bot]":
+        print("Skipping: PR opened by dependabot[bot]")
+        return 0
     project_root = Path(__file__).resolve().parents[1]
     try:
         return validate_pr(

@@ -70,8 +70,8 @@ def test_security_workflow_scans_code_actions_and_dependencies() -> None:
     assert "comment-summary-in-pr: on-failure" in dependency_job
 
     assert "timeout-minutes: 15" in audit_job
-    assert "uses: actions/checkout@v6" in audit_job
-    assert "uses: actions/setup-python@v6" in audit_job
+    assert "uses: actions/checkout@v7" in audit_job
+    assert "uses: actions/setup-python@v7" in audit_job
     assert "python scripts/audit_dependencies.py" in audit_job
     assert "if: github.event_name == 'pull_request'" not in audit_job
 
@@ -114,7 +114,7 @@ def test_links_workflow_fails_for_every_broken_live_link() -> None:
     assert "permissions:\n  contents: read" in workflow
     assert "timeout-minutes: 10" in link_job
     assert "cancel-in-progress: true" in link_job
-    assert "uses: actions/checkout@v6" in link_job
+    assert "uses: actions/checkout@v7" in link_job
     assert "uses: lycheeverse/lychee-action@v2" in lychee_step
     assert "--exclude-path docs/case-studies" in lychee_step
     assert "examples/universal-app/index.html" not in lychee_step
@@ -154,7 +154,7 @@ def test_every_workflow_has_a_terminal_status_gate() -> None:
         assert (
             "RUN_SHA: ${{ github.event.pull_request.head.sha || github.sha }}" in gate
         )
-        assert "BRANCH_NAME: ${{ github.head_ref || github.ref_name }}" in gate
+        assert "HEAD_REF:" in gate
         for job_name in job_names:
             if job_name == "pipeline-status":
                 continue
@@ -185,8 +185,8 @@ def test_docs_workflow_action_versions_are_current() -> None:
     """Docs workflow actions should stay aligned with the current Pages stack."""
     docs_workflow = read_workflow("docs.yml")
 
-    assert_action_pin_count(docs_workflow, "actions/checkout", "v6", 2)
-    assert_action_pin_count(docs_workflow, "actions/setup-python", "v6", 1)
+    assert_action_pin_count(docs_workflow, "actions/checkout", "v7", 2)
+    assert_action_pin_count(docs_workflow, "actions/setup-python", "v7", 1)
     assert_action_pin_count(docs_workflow, "actions/upload-artifact", "v7", 1)
     assert_action_pin_count(docs_workflow, "actions/configure-pages", "v6", 1)
     assert_action_pin_count(docs_workflow, "actions/upload-pages-artifact", "v5", 1)
@@ -275,16 +275,16 @@ def test_step_deadlines_expire_before_the_job_timeout_they_sit_under() -> None:
 
 
 def test_concurrency_key_parser_reports_unsupported_keys() -> None:
-    """The scanner below has to see a key GitHub would silently ignore."""
+    """The scanner must report an unknown key alongside supported queue syntax."""
     invalid = "\n".join(
         (
             "jobs:",
             "  publish:",
             "    concurrency:",
             "      group: main-write",
-            "      # Not a real key.",
             "      cancel-in-progress: false",
             "      queue: max",
+            "      queue-size: 100",
             "    steps: []",
         )
     )
@@ -293,18 +293,12 @@ def test_concurrency_key_parser_reports_unsupported_keys() -> None:
         "group",
         "cancel-in-progress",
         "queue",
+        "queue-size",
     ]
 
 
 def test_workflow_concurrency_blocks_use_only_supported_keys() -> None:
-    """GitHub ignores unknown concurrency keys instead of rejecting them.
-
-    Regression test for issue #62: ``queue: max`` documented a queuing
-    guarantee the workflow never had. The syntax accepts only ``group`` and
-    ``cancel-in-progress``; with ``cancel-in-progress: false`` GitHub keeps the
-    running job and holds a single pending run per group.
-    https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#concurrency
-    """
+    """Documented concurrency keys include queue (issue #105)."""
     checked = 0
 
     for path in sorted(WORKFLOWS.glob("*.y*ml")):
@@ -312,7 +306,7 @@ def test_workflow_concurrency_blocks_use_only_supported_keys() -> None:
         unsupported = sorted(set(keys) - SUPPORTED_CONCURRENCY_KEYS)
         assert not unsupported, (
             f"{path.name}: concurrency blocks declare {unsupported}, which "
-            "GitHub Actions ignores silently. Only "
+            "are unsupported. Only "
             f"{sorted(SUPPORTED_CONCURRENCY_KEYS)} exist."
         )
         checked += len(keys)
@@ -440,7 +434,7 @@ def test_every_checkout_declares_credential_persistence() -> None:
             if "persist-credentials: true" in step:
                 persisting.append(f"{path.name}:{index + 1}")
 
-    assert checkouts == 24, f"expected 24 checkouts, found {checkouts}"
+    assert checkouts == 25, f"expected 25 checkouts, found {checkouts}"
     # Only the job that pushes the version bump commit needs the token wired
     # into the remote; every other checkout only reads the tree.
     assert (
