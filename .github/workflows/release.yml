@@ -12,6 +12,7 @@ on:
         description: 'Version bump type'
         required: true
         type: choice
+        default: patch
         options:
           - patch
           - minor
@@ -34,8 +35,8 @@ env:
 # the terminal status gate reliably treat a cancellation there as a timeout or
 # manual cancellation. Write-capable release jobs share one non-cancelling
 # concurrency group: a write that has started is never interrupted, and GitHub
-# holds at most one pending run for the group. GitHub Actions accepts only
-# `group` and `cancel-in-progress` here -- there is no queue-depth key.
+# queues up to 100 pending writers with `queue: max` so a third writer does
+# not discard an earlier pending release.
 jobs:
   # === DETECT CHANGES - determines which jobs should run ===
   detect-changes:
@@ -50,13 +51,13 @@ jobs:
       any-code-changed: ${{ steps.changes.outputs.any-code-changed }}
       docs-changed: ${{ steps.changes.outputs.docs-changed }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.13'
 
@@ -116,7 +117,7 @@ jobs:
         needs.detect-changes.outputs.any-code-changed == 'true'
       )
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -128,7 +129,7 @@ jobs:
         run: bash scripts/simulate-fresh-merge.sh
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.13'
 
@@ -219,7 +220,7 @@ jobs:
         needs.detect-changes.outputs.docs-changed == 'true'
       )
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -247,7 +248,7 @@ jobs:
       # upload token -- the same exchange the publish step performs.
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -287,12 +288,12 @@ jobs:
         needs.detect-changes.outputs.any-code-changed == 'true'
       )
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.13'
 
@@ -376,12 +377,12 @@ jobs:
         needs.test.result == 'success'
       )
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.13'
 
@@ -431,6 +432,7 @@ jobs:
         with:
           name: dist
           path: ${{ steps.python_layout.outputs.dist_dir }}
+          if-no-files-found: error
 
   # === CHANGELOG CHECK - only runs on PRs with code changes ===
   # Docs-only PRs (./docs folder, markdown files) don't require changelog fragments
@@ -444,13 +446,13 @@ jobs:
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -482,6 +484,7 @@ jobs:
 
       - name: Check for changelog fragments
         env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
           GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: python "$PYTHON_ROOT/scripts/validate_changeset.py"
@@ -499,7 +502,7 @@ jobs:
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -537,19 +540,22 @@ jobs:
   # Automatic release on push to main (if version changed)
   auto-release:
     name: Auto Release
-    needs: [lint, test, build, release-preflight]
+    needs: [lint, test, build, release-preflight, validate-docs, changelog, docker-build]
     outputs:
       released: ${{ steps.github_release.outputs.released }}
       version: ${{ steps.github_release.outputs.version }}
     concurrency:
       group: ${{ github.workflow }}-main-write
       cancel-in-progress: false
+      queue: max
     if: |
       !cancelled() &&
       github.event_name == 'push' && github.ref == 'refs/heads/main' &&
       needs.lint.result == 'success' &&
       needs.test.result == 'success' &&
       needs.build.result == 'success' &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') &&
       needs.release-preflight.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -557,13 +563,13 @@ jobs:
       contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.13'
 
@@ -650,13 +656,14 @@ jobs:
   # Manual release via workflow_dispatch - only after CI passes
   manual-release:
     name: Manual Release
-    needs: [lint, test, build, release-preflight]
+    needs: [lint, test, build, release-preflight, validate-docs, changelog, docker-build]
     outputs:
       released: ${{ steps.github_release.outputs.released }}
       version: ${{ steps.github_release.outputs.version }}
     concurrency:
       group: ${{ github.workflow }}-main-write
       cancel-in-progress: false
+      queue: max
     # !cancelled() prevents the skipped detect-changes dependency from propagating
     # through lint/test/build while still propagating workflow cancellation.
     # The explicit result checks ensure release only proceeds after CI passes.
@@ -666,6 +673,8 @@ jobs:
       needs.lint.result == 'success' &&
       needs.test.result == 'success' &&
       needs.build.result == 'success' &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') &&
       needs.release-preflight.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -677,14 +686,14 @@ jobs:
       # .git/config: scripts/version_and_commit.py runs `git push origin main`
       # to publish the version bump, which needs the token wired into the
       # remote. Every other checkout sets persist-credentials: false.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: true
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.13'
 
@@ -818,7 +827,7 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       RELEASE_VERSION: ${{ needs.auto-release.outputs.version || needs.manual-release.outputs.version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -860,7 +869,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -960,7 +969,7 @@ jobs:
             changelog, docker-build, auto-release, manual-release,
             docker-publish-config, docker-publish-build, docker-publish]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -968,5 +977,5 @@ jobs:
         env:
           NEEDS_JSON: ${{ toJSON(needs) }}
           RUN_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+          HEAD_REF: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/head', github.event.pull_request.number) || github.ref }}
         run: bash scripts/check-pipeline-status.sh

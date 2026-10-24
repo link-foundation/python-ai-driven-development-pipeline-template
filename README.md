@@ -187,6 +187,18 @@ The GitHub Actions workflow provides:
 4. **Building**: Package building and validation
 5. **Coverage**: Automatic upload to Codecov
 
+Shell and JSON changes activate the code checks. Changes under `docs/`,
+`changelog.d/`, `dev/log/`, `examples/`, and `experiments/` remain excluded.
+Dependabot PRs are exempt from the fragment requirement by authenticated author;
+branch names do not grant an exemption. Standalone shell scripts are checked
+with pinned ShellCheck in CI and pre-commit.
+
+Security checks probe dependency review availability first. A disabled Dependency
+graph warns on PRs and fails pushes to main and scheduled runs with the setting
+an administrator must enable: Settings → Code security → Dependency graph.
+Transient API failures are retried and reported as unknown, without claiming the
+setting is disabled. Set `DEPENDENCY_GRAPH_DEBUG=1` for response tracing.
+
 ### Runner and link-check policy
 
 Ubuntu jobs and Linux matrix entries use `ubuntu-24.04`. A workflow regression
@@ -202,6 +214,10 @@ Slash-containing refs must be percent-encoded in their URL segment for this
 fallback. Missing content and persistent outages still fail the workflow.
 Set `RECHECK_VERBOSE=true` to log each attempt; `RECHECK_WAIT_MS` adjusts the
 initial backoff (2000 milliseconds by default).
+
+Lychee scans the repository directory for Markdown and HTML, respecting ignored
+paths without warning when an extension is absent. Its cache persists between
+runs, and failed runs retain the `lychee-report` artifact.
 
 ### API Documentation
 
@@ -257,10 +273,11 @@ When such a surface is added, use the Python porting checklist in
 
 The release workflow (`release.yml`) provides:
 
-1. **Integrated CI checks**: Runs lint, test, and build before any release
+1. **Integrated CI checks**: Waits for lint, test, build, release preflight, and
+   any applicable documentation, changelog, and Docker build checks
 2. **Auto-release on push**: Publishes when the current PyPI version or GitHub
    release is missing, so interrupted releases can resume
-3. **Manual release**: Trigger releases via workflow_dispatch
+3. **Manual release**: Trigger releases via workflow_dispatch (default: patch)
 4. **Fragment collection**: Automatically collects changelog fragments
 5. **PyPI publishing**: OIDC trusted publishing (no tokens needed); existing
    uploads are skipped when retrying a partial release
@@ -272,7 +289,17 @@ The release workflow (`release.yml`) provides:
    the `DOCKERHUB_TOKEN` secret to publish native `linux/amd64` and
    `linux/arm64` images after each GitHub release
 
-**Important**: All releases require passing CI checks (lint + test + build). No release will ever happen without passing tests, ensuring code quality and stability.
+All releases require successful lint, test, build, and credential preflight.
+Failures or cancellations in any required check prevent publishing; checks that
+do not apply to the event may skip. Release writers share a non-cancelling queue
+that holds up to 100 pending jobs.
+
+PyPI preflight exchanges an OIDC token before publishing. A missing trusted
+publisher fails with the owner, repository, workflow, blank environment, and the
+appropriate existing-project or pending-publisher settings URL. Rename
+`[project].name` first if the template's `my-package` project is not yours.
+Rate limits and inconclusive token errors remain unknown. PR probes report
+credential problems as advisory because forks may not have publishing secrets.
 
 Both automatic and manual releases wait up to ten minutes for the exact PyPI
 version to appear before running the installation smoke test. A timeout explains

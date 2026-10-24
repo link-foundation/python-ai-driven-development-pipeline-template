@@ -1,0 +1,6 @@
+paths:
+  .github/workflows/**/*.{yml,yaml}:
+    ignore:
+      # queue is documented syntax, newer than actionlint 1.7.12's schema.
+      # Remove this exception when rhysd/actionlint#654 ships.
+      - 'unexpected key "queue" for "concurrency" section'

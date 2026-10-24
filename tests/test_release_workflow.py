@@ -110,7 +110,7 @@ def test_pipeline_status_gate_covers_every_other_release_job() -> None:
     assert "run: bash scripts/check-pipeline-status.sh" in gate
     assert "NEEDS_JSON: ${{ toJSON(needs) }}" in gate
     assert "RUN_SHA: ${{ github.event.pull_request.head.sha || github.sha }}" in gate
-    assert "BRANCH_NAME: ${{ github.head_ref || github.ref_name }}" in gate
+    assert "HEAD_REF:" in gate
     for job_name in job_names:
         if job_name != "pipeline-status":
             assert re.search(rf"(?:^|[\s,[])({re.escape(job_name)})(?=[\s,\]])", gate)
@@ -214,8 +214,8 @@ def test_release_workflow_action_versions_are_current() -> None:
     """Release workflow actions should use the current major versions."""
     release_workflow = read_workflow("release.yml")
 
-    assert_action_pin_count(release_workflow, "actions/checkout", "v6", 13)
-    assert_action_pin_count(release_workflow, "actions/setup-python", "v6", 7)
+    assert_action_pin_count(release_workflow, "actions/checkout", "v7", 13)
+    assert_action_pin_count(release_workflow, "actions/setup-python", "v7", 7)
     assert_action_pin_count(release_workflow, "actions/upload-artifact", "v7", 2)
     assert_action_pin_count(release_workflow, "actions/download-artifact", "v8", 2)
     assert_action_pin_absent(release_workflow, "actions/download-artifact", "v7")
@@ -247,7 +247,7 @@ def test_release_workflow_sets_git_default_branch_before_checkout() -> None:
     assert "  GIT_CONFIG_VALUE_0: main" in workflow
 
     env_index = workflow.index("env:\n  GIT_CONFIG_COUNT: '1'")
-    first_checkout_index = workflow.index("uses: actions/checkout@v6")
+    first_checkout_index = workflow.index("uses: actions/checkout@v7")
     assert env_index < first_checkout_index
 
 
