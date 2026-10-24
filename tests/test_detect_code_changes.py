@@ -44,3 +44,30 @@ def test_markdown_changes_activate_the_docs_gate(event_name: str) -> None:
         "any-code-changed": False,
         "docs-changed": True,
     }
+
+
+@pytest.mark.parametrize("event_name", ["pull_request", "push"])
+@pytest.mark.parametrize("prefix", ["", "python/"])
+@pytest.mark.parametrize(
+    "path", ["scripts/simulate-fresh-merge.sh", ".secretlintrc.json", "src/data.json"]
+)
+def test_shell_and_json_changes_activate_jobs(event_name, prefix, path) -> None:
+    assert detect_change_types([prefix + path], event_name=event_name) == {
+        "any-code-changed": True,
+        "docs-changed": False,
+    }
+
+
+@pytest.mark.parametrize("event_name", ["pull_request", "push"])
+@pytest.mark.parametrize("prefix", ["", "python/"])
+@pytest.mark.parametrize(
+    "folder", ["docs", "changelog.d", "dev/log", "examples", "experiments"]
+)
+@pytest.mark.parametrize("extension", ["sh", "json"])
+def test_excluded_folders_win_over_code_extensions(
+    event_name, prefix, folder, extension
+) -> None:
+    changes = detect_change_types(
+        [f"{prefix}{folder}/fixture.{extension}"], event_name=event_name
+    )
+    assert changes["any-code-changed"] is False

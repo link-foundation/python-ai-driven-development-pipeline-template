@@ -10,10 +10,27 @@ from pathlib import Path
 
 import pytest
 
-from scripts.validate_changeset import validate_fragment_content
+from scripts.validate_changeset import main, validate_fragment_content
 
 ROOT = Path(__file__).resolve().parents[1]
 VALID_FRAGMENT = "### Fixed\n\n- Document the source change.\n"
+
+
+def test_dependabot_author_skips_before_resolving_refs(monkeypatch, capsys) -> None:
+    monkeypatch.setenv("PR_AUTHOR", "dependabot[bot]")
+    assert main(["--base-ref", "missing-ref", "--head-ref", "missing-ref"]) == 0
+    assert "Skipping: PR opened by dependabot[bot]" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    "author", ["contributor", "dependabot", "dependabot[bot]-fake", ""]
+)
+def test_other_authors_and_bot_named_branches_still_require_fragments(
+    monkeypatch, author
+) -> None:
+    monkeypatch.setenv("PR_AUTHOR", author)
+    monkeypatch.setenv("GITHUB_HEAD_REF", "dependabot/pip/group")
+    assert main(["--base-ref", "missing-ref", "--head-ref", "missing-ref"]) == 1
 
 
 def git(repo: Path, *args: str) -> str:
