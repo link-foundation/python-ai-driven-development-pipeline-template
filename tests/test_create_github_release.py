@@ -194,7 +194,7 @@ def test_build_pypi_badge_links_to_exact_version_page() -> None:
     """PyPI badge should point at the exact published version, not the project."""
     badge = module.build_pypi_badge("my-package", "py_v1.2.3")
 
-    assert "img.shields.io" in badge
+    assert badge.startswith("[![PyPI version](https://img.shields.io/badge/pypi-1.2.3-")
     assert "https://pypi.org/project/my-package/1.2.3/" in badge
     assert "py_v1.2.3" not in badge
 
@@ -354,7 +354,7 @@ def test_append_pypi_badge_if_missing_adds_linked_version_badge() -> None:
     body = module.append_pypi_badge_if_missing("Release notes", "my-package", "1.2.3")
 
     assert "Release notes" in body
-    assert "https://img.shields.io" in body
+    assert body.endswith(module.build_pypi_badge("my-package", "1.2.3"))
     assert "https://pypi.org/project/my-package/1.2.3/" in body
 
 

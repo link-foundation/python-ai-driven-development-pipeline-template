@@ -7,6 +7,8 @@
   and validating paths and symlinks before extracting with Python's zipfile.
 - Run full CodeQL analysis for large pull requests and fail the Security gate on
   findings or incomplete SARIF reports while preserving scan evidence.
+- Detect existing release badges by parsed URL host so unrelated URLs and prose
+  cannot suppress the PyPI badge; resolve findings exposed by the full scan.
 - Reject missing, unreadable, empty or malformed lychee reports after a failed
   checker instead of reporting that all broken links have archived versions.
 - Preserve fenced changelog examples and following release details, and refuse

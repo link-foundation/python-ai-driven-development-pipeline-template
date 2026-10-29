@@ -20,7 +20,7 @@ across all affected workflows and helpers, without deferring requested work.
   document reproduction and verification; inspect full PR diff for regressions.
 - [ ] List CI runs with timestamps/SHAs, preserve failed logs under ci-logs/,
   inspect errors with line numbers, fix causes, and verify latest-head CI passes.
-- [ ] Run hosted artifact round trip and 300+ changed-file CodeQL regression.
+- [x] Run hosted artifact round trip and 300+ changed-file CodeQL regression.
 - [ ] Re-read final issue/PR feedback, check clean tree, mark PR #127 ready.
 
 ## Complete requirement inventory and candidate solutions
@@ -153,21 +153,54 @@ To be completed alongside implementation with source links and exact results.
 - Read recent merged PR #119 and downstream PR #32's reusable artifact helper.
   Adapted its SDK/reconciliation approach to all template artifact operations,
   with a bundled action so no install or credentials are needed in shell steps.
+- [CodeQL URL validation guidance](https://codeql.github.com/codeql-query-help/python/py-incomplete-url-substring-sanitization/)
+  recommends parsing the URL host, including for correctness outside security
+  sinks. The full scan exposed four pre-existing substring checks in release
+  badge code/tests. Shared exact-host detection fixes both release scripts;
+  ten regressions cover misleading domains, paths, userinfo, query strings and
+  prose, while retaining real badge/project-link idempotency.
 
 ### Reproduction and local verification
 
 - Python bugs: 18 failures / 24 passes before fixes; all 42 cases passed after.
 - CodeQL gate: pre-fix CLI/workflow regressions failed; 19 cases passed after,
   including two additional malformed-driver regressions found during review.
+- Replayed real SARIF through the CLI: template analysis 2057844164 (clean)
+  exits 0; meta-sovereign scheduled-security analysis 2049967568 from commit
+  dc30f00aefb2c1a89c64bf7e7fa78ef80a860fe7 exits 1 and reports all 50 findings.
+  Both reports were downloaded through the Code Scanning REST API with its
+  application/sarif+json representation; this corroborates #122's comment.
 - Artifact transfer: 19 Node cases pass, including DNS/socket recovery,
   exhaustion, permanent 4xx/quota refusal, stale-artifact refusal, lost-finalize
   reconciliation, empty evidence, Pages tar and verified raw downloads.
 - ZIP extraction: 12 subprocess cases pass for nested/empty/binary content,
   traversal, absolute/Windows paths, symlinks, special files and corrupt ZIPs.
 - Ruff, mypy, actionlint, both zizmor modes, ShellCheck and Sphinx -W pass.
-- Full Python suite: 535 passed, one existing multi-language-layout skip.
-- A temporary 301-file fixture brings PR #127 to 341 changed files. Its commit
-  will be reverted after hosted full-analysis evidence is recorded. GitHub's
+- Badge regressions: six failures before the exact-host fix; all ten pass after.
+- Full Python suite: 545 passed, one existing multi-language-layout skip.
+- A temporary 301-file fixture brought PR #127 to 341 changed files. Its commit
+  is reverted after hosted full-analysis evidence is recorded. GitHub's
   diff endpoint also rejects this fixture with HTTP 406 (300-file limit); source
-  and workflow changes were reviewed locally while awaiting the smaller diff.
-- Hosted checks: results recorded below when complete.
+  and workflow changes were reviewed locally before removing the fixture.
+
+### Hosted verification before final cleanup
+
+- [Security run 40959801018](https://github.com/link-foundation/python-ai-driven-development-pipeline-template/actions/runs/40959801018)
+  analyzed both Python and Actions on the 341-file diff at e7b8eef. Both Analyze
+  steps completed and uploaded normal Code Scanning results with no diff-limit
+  warning; no language or query was skipped. The Python gate then correctly
+  rejected four existing badge substring findings and the aggregate Security
+  gate failed. Actions had zero findings. Both SARIF artifacts survived failure.
+  Preserved full workflow log: ci-logs/Security-40959801018.log; aggregate failure
+  is at lines 5230–5231. The four findings and rejecting exit status are also at
+  lines 1968–1973 of ci-logs/codeql-python-large-diff.log. These findings are fixed
+  in both release helpers and their tests, without exclusions or suppressions.
+- [Artifact Transport Regression job](https://github.com/link-foundation/python-ai-driven-development-pipeline-template/actions/runs/40959801016/job/123749285519)
+  passed all 19 injected regressions, reproduced the committed bundle from the
+  lockfile, transferred nested/binary/empty evidence with strict deprecations,
+  compared all bytes, and verified the Pages tar through a pattern download.
+  The raw ZIP hashes matched and neither download emitted DEP0005.
+- Docs and Broken Link Checker passed at the same commit. Final cleaned-head
+  checks, including the badge correction, are recorded in PR #127 before it is
+  marked ready; the large-diff Security failure above is deliberate gate
+  evidence, not a claim that that historical run passed.

@@ -33,6 +33,7 @@ from release_naming import (  # noqa: E402
     build_release_tag,
     build_release_title,
     detect_python_layout,
+    has_release_badge,
     normalize_version,
 )
 
@@ -126,7 +127,7 @@ def append_pypi_badge_if_missing(
     version: str,
 ) -> str:
     """Append a linked PyPI version badge unless a shields.io badge exists."""
-    if "img.shields.io" in release_notes.lower():
+    if has_release_badge(release_notes):
         return release_notes
 
     badge = build_pypi_badge(distribution_name, version)

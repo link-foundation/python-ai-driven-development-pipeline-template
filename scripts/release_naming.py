@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Union
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 
 LANGUAGE = "Python"
@@ -86,3 +86,20 @@ def build_pypi_badge(distribution_name: str, version: str) -> str:
     image_url = f"https://img.shields.io/badge/pypi-{badge_version}-blue.svg?logo=pypi"
     package_url = f"https://pypi.org/project/{package_path}/{version_path}/"
     return f"[![PyPI version]({image_url})]({package_url})"
+
+
+def has_release_badge(body: str, *, include_project_link: bool = False) -> bool:
+    """Recognize badge/project URLs by exact host, preserving formatting retries."""
+    for candidate in re.findall(r"https?://[^\s<>()\[\]\"']+", body, re.IGNORECASE):
+        try:
+            url = urlsplit(candidate)
+            if url.hostname == "img.shields.io" or (
+                include_project_link
+                and url.hostname == "pypi.org"
+                and url.path.startswith("/project/")
+            ):
+                return True
+        except ValueError:
+            # Malformed example URLs do not prove the notes contain a badge.
+            continue
+    return False
