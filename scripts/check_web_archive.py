@@ -150,12 +150,22 @@ def main() -> int:
     print("=== Web Archive Fallback Check ===")
     print(f"Reading lychee output from: {output_path}")
 
-    if not output_path.exists():
-        print("No lychee output file found. Skipping web archive check.")
-        set_output("all_archived", "true")
-        return 0
+    try:
+        content = output_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as error:
+        print(f"::error::Cannot read lychee report {output_path}: {error}")
+        set_output("all_archived", "false")
+        return 1
 
-    broken_urls = extract_broken_urls(output_path.read_text(encoding="utf-8"))
+    broken_urls = extract_broken_urls(content)
+    # This helper normally runs only after a failed checker. A report with no
+    # parseable failures cannot prove that checker completed successfully.
+    if not broken_urls and os.environ.get("LYCHEE_EXIT_CODE", "1") != "0":
+        print(
+            f"::error::Failed lychee checker produced an empty or malformed report: {output_path}"
+        )
+        set_output("all_archived", "false")
+        return 1
     recovered_file = Path(os.environ.get("RECOVERED_URLS", "lychee/recovered.txt"))
     recovered_text = (
         recovered_file.read_text(encoding="utf-8") if recovered_file.exists() else ""

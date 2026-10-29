@@ -77,39 +77,47 @@ def run_command(cmd: list[str], check: bool = True) -> subprocess.CompletedProce
 
 
 def extract_changelog_entry(changelog_path: Path, version: str) -> str:
-    """Extract the changelog entry for a specific version."""
-    if not changelog_path.exists():
-        print(f"Warning: {changelog_path} not found", file=sys.stderr)
-        return f"Release {version}"
+    """Extract required notes, recognizing release headings outside fences only.
 
-    content = changelog_path.read_text()
-
-    # Scriv's configured title is "## [1.2.3] - date"; the version bumper's
-    # generic fallback and older changelogs use an unbracketed heading.
-    version_pattern = rf"^## (?:\[{re.escape(version)}\]|{re.escape(version)})(?:\s|$)"
-    match = re.search(version_pattern, content, re.MULTILINE)
-
-    if not match:
-        print(
-            f"Warning: Version {version} not found in {changelog_path}",
-            file=sys.stderr,
-        )
-        return f"Release {version}"
-
-    # Extract content until next version section or end of file
-    start = match.end()
-    next_version = re.search(
-        r"^## (?:\[\d+\.\d+\.\d+\]|\d+\.\d+\.\d+)(?:\s|$)",
-        content[start:],
-        re.MULTILINE,
+    Slice the original text without changing line endings or body indentation.
+    Fences follow CommonMark's delimiter character, length and indentation rules.
+    """
+    content = changelog_path.read_bytes().decode(ENCODING)
+    heading = re.compile(
+        r"^ {0,3}##[ \t]+(?:\[(\d+\.\d+\.\d+[^\]\s]*)\]|"
+        r"(\d+\.\d+\.\d+[^\s]*))(?:[ \t]+.*)?$"
     )
+    fence: str | None = None
+    offset = 0
+    start: int | None = None
+    end = len(content)
+    for line in content.splitlines(keepends=True):
+        text = line.rstrip("\r\n")
+        marker = re.match(r"^ {0,3}(`{3,}|~{3,})(.*)$", text)
+        if fence:
+            if (
+                marker
+                and marker[1][0] == fence[0]
+                and len(marker[1]) >= len(fence)
+                and not marker[2].strip()
+            ):
+                fence = None
+        elif marker and (marker[1][0] != "`" or "`" not in marker[2]):
+            fence = marker[1]
+        else:
+            match = heading.fullmatch(text)
+            if match:
+                if start is not None:
+                    end = offset
+                    break
+                if (match[1] or match[2]) == version:
+                    start = offset + len(line)
+        offset += len(line)
 
-    if next_version:
-        entry = content[start : start + next_version.start()].strip()
-    else:
-        entry = content[start:].strip()
-
-    return entry if entry else f"Release {version}"
+    if start is None or not content[start:end].strip():
+        msg = f"Required changelog entry for {version} is missing or empty in {changelog_path}"
+        raise ValueError(msg)
+    return content[start:end].strip("\r\n")
 
 
 def append_pypi_badge_if_missing(

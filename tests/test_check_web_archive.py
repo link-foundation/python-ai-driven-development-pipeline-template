@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import importlib.util
+import os
+import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 
 SCRIPT_PATH = (
     Path(__file__).resolve().parent.parent / "scripts" / "check_web_archive.py"
@@ -108,3 +111,39 @@ def test_main_treats_a_recheck_recovered_url_as_not_broken(
     output = capsys.readouterr().out
     assert "answers the re-check -- not broken" in output
     assert "No broken URLs found in lychee output." in output
+
+
+@pytest.mark.parametrize(
+    "report_kind", ["missing", "empty", "malformed", "directory", "invalid-utf8"]
+)
+def test_failed_checker_requires_readable_report(
+    tmp_path: Path, report_kind: str
+) -> None:
+    """A failed lychee cannot be approved without readable failure evidence."""
+    report = tmp_path / "out.md"
+    if report_kind == "directory":
+        report.mkdir()
+    elif report_kind != "missing":
+        report.write_bytes(
+            {"empty": b"", "malformed": b"checker crashed", "invalid-utf8": b"\xff"}[
+                report_kind
+            ]
+        )
+    outputs = tmp_path / "outputs"
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT_PATH)],
+        env={
+            **os.environ,
+            "LYCHEE_OUTPUT": str(report),
+            "LYCHEE_EXIT_CODE": "2",
+            "GITHUB_OUTPUT": str(outputs),
+        },
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=10,
+    )
+    assert result.returncode != 0
+    assert "all_archived=true" not in result.stdout
+    assert "all_archived=false" in outputs.read_text()
+    assert "::error::" in result.stdout
