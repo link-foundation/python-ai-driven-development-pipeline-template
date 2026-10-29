@@ -8,9 +8,12 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        exclude: ^\.github/actions/artifact/dist/.*\.mjs$
       - id: end-of-file-fixer
+        exclude: ^\.github/actions/artifact/dist/.*\.mjs$
       - id: check-yaml
       - id: check-added-large-files
+        exclude: ^\.github/actions/artifact/dist/.*\.mjs$
       - id: check-merge-conflict
       - id: check-toml
       - id: debug-statements

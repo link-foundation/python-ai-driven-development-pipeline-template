@@ -187,9 +187,9 @@ def test_docs_workflow_action_versions_are_current() -> None:
 
     assert_action_pin_count(docs_workflow, "actions/checkout", "v7", 2)
     assert_action_pin_count(docs_workflow, "actions/setup-python", "v7", 1)
-    assert_action_pin_count(docs_workflow, "actions/upload-artifact", "v7", 1)
+    assert docs_workflow.count("uses: $/.github/actions/artifact") == 2
     assert_action_pin_count(docs_workflow, "actions/configure-pages", "v6", 1)
-    assert_action_pin_count(docs_workflow, "actions/upload-pages-artifact", "v5", 1)
+    assert "pages: true" in docs_workflow
     assert_action_pin_count(docs_workflow, "actions/deploy-pages", "v5", 1)
 
     assert_action_pin_absent(docs_workflow, "actions/checkout", "v4")
@@ -434,7 +434,7 @@ def test_every_checkout_declares_credential_persistence() -> None:
             if "persist-credentials: true" in step:
                 persisting.append(f"{path.name}:{index + 1}")
 
-    assert checkouts == 25, f"expected 25 checkouts, found {checkouts}"
+    assert checkouts == 26, f"expected 26 checkouts, found {checkouts}"
     # Only the job that pushes the version bump commit needs the token wired
     # into the remote; every other checkout only reads the tree.
     assert (

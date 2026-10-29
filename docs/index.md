@@ -13,6 +13,7 @@ with your project name, author, and the autodoc target package.
 
 api
 preview-regeneration
+ci-evidence
 ```
 
 ## Indices

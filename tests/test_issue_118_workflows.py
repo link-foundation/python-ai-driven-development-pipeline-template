@@ -70,7 +70,10 @@ def test_pedantic_workflow_audit_is_online() -> None:
 def test_every_artifact_upload_fails_when_it_finds_no_files() -> None:
     for path in WORKFLOWS.glob("*.yml"):
         for step in re.split(r"^      - ", path.read_text(), flags=re.MULTILINE):
-            if "uses: actions/upload-artifact@" in step:
+            if (
+                "uses: $/.github/actions/artifact" in step
+                and "operation: download" not in step
+            ):
                 assert "if-no-files-found: error" in step, (path.name, step)
 
 

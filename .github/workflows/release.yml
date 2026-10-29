@@ -428,7 +428,7 @@ jobs:
           twine check dist/*
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v7
+        uses: $/.github/actions/artifact
         with:
           name: dist
           path: ${{ steps.python_layout.outputs.dist_dir }}
@@ -612,8 +612,9 @@ jobs:
 
       - name: Download artifacts
         if: steps.version_check.outputs.should_release == 'true'
-        uses: actions/download-artifact@v8
+        uses: $/.github/actions/artifact
         with:
+          operation: download
           name: dist
           path: dist/
 
@@ -901,7 +902,7 @@ jobs:
           touch "/tmp/digests/${DIGEST#sha256:}"
 
       - name: Upload image digest
-        uses: actions/upload-artifact@v7
+        uses: $/.github/actions/artifact
         with:
           name: docker-digest-${{ strategy.job-index }}
           path: /tmp/digests/*
@@ -929,8 +930,9 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Download image digests
-        uses: actions/download-artifact@v8
+        uses: $/.github/actions/artifact
         with:
+          operation: download
           path: /tmp/digests
           pattern: docker-digest-*
           merge-multiple: true

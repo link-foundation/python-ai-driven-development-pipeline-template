@@ -216,8 +216,8 @@ def test_release_workflow_action_versions_are_current() -> None:
 
     assert_action_pin_count(release_workflow, "actions/checkout", "v7", 13)
     assert_action_pin_count(release_workflow, "actions/setup-python", "v7", 7)
-    assert_action_pin_count(release_workflow, "actions/upload-artifact", "v7", 2)
-    assert_action_pin_count(release_workflow, "actions/download-artifact", "v8", 2)
+    assert release_workflow.count("uses: $/.github/actions/artifact") == 4
+    assert release_workflow.count("operation: download") == 2
     assert_action_pin_absent(release_workflow, "actions/download-artifact", "v7")
     assert_action_hash_pin(release_workflow, "codecov/codecov-action", 1)
     assert_action_hash_pin(release_workflow, "pypa/gh-action-pypi-publish", 2)
@@ -493,9 +493,10 @@ def test_release_workflow_publishes_multi_arch_docker_images() -> None:
     assert "cache-to: type=gha,mode=max,scope=${{ matrix.platform }}" in build
     assert "push-by-digest=true" in build
     assert "name-canonical=true" in build
-    assert "uses: actions/upload-artifact@v7" in build
+    assert "uses: $/.github/actions/artifact" in build
 
-    assert "uses: actions/download-artifact@v8" in publish
+    assert "uses: $/.github/actions/artifact" in publish
+    assert "operation: download" in publish
     assert "merge-multiple: true" in publish
     assert "docker buildx imagetools create" in publish
     assert '--tag "${IMAGE}:latest"' in publish

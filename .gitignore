@@ -207,3 +207,6 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Local artifact action dependencies (the generated bundle is committed).
+node_modules/

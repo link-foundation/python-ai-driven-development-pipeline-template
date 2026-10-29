@@ -100,6 +100,7 @@ jobs:
         env:
           LYCHEE_OUTPUT: lychee/out.md
           RECOVERED_URLS: lychee/recovered.txt
+          LYCHEE_EXIT_CODE: ${{ steps.lychee.outputs.exit_code }}
 
       - name: Fail if broken links were found
         if: >-
@@ -123,7 +124,7 @@ jobs:
 
       - name: Upload lychee report
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: $/.github/actions/artifact
         with:
           name: lychee-report
           path: lychee/out.md
