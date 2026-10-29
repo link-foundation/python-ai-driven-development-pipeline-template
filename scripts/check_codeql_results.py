@@ -23,7 +23,8 @@ def validate_report(payload: object) -> list[str]:
             continue
         tool = run.get("tool")
         driver = tool.get("driver") if isinstance(tool, dict) else None
-        if not isinstance(driver, dict) or not driver.get("name"):
+        name = driver.get("name") if isinstance(driver, dict) else None
+        if not isinstance(name, str) or not name.strip():
             errors.append(f"{prefix}: missing tool driver")
         invocations = run.get("invocations", [])
         if not isinstance(invocations, list) or any(

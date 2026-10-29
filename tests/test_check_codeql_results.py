@@ -69,6 +69,8 @@ def test_rejects_every_finding_level_in_later_files_and_runs(tmp_path, level):
         report(invocations=[{}]),
         report(results="bad"),
         report(tool={}),
+        report(tool={"driver": {"name": 42}}),
+        report(tool={"driver": {"name": "   "}}),
     ],
 )
 def test_rejects_invalid_or_unsuccessful_reports(tmp_path, payload):

@@ -8,14 +8,14 @@ across all affected workflows and helpers, without deferring requested work.
 - [x] Read parent issue, six sub-issues, all comments and PR conversation,
   inline review comments and reviews; confirm native sub-issue inventory.
 - [x] Verify prepared branch and clean initial working tree.
-- [ ] Research official upstream sources and recent related PRs; compare reusable
+- [x] Research official upstream sources and recent related PRs; compare reusable
   components and implementation options below.
-- [ ] Add minimal regressions and observe failures before each implementation.
-- [ ] Implement all criteria, including every artifact call site.
-- [ ] Run focused tests, then the complete Python suite and local CI checks:
+- [x] Add minimal regressions and observe failures before each implementation.
+- [x] Implement all criteria, including every artifact call site.
+- [x] Run focused tests, then the complete Python suite and local CI checks:
   Ruff lint/format, mypy, file-size check, actionlint, zizmor and ShellCheck.
-- [ ] Add a release-triggering changelog fragment; commit useful atomic steps.
-- [ ] Fetch/merge latest main as needed; push only issue-126-89f22b11c0b0.
+- [x] Add a release-triggering changelog fragment; commit useful atomic steps.
+- [x] Fetch/merge latest main as needed; push only issue-126-89f22b11c0b0.
 - [ ] Update PR title/body, retain separate Fixes references for #120–#126,
   document reproduction and verification; inspect full PR diff for regressions.
 - [ ] List CI runs with timestamps/SHAs, preserve failed logs under ci-logs/,
@@ -157,11 +157,17 @@ To be completed alongside implementation with source links and exact results.
 ### Reproduction and local verification
 
 - Python bugs: 18 failures / 24 passes before fixes; all 42 cases passed after.
-- CodeQL gate: pre-fix CLI/workflow regressions failed; 17 cases passed after.
+- CodeQL gate: pre-fix CLI/workflow regressions failed; 19 cases passed after,
+  including two additional malformed-driver regressions found during review.
 - Artifact transfer: 19 Node cases pass, including DNS/socket recovery,
   exhaustion, permanent 4xx/quota refusal, stale-artifact refusal, lost-finalize
   reconciliation, empty evidence, Pages tar and verified raw downloads.
 - ZIP extraction: 12 subprocess cases pass for nested/empty/binary content,
   traversal, absolute/Windows paths, symlinks, special files and corrupt ZIPs.
 - Ruff, mypy, actionlint, both zizmor modes, ShellCheck and Sphinx -W pass.
-- Full Python suite and hosted checks: results recorded below when complete.
+- Full Python suite: 535 passed, one existing multi-language-layout skip.
+- A temporary 301-file fixture brings PR #127 to 341 changed files. Its commit
+  will be reverted after hosted full-analysis evidence is recorded. GitHub's
+  diff endpoint also rejects this fixture with HTTP 406 (300-file limit); source
+  and workflow changes were reviewed locally while awaiting the smaller diff.
+- Hosted checks: results recorded below when complete.
