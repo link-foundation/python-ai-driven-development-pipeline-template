@@ -34,6 +34,7 @@ from release_naming import (  # noqa: E402
     PYPROJECT_FILE,
     build_pypi_badge,
     detect_python_layout,
+    has_release_badge,
     normalize_version,
 )
 
@@ -95,7 +96,7 @@ def format_release_body(
 ) -> str:
     """Format the release body with enhanced information."""
     # Check if already formatted (has PyPI badge)
-    if "pypi.org/project" in body.lower() or "img.shields.io" in body.lower():
+    if has_release_badge(body, include_project_link=True):
         print("Release notes already formatted, skipping")
         return body
 

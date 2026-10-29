@@ -86,6 +86,61 @@ def test_release_notes_find_generic_unbracketed_version(tmp_path) -> None:
     assert "Older release." not in notes
 
 
+@pytest.mark.parametrize("fence", ["```md", "~~~markdown", "  ````md", "   ~~~~~"])
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_release_notes_preserve_fenced_examples(tmp_path, fence, newline) -> None:
+    """Only real release headings delimit notes; preserve their original bytes."""
+    delimiter = fence.strip()[0] * len(fence.strip().split("m")[0])
+    # A shorter or different delimiter cannot close the example.
+    body = newline.join(
+        [
+            "### Added",
+            "",
+            "  Indented detail.",
+            "",
+            fence,
+            "## [9.9.9]",
+            "```" if len(delimiter) > 3 else "~~~" if delimiter[0] == "`" else "```",
+            "## 8.8.8",
+            delimiter,
+            "",
+            "### Fixed",
+            "Remaining details.  ",
+        ]
+    )
+    changelog = tmp_path / "CHANGELOG.md"
+    changelog.write_bytes(
+        (
+            "## [1.2.3] - 2026-10-29"
+            + newline * 2
+            + body
+            + newline * 2
+            + "## 1.2.2"
+            + newline
+            + "old"
+        ).encode()
+    )
+    assert module.extract_changelog_entry(changelog, "1.2.3") == body
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        None,
+        "## 1.2.2\nold",
+        "```md\n## 1.2.3\nexample\n```",
+        "~~~\n## [1.2.3]\nexample",
+        "## 1.2.3\n\n## 1.2.2\nold",
+    ],
+)
+def test_release_notes_fail_when_required_entry_missing(tmp_path, content) -> None:
+    changelog = tmp_path / "CHANGELOG.md"
+    if content is not None:
+        changelog.write_text(content)
+    with pytest.raises((ValueError, FileNotFoundError), match="1.2.3|CHANGELOG"):
+        module.extract_changelog_entry(changelog, "1.2.3")
+
+
 def test_detect_python_layout_treats_python_subdir_as_multi_language(tmp_path) -> None:
     """A python/pyproject.toml means releases share a multi-language namespace."""
     python_root = tmp_path / "python"
@@ -139,7 +194,7 @@ def test_build_pypi_badge_links_to_exact_version_page() -> None:
     """PyPI badge should point at the exact published version, not the project."""
     badge = module.build_pypi_badge("my-package", "py_v1.2.3")
 
-    assert "img.shields.io" in badge
+    assert badge.startswith("[![PyPI version](https://img.shields.io/badge/pypi-1.2.3-")
     assert "https://pypi.org/project/my-package/1.2.3/" in badge
     assert "py_v1.2.3" not in badge
 
@@ -299,7 +354,7 @@ def test_append_pypi_badge_if_missing_adds_linked_version_badge() -> None:
     body = module.append_pypi_badge_if_missing("Release notes", "my-package", "1.2.3")
 
     assert "Release notes" in body
-    assert "https://img.shields.io" in body
+    assert body.endswith(module.build_pypi_badge("my-package", "1.2.3"))
     assert "https://pypi.org/project/my-package/1.2.3/" in body
 
 

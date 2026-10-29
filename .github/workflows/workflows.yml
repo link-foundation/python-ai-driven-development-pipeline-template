@@ -1,8 +1,8 @@
 name: Workflows
 
 # actionlint validates workflow schema and shellchecks inline run blocks.
-# Documented queue: max syntax is temporarily exempted in .github/actionlint.yaml
-# until rhysd/actionlint#654 ships; all other unknown keys remain errors.
+# Documented queue: max and self-repository syntax have narrow exceptions in
+# .github/actionlint.yaml until upstream support ships; other errors still fail.
 on:
   push:
     branches:
@@ -136,6 +136,86 @@ jobs:
       - name: Shellcheck every tracked shell script
         run: git ls-files -z '*.sh' | xargs -0 pipx run --spec shellcheck-py==0.11.0.1 shellcheck
 
+  artifact-roundtrip:
+    name: Artifact Transport Regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-artifacts
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Install pinned artifact dependencies
+        working-directory: .github/actions/artifact
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Test transport recovery and refusal
+        run: node --throw-deprecation --test tests/artifact.test.mjs
+
+      - name: Verify committed action bundle
+        working-directory: .github/actions/artifact
+        run: |
+          npm run build
+          git diff --exit-code -- dist
+
+      - name: Prepare round-trip evidence
+        run: |
+          mkdir -p /tmp/artifact-evidence/nested /tmp/pages-evidence
+          printf '\000\377\102' > /tmp/artifact-evidence/nested/bytes.bin
+          touch /tmp/artifact-evidence/empty
+          printf '<html>artifact transport regression</html>' > /tmp/pages-evidence/index.html
+
+      - name: Upload round-trip evidence
+        uses: $/.github/actions/artifact
+        with:
+          name: transport-roundtrip
+          path: /tmp/artifact-evidence
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Download with deprecations treated as errors
+        uses: $/.github/actions/artifact
+        env:
+          NODE_OPTIONS: --throw-deprecation
+        with:
+          operation: download
+          name: transport-roundtrip
+          path: /tmp/artifact-downloaded
+
+      - name: Verify every downloaded byte
+        run: diff -r /tmp/artifact-evidence /tmp/artifact-downloaded
+
+      - name: Upload Pages round-trip evidence
+        uses: $/.github/actions/artifact
+        with:
+          name: pages-roundtrip
+          pages: true
+          path: /tmp/pages-evidence
+          if-no-files-found: error
+
+      - name: Download Pages archive
+        uses: $/.github/actions/artifact
+        env:
+          NODE_OPTIONS: --throw-deprecation
+        with:
+          operation: download
+          pattern: pages-round*
+          merge-multiple: true
+          path: /tmp/pages-downloaded
+
+      - name: Verify Pages tar content
+        run: |
+          mkdir -p /tmp/pages-unpacked
+          tar -xf /tmp/pages-downloaded/artifact.tar -C /tmp/pages-unpacked
+          diff -r /tmp/pages-evidence /tmp/pages-unpacked
+
   # Terminal status gate (issue #69): GitHub reports jobs killed by
   # timeout-minutes as cancelled. Observe every other job so a timeout on main
   # becomes a visible failure instead of a grey run, while a run that was
@@ -146,6 +226,7 @@ jobs:
       - actionlint
       - zizmor
       - shellcheck
+      - artifact-roundtrip
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
