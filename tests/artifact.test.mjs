@@ -129,3 +129,39 @@ test('download retries transport, skips deprecated extraction and enforces diges
   await assert.rejects(downloadWithRetry({ downloadArtifact: async () => ({ digestMismatch: true }) }, { id: 1, digest: `sha256:${'a'.repeat(64)}` }, root, noWait), /digest/i);
   await assert.rejects(downloadWithRetry(client, { id: 1 }, root, noWait), /digest/i);
 });
+
+test('archiver-utils uses current glob without changing matches or ZIP bytes', async (t) => {
+  const { createRequire } = await import('node:module');
+  const actionDir = new URL('../.github/actions/artifact/', import.meta.url);
+  const lock = JSON.parse(await readFile(new URL('package-lock.json', actionDir), 'utf8'));
+  const globs = Object.entries(lock.packages).filter(([key]) => key.endsWith('node_modules/glob'));
+  assert.deepEqual(globs.map(([key, value]) => [key, value.version]), [['node_modules/glob', '13.0.6']]);
+  assert.ok(Object.values(lock.packages).every(value => !value.deprecated), 'no deprecated packages are locked');
+
+  const require = createRequire(new URL('package.json', actionDir));
+  let archiver;
+  try { archiver = require('archiver'); } catch { return t.skip('artifact dependencies are not installed'); }
+  const file = createRequire(require.resolve('archiver'))('archiver-utils').file;
+  const root = await mkdtemp(path.join(tmpdir(), 'glob-probe-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await mkdir(path.join(root, 'a/b'), { recursive: true });
+  for (const name of ['a/one.txt', 'a/b/two.txt', 'a/b/skip.log', '.hidden.txt']) await writeFile(path.join(root, name), name);
+  assert.deepEqual(file.expand({ cwd: root }, ['**/*.txt', '!**/skip*']).sort(), ['a/b/two.txt', 'a/one.txt']);
+  assert.deepEqual(file.expand({ cwd: root, dot: true }, ['*.txt']).sort(), ['.hidden.txt']);
+  assert.deepEqual(file.expand({ cwd: root, filter: 'isDirectory' }, ['a/**']).sort(), ['a', 'a/b']);
+
+  const zip = async () => {
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    const chunks = [];
+    archive.on('data', chunk => chunks.push(chunk));
+    const done = new Promise((resolve, reject) => { archive.on('end', resolve); archive.on('error', reject); });
+    archive.glob('**/*.txt', { cwd: root, dot: true }, { date: new Date(0) });
+    await archive.finalize();
+    await done;
+    return Buffer.concat(chunks);
+  };
+  const bytes = await zip();
+  assert.ok(bytes.subarray(0, 4).equals(Buffer.from('PK\x03\x04', 'latin1')));
+  assert.ok(bytes.equals(await zip()), 'ZIP bytes are deterministic');
+  for (const name of ['a/one.txt', 'a/b/two.txt', '.hidden.txt']) assert.ok(bytes.includes(Buffer.from(name)));
+});
