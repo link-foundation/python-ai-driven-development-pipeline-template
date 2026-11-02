@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-import subprocess
 
 import pytest
 
@@ -51,8 +50,10 @@ def test_link_scan_uses_directory_extensions_and_persists_cache() -> None:
     assert re.search(r"^            \.$", scan, re.MULTILINE)
     assert "uses: actions/cache@v5" in job
     assert "path: .lycheecache" in job
-    assert "key: cache-lychee-${{ github.sha }}" in job
-    assert "restore-keys: cache-lychee-" in job
+    # Issue #131: scoped to the UTC day so a restored cache is never too old.
+    day = "${{ steps.link-cache.outputs.day }}"
+    assert f"key: cache-lychee-{day}-${{{{ github.sha }}}}" in job
+    assert f"restore-keys: cache-lychee-{day}-" in job
     report = workflow_step_block(job, "Upload lychee report")
     assert "if: failure()" in report
     assert "name: lychee-report" in report
@@ -117,27 +118,15 @@ def test_required_dispatch_inputs_have_defaults() -> None:
                 assert "default:" in block, path.name
 
 
-def test_pages_suppresses_only_the_upstream_punycode_warning() -> None:
+def test_pages_deploy_needs_no_deprecation_warning_suppression() -> None:
+    """Issue #130 removed deploy-pages v5 and with it the DEP0040 workaround."""
     workflow = read_workflow("docs.yml")
-    job = workflow_job_block(workflow, "deploy")
-    step = workflow_step_block(job, "Deploy Pages artifact")
-    assert "NODE_OPTIONS: --disable-warning=DEP0040" in step
-    assert "actions/deploy-pages#434" in step
-    assert workflow.count("NODE_OPTIONS:") == 1
-    result = subprocess.run(
-        [
-            "node",
-            "--disable-warning=DEP0040",
-            "-e",
-            "require('punycode'); process.emitWarning('keep', {code:'DEP9999', type:'DeprecationWarning'})",
-        ],
-        capture_output=True,
-        text=True,
-        timeout=10,
-        check=True,
+    step = workflow_step_block(
+        workflow_job_block(workflow, "deploy"), "Deploy Pages artifact"
     )
-    assert "DEP0040" not in result.stderr
-    assert "DEP9999" in result.stderr
+    assert "uses: $/.github/actions/deploy-pages" in step
+    assert "NODE_OPTIONS" not in workflow
+    assert "DEP0040" not in workflow
 
 
 def test_standalone_shellcheck_is_pinned_and_required() -> None:

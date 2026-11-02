@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -93,6 +93,41 @@ test('empty and missing evidence fails before network access; globs preserve roo
   assert.equal((await findFiles(path.join(root, 'nested', '*'))).root, path.join(root, 'nested'));
 });
 
+test('findFiles keeps the @actions/glob semantics on patched minimatch', async (t) => {
+  const root = await mkdtemp(path.join(tmpdir(), 'artifact-glob-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  for (const name of ['a/one.txt', 'a/b/two.txt', 'a/b/skip.log', 'a/.dot/x.txt', 'c/d/deep.bin', 'single.md']) {
+    await mkdir(path.dirname(path.join(root, name)), { recursive: true });
+    await writeFile(path.join(root, name), name);
+  }
+  await symlink(path.join(root, 'a/one.txt'), path.join(root, 'a/link.txt'));
+  await symlink(path.join(root, 'c'), path.join(root, 'a/linkdir'));
+  const found = async input => {
+    const { files, root: base } = await findFiles(input);
+    return { files: files.map(file => path.relative(root, file)), root: path.relative(root, base) || '.' };
+  };
+  const at = name => path.join(root, name);
+  // A matched directory contributes its descendants; hidden entries and symlinks never do.
+  assert.deepEqual(await found(at('a')), { files: ['a/b/skip.log', 'a/b/two.txt', 'a/one.txt'], root: 'a' });
+  assert.deepEqual(await found(at('a/*')), { files: ['a/b/skip.log', 'a/b/two.txt', 'a/one.txt'], root: 'a' });
+  assert.deepEqual(await found(at('a/**/*.txt')), { files: ['a/b/two.txt', 'a/one.txt'], root: 'a' });
+  assert.deepEqual(await found(at('*/b')), { files: ['a/b/skip.log', 'a/b/two.txt'], root: '.' });
+  assert.deepEqual(await found(at('a/[ab]/t?o.txt')), { files: ['a/b/two.txt'], root: 'a' });
+  // One pattern per line, `#` comments, `!` exclusions; the root spans every search path.
+  assert.deepEqual(await found(`# evidence\n${at('a')}\n!${at('a/b/skip.log')}\n${at('c')}`),
+    { files: ['a/b/two.txt', 'a/one.txt', 'c/d/deep.bin'], root: '.' });
+  assert.deepEqual(await found(at('single.md')), { files: ['single.md'], root: '.' });
+  // Braces stay literal (nobrace), as in @actions/glob.
+  await assert.rejects(findFiles(at('a/b/*.{txt,log}')), /No files/);
+  await assert.rejects(findFiles(at('a/link.txt')), /No files/);
+  await assert.rejects(findFiles(at('a/linkdir')), /No files/);
+  await assert.rejects(findFiles(`!${at('a')}`), /No files/);
+  // GHSA-g3hv-75wg-m249 amplifies `**/../` chains; resolved, patched patterns stay cheap.
+  const started = Date.now();
+  await assert.rejects(findFiles(at(`${'**/../'.repeat(12)}missing`)), /No files/);
+  assert.ok(Date.now() - started < 5000, 'pattern preprocessing is bounded');
+});
+
 test('Pages artifact contains artifact.tar and the complete visible site', async (t) => {
   const root = await mkdtemp(path.join(tmpdir(), 'pages-test-'));
   t.after(() => rm(root, { recursive: true, force: true }));
@@ -130,12 +165,15 @@ test('download retries transport, skips deprecated extraction and enforces diges
   await assert.rejects(downloadWithRetry(client, { id: 1 }, root, noWait), /digest/i);
 });
 
-test('archiver-utils uses current glob without changing matches or ZIP bytes', async (t) => {
+test('archiver-utils and readdir-glob use patched glob and minimatch without changing matches or ZIP bytes', async (t) => {
   const { createRequire } = await import('node:module');
   const actionDir = new URL('../.github/actions/artifact/', import.meta.url);
   const lock = JSON.parse(await readFile(new URL('package-lock.json', actionDir), 'utf8'));
   const globs = Object.entries(lock.packages).filter(([key]) => key.endsWith('node_modules/glob'));
-  assert.deepEqual(globs.map(([key, value]) => [key, value.version]), [['node_modules/glob', '13.0.6']]);
+  // glob 14.0.2+ and minimatch 11.0.1+ fix GHSA-3g3m-2fjr-6pw4 and GHSA-g3hv-75wg-m249 (issue #132).
+  assert.deepEqual(globs.map(([key, value]) => [key, value.version]), [['node_modules/glob', '14.0.3']]);
+  const minimatches = Object.entries(lock.packages).filter(([key]) => key.endsWith('node_modules/minimatch'));
+  assert.deepEqual(minimatches.map(([key, value]) => [key, value.version]), [['node_modules/minimatch', '11.0.4']]);
   assert.ok(Object.values(lock.packages).every(value => !value.deprecated), 'no deprecated packages are locked');
 
   const require = createRequire(new URL('package.json', actionDir));

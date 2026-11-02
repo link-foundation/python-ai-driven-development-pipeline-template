@@ -2,8 +2,14 @@
 
 All artifact transfers use the local JavaScript action in
 `.github/actions/artifact`. It bundles exact versions of GitHub's artifact SDK,
-Core and Glob with a committed lockfile and third-party license notices. Runtime
-credentials stay inside the runner's JavaScript action context.
+Core and minimatch with a committed lockfile and third-party license notices.
+Runtime credentials stay inside the runner's JavaScript action context.
+
+Upload paths keep the `@actions/glob` rules: one pattern per line, `#`
+comments, `!` exclusions, every file under a matched directory, and no hidden
+entries or symbolic links. The action matches them with minimatch 11 itself,
+because `@actions/glob` 0.7.0 requires the API that minimatch 11 removed and
+older minimatch versions carry GHSA-g3hv-75wg-m249.
 
 Transfers retry transient DNS/socket failures and HTTP 429/5xx responses up to
 three times, with 5 and 10 second delays. Permanent refusals, quota errors and
@@ -27,6 +33,14 @@ npm test --prefix .github/actions/artifact
 npm run build --prefix .github/actions/artifact
 git add -f .github/actions/artifact/dist
 ```
+
+The Security workflow audits every committed `package-lock.json` with
+`scripts/audit-npm-locks.sh` (`npm audit --package-lock-only
+--audit-level=moderate`) on pushes, pull requests and its weekly schedule.
+Dependabot (`.github/dependabot.yml`) proposes weekly npm and GitHub Actions
+updates after a seven-day cooldown. Dependabot does not rebuild `dist`, so an npm
+update pull request fails "Verify committed action bundle" until someone runs the
+commands above on its branch and pushes the rebuilt bundle.
 
 The Workflows pipeline tests injected transport errors and a real artifact
 round trip, compares every downloaded byte, verifies the Pages tar, and runs

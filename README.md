@@ -216,8 +216,12 @@ Set `RECHECK_VERBOSE=true` to log each attempt; `RECHECK_WAIT_MS` adjusts the
 initial backoff (2000 milliseconds by default).
 
 Lychee scans the repository directory for Markdown and HTML, respecting ignored
-paths without warning when an extension is absent. Its cache persists between
-runs, and failed runs retain the `lychee-report` artifact.
+paths without warning when an extension is absent. Besides pushes and pull
+requests that touch those files, the checker runs every Monday at 06:00 UTC, so
+links that rot without a commit are still reported. Its cache is keyed by UTC
+day: runs on the same day reuse results, and lychee never has to discard a cache
+older than its one-day `--max-cache-age`. Failed runs retain the
+`lychee-report` artifact.
 
 ### API Documentation
 
@@ -256,9 +260,20 @@ repositories green while still validating their docs before Pages is configured.
    repository variable `DEPLOY_GITHUB_PAGES` with value `true`.
 
 Without the variable, the workflow logs a notice and skips deployment without
-failing. Without the Pages source setting, an opted-in deploy fails on
-`actions/deploy-pages` with `Get Pages site failed`. The Pages source setting
-cannot be configured from a workflow.
+failing. Without the Pages source setting, an opted-in deploy fails with HTTP
+404, the GitHub request ID and a link to the Pages settings. The Pages source
+setting cannot be configured from a workflow.
+
+The deploy job publishes with the local `.github/actions/deploy-pages` action,
+which speaks the REST protocol of `actions/deploy-pages@v5` using only Node.js
+built-ins. The build job outputs the ID of the `github-pages` artifact it
+uploaded, and the deploy job publishes exactly that artifact. A transient
+HTTP 5xx, HTTP 429 or lost connection while creating the deployment is retried
+up to three times, 10 and 20 seconds apart. Before each retry the action looks
+up the deployment of the commit SHA and adopts it unless it failed, so one
+commit is never deployed twice. A refusal (any other 4xx) fails at once with
+the status and request ID. Status polling, the 10-minute timeout and
+cancellation match `actions/deploy-pages@v5`.
 
 ### Preview regeneration parity
 
