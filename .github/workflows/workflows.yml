@@ -11,12 +11,14 @@ on:
       - '.github/**'
       - '**.sh'
       - '.pre-commit-config.yaml'
+      - 'tests/*.test.mjs'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
       - '.github/**'
       - '**.sh'
       - '.pre-commit-config.yaml'
+      - 'tests/*.test.mjs'
   workflow_dispatch:
 
 permissions:
@@ -158,6 +160,10 @@ jobs:
 
       - name: Test transport recovery and refusal
         run: node --throw-deprecation --test tests/artifact.test.mjs
+
+      # Issue #130: mocked Pages API; no dependencies to install.
+      - name: Test Pages deployment retries and refusals
+        run: node --throw-deprecation --test tests/deploy-pages.test.mjs
 
       # Dependabot npm PRs (.github/dependabot.yml) update the lockfile but
       # never run the build, so they stop here until dist/ is rebuilt.

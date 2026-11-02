@@ -8,8 +8,15 @@ name: Docs
 # One-time setup: in the repository's Settings -> Pages, set Source to
 # "GitHub Actions", then set the DEPLOY_GITHUB_PAGES repository variable to
 # "true". Without the variable, deployment is skipped with a notice. Without
-# Pages configured, actions/deploy-pages fails with "Get Pages site failed".
-# See README.md "Deploying API documentation".
+# Pages configured, the deploy step fails with HTTP 404, the request ID and a
+# link to the Pages settings. See README.md "Deploying API documentation".
+#
+# The deploy job uses the local .github/actions/deploy-pages action (issue
+# #130): the REST protocol of actions/deploy-pages@v5, plus bounded retries
+# of a transient 5xx/429 from creating the deployment. Before each retry it
+# looks the deployment up by commit SHA and adopts it unless it failed, so a
+# commit is never deployed twice. It publishes exactly the artifact ID that
+# the build job outputs.
 
 on:
   push:
@@ -19,6 +26,7 @@ on:
       - 'src/**'
       - 'pyproject.toml'
       - '.github/workflows/docs.yml'
+      - '.github/actions/deploy-pages/**'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
@@ -26,6 +34,7 @@ on:
       - 'src/**'
       - 'pyproject.toml'
       - '.github/workflows/docs.yml'
+      - '.github/actions/deploy-pages/**'
   workflow_dispatch:
 
 # Least-privilege default; the write scopes GitHub Pages needs are granted
@@ -51,6 +60,9 @@ jobs:
       contents: read
       # actions/configure-pages enables the Pages site on push to main.
       pages: write
+    outputs:
+      # Empty unless the Pages artifact was uploaded; deploy only runs then.
+      pages-artifact-id: ${{ steps.pages-artifact.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -86,6 +98,7 @@ jobs:
         uses: actions/configure-pages@v6
 
       - name: Upload GitHub Pages artifact
+        id: pages-artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_GITHUB_PAGES == 'true'
         uses: $/.github/actions/artifact
         with:
@@ -102,7 +115,7 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
-      # actions/deploy-pages publishes the artifact using an OIDC token.
+      # The deploy action publishes the artifact using an OIDC token.
       pages: write
       id-token: write
     environment:
@@ -111,11 +124,9 @@ jobs:
     steps:
       - name: Deploy Pages artifact
         id: deployment
-        uses: actions/deploy-pages@v5
-        # Remove when actions/deploy-pages#434 fixes the bundled dependency.
-        # Only DEP0040 is suppressed; other warnings remain visible.
-        env:
-          NODE_OPTIONS: --disable-warning=DEP0040
+        uses: $/.github/actions/deploy-pages
+        with:
+          artifact_id: ${{ needs.build.outputs.pages-artifact-id }}
 
   # Terminal status gate (issue #69): GitHub reports jobs killed by
   # timeout-minutes as cancelled. Observe every other job so a timeout on main

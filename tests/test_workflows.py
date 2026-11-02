@@ -190,7 +190,9 @@ def test_docs_workflow_action_versions_are_current() -> None:
     assert docs_workflow.count("uses: $/.github/actions/artifact") == 2
     assert_action_pin_count(docs_workflow, "actions/configure-pages", "v6", 1)
     assert "pages: true" in docs_workflow
-    assert_action_pin_count(docs_workflow, "actions/deploy-pages", "v5", 1)
+    # Issue #130: the local action replaces actions/deploy-pages@v5.
+    assert docs_workflow.count("uses: $/.github/actions/deploy-pages") == 1
+    assert "uses: actions/deploy-pages@" not in docs_workflow
 
     assert_action_pin_absent(docs_workflow, "actions/checkout", "v4")
     assert_action_pin_absent(docs_workflow, "actions/setup-python", "v5")
@@ -434,7 +436,7 @@ def test_every_checkout_declares_credential_persistence() -> None:
             if "persist-credentials: true" in step:
                 persisting.append(f"{path.name}:{index + 1}")
 
-    assert checkouts == 26, f"expected 26 checkouts, found {checkouts}"
+    assert checkouts == 27, f"expected 27 checkouts, found {checkouts}"
     # Only the job that pushes the version bump commit needs the token wired
     # into the remote; every other checkout only reads the tree.
     assert (

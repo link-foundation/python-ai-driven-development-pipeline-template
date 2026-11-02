@@ -260,9 +260,20 @@ repositories green while still validating their docs before Pages is configured.
    repository variable `DEPLOY_GITHUB_PAGES` with value `true`.
 
 Without the variable, the workflow logs a notice and skips deployment without
-failing. Without the Pages source setting, an opted-in deploy fails on
-`actions/deploy-pages` with `Get Pages site failed`. The Pages source setting
-cannot be configured from a workflow.
+failing. Without the Pages source setting, an opted-in deploy fails with HTTP
+404, the GitHub request ID and a link to the Pages settings. The Pages source
+setting cannot be configured from a workflow.
+
+The deploy job publishes with the local `.github/actions/deploy-pages` action,
+which speaks the REST protocol of `actions/deploy-pages@v5` using only Node.js
+built-ins. The build job outputs the ID of the `github-pages` artifact it
+uploaded, and the deploy job publishes exactly that artifact. A transient
+HTTP 5xx, HTTP 429 or lost connection while creating the deployment is retried
+up to three times, 10 and 20 seconds apart. Before each retry the action looks
+up the deployment of the commit SHA and adopts it unless it failed, so one
+commit is never deployed twice. A refusal (any other 4xx) fails at once with
+the status and request ID. Status polling, the 10-minute timeout and
+cancellation match `actions/deploy-pages@v5`.
 
 ### Preview regeneration parity
 
