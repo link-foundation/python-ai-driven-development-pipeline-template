@@ -36,6 +36,32 @@ jobs:
       - name: Audit pyproject.toml and docs/requirements.txt
         run: python scripts/audit_dependencies.py
 
+  # The Python audit above cannot see npm. The artifact action bundles its
+  # package-lock.json into the dist/ code that every artifact transfer runs,
+  # so each committed npm lockfile is audited on every run, scheduled ones
+  # included (issue #132).
+  npm-audit:
+    name: Audit npm Lockfiles
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-npm-audit
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Audit every committed package-lock.json
+        env:
+          NPM_AUDIT_LEVEL: moderate
+        run: bash scripts/audit-npm-locks.sh
+
   codeql:
     name: CodeQL (${{ matrix.language }})
     runs-on: ubuntu-24.04
@@ -119,6 +145,7 @@ jobs:
     name: Pipeline Status
     needs:
       - dependency-audit
+      - npm-audit
       - codeql
       - dependency-review
     if: always()

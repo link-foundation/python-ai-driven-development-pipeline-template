@@ -23,6 +23,11 @@ on:
       - 'scripts/check_web_archive.py'
       - 'scripts/recheck_broken_links.py'
   workflow_dispatch:
+  # Links rot without commits: recheck weekly even when no Markdown or HTML
+  # changed, so a dead external URL is caught by the schedule instead of the
+  # next unrelated pull request (issue #131).
+  schedule:
+    - cron: '0 6 * * 1'
 
 permissions:
   contents: read
@@ -47,12 +52,20 @@ jobs:
         with:
           persist-credentials: false
 
+      # lychee keeps cached results for --max-cache-age 1d and discards an older
+      # cache with "[WARN] Cache is too old". Scoping the key to the UTC day
+      # restores only a cache saved the same day, which lychee always accepts
+      # (issue #131).
+      - name: Name today's link cache
+        id: link-cache
+        run: echo "day=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
       - name: Restore lychee cache
         uses: actions/cache@v5
         with:
           path: .lycheecache
-          key: cache-lychee-${{ github.sha }}
-          restore-keys: cache-lychee-
+          key: cache-lychee-${{ steps.link-cache.outputs.day }}-${{ github.sha }}
+          restore-keys: cache-lychee-${{ steps.link-cache.outputs.day }}-
 
       - name: Check links with lychee
         id: lychee

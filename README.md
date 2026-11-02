@@ -216,8 +216,12 @@ Set `RECHECK_VERBOSE=true` to log each attempt; `RECHECK_WAIT_MS` adjusts the
 initial backoff (2000 milliseconds by default).
 
 Lychee scans the repository directory for Markdown and HTML, respecting ignored
-paths without warning when an extension is absent. Its cache persists between
-runs, and failed runs retain the `lychee-report` artifact.
+paths without warning when an extension is absent. Besides pushes and pull
+requests that touch those files, the checker runs every Monday at 06:00 UTC, so
+links that rot without a commit are still reported. Its cache is keyed by UTC
+day: runs on the same day reuse results, and lychee never has to discard a cache
+older than its one-day `--max-cache-age`. Failed runs retain the
+`lychee-report` artifact.
 
 ### API Documentation
 
