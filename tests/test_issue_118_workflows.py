@@ -121,7 +121,9 @@ def test_required_dispatch_inputs_have_defaults() -> None:
 def test_pages_deploy_needs_no_deprecation_warning_suppression() -> None:
     """Issue #130 removed deploy-pages v5 and with it the DEP0040 workaround."""
     workflow = read_workflow("docs.yml")
-    step = workflow_step_block(workflow_job_block(workflow, "deploy"), "Deploy Pages artifact")
+    step = workflow_step_block(
+        workflow_job_block(workflow, "deploy"), "Deploy Pages artifact"
+    )
     assert "uses: $/.github/actions/deploy-pages" in step
     assert "NODE_OPTIONS" not in workflow
     assert "DEP0040" not in workflow

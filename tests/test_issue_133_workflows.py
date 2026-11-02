@@ -32,9 +32,7 @@ def _tracked_lockfile_dirs() -> set[str]:
 
 def test_build_job_outputs_the_pages_artifact_id() -> None:
     build = workflow_job_block(read_workflow("docs.yml"), "build")
-    assert (
-        "pages-artifact-id: ${{ steps.pages-artifact.outputs.artifact-id }}" in build
-    )
+    assert "pages-artifact-id: ${{ steps.pages-artifact.outputs.artifact-id }}" in build
     upload = workflow_step_block(build, "Upload GitHub Pages artifact")
     assert "id: pages-artifact" in upload
     assert "pages: true" in upload
@@ -129,7 +127,7 @@ def test_npm_audit_covers_every_tracked_lockfile() -> None:
     script = ROOT / "scripts" / "audit-npm-locks.sh"
     text = script.read_text(encoding="utf-8")
     assert "npm audit --package-lock-only" in text
-    assert 'NPM_AUDIT_LEVEL:-moderate' in text
+    assert "NPM_AUDIT_LEVEL:-moderate" in text
     listed = subprocess.run(
         ["bash", str(script), "--list"],
         cwd=ROOT,
