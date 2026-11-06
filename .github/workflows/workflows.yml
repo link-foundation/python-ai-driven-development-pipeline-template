@@ -95,7 +95,7 @@ jobs:
       #
       # The action and CLI share one pin supported by this action's digest table.
       - name: Audit workflow files
-        uses: zizmorcore/zizmor-action@v0.6.4
+        uses: zizmorcore/zizmor-action@v0.8.0
         with:
           advanced-security: false
           annotations: true
