@@ -684,7 +684,7 @@ jobs:
       id-token: write
     steps:
       # The only checkout in this repository that keeps credentials in
-      # .git/config: scripts/version_and_commit.py runs `git push origin main`
+      # .git/config: scripts/version_and_commit.py runs `git push origin HEAD:refs/heads/main`
       # to publish the version bump, which needs the token wired into the
       # remote. Every other checkout sets persist-credentials: false.
       - uses: actions/checkout@v7
@@ -728,7 +728,7 @@ jobs:
         run: |
           cd "$PYTHON_ROOT"
           python -m pip install --upgrade pip
-          pip install build twine "scriv[toml]"
+          pip install build twine "scriv[toml]" uv
 
       - name: Configure git
         run: |
@@ -740,6 +740,7 @@ jobs:
         env:
           BUMP_TYPE: ${{ github.event.inputs.bump_type }}
           DESCRIPTION: ${{ github.event.inputs.description }}
+          VALIDATED_SHA: ${{ github.sha }}
         run: |
           cd "$PYTHON_ROOT"
           python scripts/version_and_commit.py \
