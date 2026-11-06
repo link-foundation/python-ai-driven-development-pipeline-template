@@ -8,6 +8,65 @@ import sys
 from pathlib import Path
 
 
+def valid_notification(notification: object) -> bool:
+    """Validate diagnostic records even when their severity is informational."""
+    if not isinstance(notification, dict):
+        return False
+    message = notification.get("message")
+    if not isinstance(message, dict) or not any(
+        isinstance(message.get(key), str) and message[key]
+        for key in ("text", "markdown", "id")
+    ):
+        return False
+    if any(
+        key in message and not isinstance(message[key], str)
+        for key in ("text", "markdown", "id")
+    ):
+        return False
+    if "descriptor" in notification:
+        descriptor = notification["descriptor"]
+        if not isinstance(descriptor, dict) or not (
+            isinstance(descriptor.get("id"), str)
+            or type(descriptor.get("index")) is int
+            and descriptor["index"] >= 0
+        ):
+            return False
+    locations = notification.get("locations", [])
+    if not isinstance(locations, list):
+        return False
+    for location in locations:
+        if not isinstance(location, dict):
+            return False
+        physical = location.get("physicalLocation", {})
+        if not isinstance(physical, dict):
+            return False
+        for key in ("artifactLocation", "region", "contextRegion"):
+            if key in physical and not isinstance(physical[key], dict):
+                return False
+    return True
+
+
+def validate_notifications(invocation: dict, prefix: str) -> list[str]:
+    """An invocation can succeed while extraction/configuration is incomplete."""
+    errors = []
+    for key in ("toolExecutionNotifications", "toolConfigurationNotifications"):
+        notifications = invocation.get(key, [])
+        if not isinstance(notifications, list):
+            errors.append(f"{prefix}: malformed {key} array")
+            continue
+        for index, notification in enumerate(notifications):
+            valid = valid_notification(notification)
+            level = notification.get("level", "warning") if valid else None
+            if not valid or level not in ("note", "none"):
+                # Include every descriptor/location/message, JSON escaped so
+                # untrusted newlines cannot become workflow commands.
+                errors.append(
+                    f"{prefix}: {key}[{index}]: warning/error or malformed "
+                    f"notification: {json.dumps(notification)}"
+                )
+    return errors
+
+
 def validate_report(payload: object) -> list[str]:
     """Check every run without filtering by severity or suppressing results."""
     if not isinstance(payload, dict) or payload.get("version") != "2.1.0":
@@ -33,6 +92,14 @@ def validate_report(payload: object) -> list[str]:
             for invocation in invocations
         ):
             errors.append(f"{prefix}: unsuccessful or invalid tool invocation")
+        if isinstance(invocations, list):
+            for invocation_index, invocation in enumerate(invocations):
+                if isinstance(invocation, dict):
+                    errors.extend(
+                        validate_notifications(
+                            invocation, f"{prefix}, invocation {invocation_index + 1}"
+                        )
+                    )
         results = run.get("results")
         if not isinstance(results, list):
             errors.append(f"{prefix}: missing or invalid results")

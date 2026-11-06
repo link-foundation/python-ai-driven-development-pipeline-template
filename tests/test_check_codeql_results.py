@@ -83,3 +83,84 @@ def test_rejects_invalid_or_unsuccessful_reports(tmp_path, payload):
 def test_rejects_missing_reports(tmp_path):
     assert gate(tmp_path).returncode != 0
     assert gate(tmp_path / "missing").returncode != 0
+
+
+NOTIFICATION_KEYS = ["toolExecutionNotifications", "toolConfigurationNotifications"]
+
+
+@pytest.mark.parametrize("key", NOTIFICATION_KEYS)
+@pytest.mark.parametrize("level", ["error", "warning", None, "unknown", 1, []])
+def test_rejects_notifications_despite_successful_execution(tmp_path, key, level):
+    notification = {
+        "descriptor": {"id": "extractor/failure"},
+        "message": {"text": "Extraction failed"},
+        "locations": [
+            {
+                "physicalLocation": {
+                    "artifactLocation": {"uri": "src/example.py"},
+                    "region": {"startLine": 42},
+                }
+            }
+        ],
+    }
+    if level is not None:
+        notification["level"] = level
+    payload = report(
+        invocations=[
+            {"executionSuccessful": True},
+            {"executionSuccessful": True, key: [notification]},
+        ]
+    )
+    (tmp_path / "extraction.sarif").write_text(json.dumps(payload))
+    result = gate(tmp_path)
+    assert result.returncode != 0
+    for detail in (
+        key,
+        "extractor/failure",
+        "src/example.py",
+        "42",
+        "Extraction failed",
+    ):
+        assert detail in result.stdout
+
+
+@pytest.mark.parametrize("key", NOTIFICATION_KEYS)
+@pytest.mark.parametrize(
+    "notifications",
+    [
+        None,
+        {},
+        "bad",
+        [None],
+        [1],
+        [[]],
+        [{}],
+        [{"level": "note"}],
+        [{"level": "none", "message": "bad"}],
+        [{"level": "note", "message": {"text": 42}}],
+        [{"level": "note", "message": {"text": "ok"}, "locations": "bad"}],
+        [{"level": "note", "message": {"text": "ok"}, "descriptor": []}],
+    ],
+)
+def test_rejects_malformed_notification_evidence(tmp_path, key, notifications):
+    payload = report(invocations=[{"executionSuccessful": True, key: notifications}])
+    (tmp_path / "malformed.sarif").write_text(json.dumps(payload))
+    assert gate(tmp_path).returncode != 0
+
+
+@pytest.mark.parametrize("key", NOTIFICATION_KEYS)
+@pytest.mark.parametrize("level", ["note", "none"])
+def test_allows_informational_notifications(tmp_path, key, level):
+    payload = report(
+        invocations=[
+            {
+                "executionSuccessful": True,
+                key: [
+                    {"level": level, "message": {"text": "Analysis progress"}},
+                    {"level": level, "message": {"id": "localizedMessage"}},
+                ],
+            }
+        ]
+    )
+    (tmp_path / "information.sarif").write_text(json.dumps(payload))
+    assert gate(tmp_path).returncode == 0
