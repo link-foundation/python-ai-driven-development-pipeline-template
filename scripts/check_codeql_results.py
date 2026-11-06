@@ -34,8 +34,7 @@ def valid_notification(notification: object) -> bool:
         return False
     message = notification.get("message")
     if not isinstance(message, dict) or not any(
-        isinstance(message.get(key), str) and message[key]
-        for key in ("text", "markdown", "id")
+        isinstance(message.get(key), str) for key in ("text", "markdown", "id")
     ):
         return False
     if any(

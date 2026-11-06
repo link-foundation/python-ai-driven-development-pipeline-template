@@ -181,7 +181,9 @@ def push_branch_with_rebase_retry(
         if git_text(["rev-parse", "HEAD"]) != retry_head:
             raise ValueError("Release commit changed during push retry")
         attest_release(validated_sha, "HEAD", pyproject_git_path)
-        completed = run_git_capturing(["git", "push", "origin", branch])
+        completed = run_git_capturing(
+            ["git", "push", "origin", f"HEAD:refs/heads/{branch}"]
+        )
         if completed.returncode == 0:
             return
 
@@ -529,7 +531,7 @@ def main() -> int:
         new_version = get_current_version(pyproject_path)
         print(f"New version: {new_version}")
         if (project_root / "uv.lock").exists():
-            run_command(["uv", "lock", "--offline"])
+            run_command(["uv", "lock", "--offline", "--project", str(project_root)])
 
         if fragments:
             print(f"Collecting {len(fragments)} changelog fragment(s)...")

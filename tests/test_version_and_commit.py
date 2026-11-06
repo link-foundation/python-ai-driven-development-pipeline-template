@@ -206,9 +206,9 @@ def test_lost_race_is_rebased_and_push_succeeds(monkeypatch, capsys) -> None:
     monkeypatch.setattr(module, "run_git_capturing", fake_run)
     module.push_branch_with_rebase_retry("main")
 
-    assert commands[0] == ["git", "push", "origin", "main"]
+    assert commands[0] == ["git", "push", "origin", "HEAD:refs/heads/main"]
     assert commands[1] == ["git", "pull", "--rebase", "origin", "main"]
-    assert commands[2] == ["git", "push", "origin", "main"]
+    assert commands[2] == ["git", "push", "origin", "HEAD:refs/heads/main"]
     assert "Rebasing and retrying" in capsys.readouterr().err
 
 
@@ -346,7 +346,9 @@ def test_transient_push_retries_identical_commit_with_bounded_backoff(
     else:
         with pytest.raises(SystemExit):
             module.push_branch_with_rebase_retry("main")
-    assert commands == [["git", "push", "origin", "main"]] * (2 if succeed else 3)
+    assert commands == [["git", "push", "origin", "HEAD:refs/heads/main"]] * (
+        2 if succeed else 3
+    )
     assert sleeps == ([1] if succeed else [1, 2])
     assert INTERNAL_ERROR in capsys.readouterr().err
 

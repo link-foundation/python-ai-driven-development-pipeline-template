@@ -284,3 +284,25 @@ def test_unrelated_metadata_commit_is_not_a_prior_release(repository):
     commit()
     with pytest.raises(ValueError, match="must change project.version"):
         release.attest_release(validated, "HEAD", (root / "pyproject.toml").as_posix())
+
+
+def test_push_publishes_attested_head_from_detached_checkout(repository, tmp_path):
+    root, validated = remote_for(repository, tmp_path)
+    git("checkout", "--detach")
+    child = metadata_child(root)
+    assert git("rev-parse", "main") == validated
+    release.push_branch_with_rebase_retry(
+        "main",
+        validated_sha=validated,
+        pyproject_git_path=(root / "pyproject.toml").as_posix(),
+    )
+    assert git("rev-parse", "origin/main") == child
+
+
+def test_merge_child_cannot_replace_validated_parent(repository):
+    root, validated = repository
+    tree = git("rev-parse", "HEAD^{tree}")
+    other = git("commit-tree", tree, "-m", "unrelated parent")
+    merged = git("commit-tree", tree, "-p", validated, "-p", other, "-m", "merge")
+    with pytest.raises(ValueError, match="sole parent"):
+        release.attest_release(validated, merged, (root / "pyproject.toml").as_posix())

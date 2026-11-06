@@ -216,3 +216,34 @@ def test_notification_diagnostics_escape_workflow_commands(tmp_path):
     assert "run 2" in result.stdout
     assert "\\n::warning::injected" in result.stdout
     assert "\n::warning::injected" not in result.stdout
+
+
+@pytest.mark.parametrize("key", NOTIFICATION_KEYS)
+@pytest.mark.parametrize("level", ["note", "none"])
+def test_accepts_codeql_empty_informational_message(tmp_path, key, level):
+    notification = {
+        "message": {"text": ""},
+        "level": level,
+        "descriptor": {
+            "id": "py/diagnostics/successfully-extracted-files",
+            "index": 1,
+            "toolComponent": {"index": 0},
+        },
+        "locations": [
+            {
+                "physicalLocation": {
+                    "artifactLocation": {"uri": "src/example.py", "index": 0},
+                }
+            }
+        ],
+    }
+    (tmp_path / "success.sarif").write_text(
+        json.dumps(
+            report(
+                invocations=[
+                    {"executionSuccessful": True, key: [notification]},
+                ]
+            )
+        )
+    )
+    assert gate(tmp_path).returncode == 0
