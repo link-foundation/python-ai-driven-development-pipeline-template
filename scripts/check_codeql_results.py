@@ -8,6 +8,26 @@ import sys
 from pathlib import Path
 
 
+def valid_reference(reference: object) -> bool:
+    """Validate a SARIF descriptor reference without requiring optional IDs."""
+    if not isinstance(reference, dict) or not any(
+        key in reference for key in ("id", "index", "guid")
+    ):
+        return False
+    for key in ("id", "guid"):
+        if key in reference and (
+            not isinstance(reference[key], str) or not reference[key]
+        ):
+            return False
+    if "index" in reference and (
+        type(reference["index"]) is not int or reference["index"] < 0
+    ):
+        return False
+    return "toolComponent" not in reference or isinstance(
+        reference["toolComponent"], dict
+    )
+
+
 def valid_notification(notification: object) -> bool:
     """Validate diagnostic records even when their severity is informational."""
     if not isinstance(notification, dict):
@@ -23,13 +43,13 @@ def valid_notification(notification: object) -> bool:
         for key in ("text", "markdown", "id")
     ):
         return False
-    if "descriptor" in notification:
-        descriptor = notification["descriptor"]
-        if not isinstance(descriptor, dict) or not (
-            isinstance(descriptor.get("id"), str)
-            or type(descriptor.get("index")) is int
-            and descriptor["index"] >= 0
-        ):
+    if "arguments" in message and (
+        not isinstance(message["arguments"], list)
+        or any(not isinstance(item, str) for item in message["arguments"])
+    ):
+        return False
+    for key in ("descriptor", "associatedRule"):
+        if key in notification and not valid_reference(notification[key]):
             return False
     locations = notification.get("locations", [])
     if not isinstance(locations, list):
@@ -43,6 +63,16 @@ def valid_notification(notification: object) -> bool:
         for key in ("artifactLocation", "region", "contextRegion"):
             if key in physical and not isinstance(physical[key], dict):
                 return False
+        artifact = physical.get("artifactLocation", {})
+        if "uri" in artifact and not isinstance(artifact["uri"], str):
+            return False
+        for key in ("region", "contextRegion"):
+            region = physical.get(key, {})
+            for coordinate in ("startLine", "startColumn", "endLine", "endColumn"):
+                if coordinate in region and (
+                    type(region[coordinate]) is not int or region[coordinate] < 1
+                ):
+                    return False
     return True
 
 

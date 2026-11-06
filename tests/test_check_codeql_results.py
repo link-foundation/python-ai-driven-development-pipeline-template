@@ -164,3 +164,55 @@ def test_allows_informational_notifications(tmp_path, key, level):
     )
     (tmp_path / "information.sarif").write_text(json.dumps(payload))
     assert gate(tmp_path).returncode == 0
+
+
+@pytest.mark.parametrize("key", NOTIFICATION_KEYS)
+@pytest.mark.parametrize(
+    "fields",
+    [
+        {"descriptor": {"id": 1, "index": 0}},
+        {"descriptor": {"index": True}},
+        {"associatedRule": "bad"},
+        {"locations": [{"physicalLocation": {"artifactLocation": {"uri": 1}}}]},
+        {"locations": [{"physicalLocation": {"region": {"startLine": "42"}}}]},
+        {"message": {"text": "ok", "arguments": [1]}},
+    ],
+)
+def test_informational_level_does_not_hide_malformed_diagnostic_fields(
+    tmp_path, key, fields
+):
+    notification = {"level": "note", "message": {"text": "info"}, **fields}
+    (tmp_path / "malformed.sarif").write_text(
+        json.dumps(
+            report(
+                invocations=[
+                    {"executionSuccessful": True, key: [notification]},
+                ]
+            )
+        )
+    )
+    assert gate(tmp_path).returncode != 0
+
+
+def test_notification_diagnostics_escape_workflow_commands(tmp_path):
+    notification = {
+        "level": "error",
+        "message": {"text": "failed\n::warning::injected"},
+    }
+    payload = report()
+    payload["runs"].append(
+        report(
+            invocations=[
+                {
+                    "executionSuccessful": True,
+                    "toolExecutionNotifications": [notification],
+                }
+            ]
+        )["runs"][0]
+    )
+    (tmp_path / "later-run.sarif").write_text(json.dumps(payload))
+    result = gate(tmp_path)
+    assert result.returncode != 0
+    assert "run 2" in result.stdout
+    assert "\\n::warning::injected" in result.stdout
+    assert "\n::warning::injected" not in result.stdout
