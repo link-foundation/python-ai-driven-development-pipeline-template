@@ -52,9 +52,32 @@ CodeQL uses full analysis for both Python and Actions. The job-level
 300-file truncation without changing query selection. The official analyzer
 still uploads to Code Scanning, then `scripts/check_codeql_results.py` checks
 every local SARIF report/run and fails on every finding regardless of severity,
-invalid reports, or failed invocations. Reports are uploaded even when the gate
+invalid reports, or failed invocations. Every invocation's execution and
+configuration notifications are checked even when execution succeeds and the
+findings list is empty. Errors, warnings (including the SARIF default when level
+is omitted), unknown levels, malformed records and malformed arrays fail the
+gate, with descriptor, location and message context. Valid note/none
+notifications remain informational. Reports are uploaded even when the gate
 fails. The aggregate Security status therefore observes these failures directly.
 
 The link checker accepts actual live-link recovery, but archive snapshots are
 repair suggestions. A failed checker cannot pass without usable report evidence.
 The archive helper fails closed when its report is missing or unusable.
+
+Manual releases carry `VALIDATED_SHA` from the workflow event through versioning
+and push recovery. The release helper accepts that commit or a direct child
+whose full repository tree differs only in release metadata: `project.version`,
+the matching local package version in `uv.lock`, `CHANGELOG.md`, and deletion of
+collected `changelog.d/*.md` fragments (excluding README). All other manifest,
+lock, source and file-mode changes require CI on the new revision. A verified
+remote release child is adopted into a clean checkout before building; matching
+version strings alone never establish recovery. Existing uv locks are refreshed
+with `uv lock --offline`, and dependency drift fails attestation.
+
+Explicit `fatal error in commit_refs_rules` and HTTP 429/5xx push failures retry
+the unchanged commit at most three times, waiting 1 and 2 seconds. GH006/GH013
+repository policy failures remain permanent, even when mixed with transient
+text. Every failed push response is retained in the log; `RELEASE_DEBUG=1` adds
+attempt/classification details. Lost races validate the remote before recovery
+and attest the resulting commit before any subsequent push. No force push or
+repository rule bypass is used.

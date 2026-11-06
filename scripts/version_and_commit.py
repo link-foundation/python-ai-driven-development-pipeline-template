@@ -14,12 +14,16 @@ Example:
 
 Environment variables:
     GITHUB_OUTPUT: Path to GitHub Actions output file
+    VALIDATED_SHA: Immutable commit validated by CI (defaults to starting HEAD locally)
+    RELEASE_DEBUG: Set to 1 for push attempt/classification diagnostics
 """
 
 import argparse
 import os
+import re
 import subprocess
 import sys
+import time
 import tomllib
 from enum import Enum, auto
 from pathlib import Path
@@ -127,15 +131,21 @@ class PushFailure(Enum):
 
     REPOSITORY_RULES = auto()
     LOST_RACE = auto()
+    TRANSIENT = auto()
     OTHER = auto()
 
 
 def classify_push_failure(raw_output: str) -> PushFailure:
-    """Classify a git push failure so only a genuine race is retried."""
+    """Separate permanent policy failures, transient server failures and races."""
     haystack = raw_output.lower()
     # Rules first: a ruleset rejection also contains the word "rejected".
     if any(pattern in haystack for pattern in REPOSITORY_RULE_PATTERNS):
         return PushFailure.REPOSITORY_RULES
+    if "fatal error in commit_refs_rules" in haystack or re.search(
+        r"\b(?:http(?:/\d(?:\.\d)?)?\s+|returned error:\s*)(?:429|5\d\d)\b",
+        haystack,
+    ):
+        return PushFailure.TRANSIENT
     if any(pattern in haystack for pattern in NON_FAST_FORWARD_PATTERNS):
         return PushFailure.LOST_RACE
     return PushFailure.OTHER
@@ -147,20 +157,42 @@ def run_git_capturing(cmd: list[str]) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, capture_output=True, text=True, check=False)
 
 
-def push_branch_with_rebase_retry(branch: str, *, max_attempts: int = 3) -> None:
+def push_branch_with_rebase_retry(
+    branch: str,
+    *,
+    max_attempts: int = 3,
+    validated_sha: str | None = None,
+    pyproject_git_path: str = "pyproject.toml",
+) -> None:
     """Push to a branch, retrying a lost race with a rebase (issue #73).
 
-    A repository-ruleset refusal or any other failure is reported as what it
-    is instead of being masked as a merge conflict; only a lost non-fast-
-    forward race is fixed by rebasing onto the new remote tip.
+    Transient server failures retry the unchanged commit with backoff. Policy
+    errors remain permanent. Remote recovery and rebases must retain the
+    validated source and dependency tree. Local callers default to starting HEAD.
     """
+    if not 1 <= max_attempts <= 3:
+        raise ValueError("Push attempts must be between 1 and 3")
+    validated_sha = validated_sha or git_text(
+        ["rev-parse", os.environ.get("VALIDATED_SHA", "HEAD")]
+    )
+    retry_head = git_text(["rev-parse", "HEAD"])
     for attempt in range(1, max_attempts + 1):
+        assert_clean_checkout()
+        if git_text(["rev-parse", "HEAD"]) != retry_head:
+            raise ValueError("Release commit changed during push retry")
+        attest_release(validated_sha, "HEAD", pyproject_git_path)
         completed = run_git_capturing(["git", "push", "origin", branch])
         if completed.returncode == 0:
             return
 
         push_error = f"{completed.stdout}{completed.stderr}".strip()
         failure = classify_push_failure(push_error)
+        print(push_error, file=sys.stderr)
+        if os.environ.get("RELEASE_DEBUG") == "1":
+            print(
+                f"Release push attempt {attempt}/{max_attempts}: {failure.name}",
+                file=sys.stderr,
+            )
 
         if failure is PushFailure.REPOSITORY_RULES:
             print(
@@ -186,6 +218,27 @@ def push_branch_with_rebase_retry(branch: str, *, max_attempts: int = 3) -> None
             )
             sys.exit(1)
 
+        if failure is PushFailure.TRANSIENT:
+            time.sleep(2 ** (attempt - 1))
+            continue
+
+        run_command(["git", "fetch", "origin", branch])
+        remote = f"origin/{branch}"
+        attest_release(validated_sha, remote, pyproject_git_path)
+        if git_text(["rev-parse", remote]) != validated_sha:
+            # A lost response may have published an equivalent release.
+            local_version = parse_version(
+                git_text(["show", f"HEAD:{pyproject_git_path}"])
+            )
+            remote_version = parse_version(
+                git_text(["show", f"{remote}:{pyproject_git_path}"])
+            )
+            if local_version != remote_version:
+                raise ValueError(
+                    "Remote release version differs; rerun CI on the new revision"
+                )
+            run_command(["git", "reset", "--hard", remote])
+            return
         print(
             f"Push rejected as non-fast-forward (attempt {attempt}/"
             f"{max_attempts}); the remote branch moved. Rebasing and retrying...",
@@ -197,6 +250,8 @@ def push_branch_with_rebase_retry(branch: str, *, max_attempts: int = 3) -> None
             print(f"Error during pull --rebase: {rebase_error}", file=sys.stderr)
             run_git_capturing(["git", "rebase", "--abort"])
             sys.exit(1)
+        attest_release(validated_sha, "HEAD", pyproject_git_path)
+        retry_head = git_text(["rev-parse", "HEAD"])
 
 
 def configure_git() -> None:
@@ -210,15 +265,136 @@ def configure_git() -> None:
     )
 
 
+def git_text(args: list[str]) -> str:
+    """Read Git evidence, failing closed on missing objects or failed commands."""
+    return run_command(["git", *args], capture=True).stdout.strip()
+
+
+def assert_clean_checkout() -> None:
+    """Never reset or publish an uncommitted source/dependency change."""
+    if git_text(["status", "--porcelain", "--untracked-files=all"]):
+        raise ValueError("Release checkout is dirty; rerun CI on committed source")
+
+
+def release_tree(ref: str) -> dict[str, tuple[str, str]]:
+    """Inventory every tracked path, including its mode and blob/submodule SHA."""
+    entries = git_text(["ls-tree", "--full-tree", "-rz", ref]).split("\0")
+    tree = {}
+    for entry in entries:
+        if entry:
+            metadata, path = entry.split("\t", 1)
+            mode, _, oid = metadata.split()
+            tree[path] = (mode, oid)
+    return tree
+
+
+def normalized_manifest(ref: str, path: str) -> tuple[dict, str]:
+    """Ignore only project.version, never dependencies or other version keys."""
+    content = git_text(["show", f"{ref}:{path}"])
+    version = parse_version(content)
+    document = tomllib.loads(content)
+    del document["project"]["version"]
+    return document, version
+
+
+def normalized_lock(ref: str, path: str, manifest: dict, version: str) -> dict:
+    """Normalize only this project's uv package version, preserving resolution."""
+    document = tomllib.loads(git_text(["show", f"{ref}:{path}"]))
+    packages = document.get("package")
+    if not isinstance(packages, list):
+        raise ValueError("Invalid uv.lock package array")
+    own_packages = []
+    for package in packages:
+        if not isinstance(package, dict):
+            raise ValueError("Invalid uv.lock package")
+        project_name = re.sub(
+            r"[-_.]+", "-", manifest["project"].get("name", "")
+        ).lower()
+        if package.get("name") == project_name and package.get("source") in (
+            {"editable": "."},
+            {"virtual": "."},
+        ):
+            own_packages.append(package)
+    if len(own_packages) != 1 or own_packages[0].get("version") != version:
+        raise ValueError(
+            "uv.lock must contain exactly one matching local project version"
+        )
+    del own_packages[0]["version"]
+    return document
+
+
+def attest_release(validated_sha: str, candidate: str, manifest_path: str) -> None:
+    """Allow the validated commit or its sole metadata-only release child.
+
+    This is a full repository comparison, also for a package under python/.
+    A missing/replaced validated parent, merge, dependency drift, file-mode
+    change, or unrelated path fails closed and requires CI on the new revision.
+    """
+    validated = git_text(["rev-parse", "--verify", f"{validated_sha}^{{commit}}"])
+    head = git_text(["rev-parse", "--verify", f"{candidate}^{{commit}}"])
+    if head == validated:
+        return
+    parents = git_text(["show", "-s", "--format=%P", head]).split()
+    if parents != [validated]:
+        raise ValueError(
+            "Release must retain the original validated commit as its sole parent; rerun CI"
+        )
+    before, after = release_tree(validated), release_tree(head)
+    root = Path(manifest_path).parent
+    lock_path = (root / "uv.lock").as_posix()
+    changelog_path = (root / "CHANGELOG.md").as_posix()
+    fragment_dir = (root / "changelog.d").as_posix()
+    old_manifest, old_version = normalized_manifest(validated, manifest_path)
+    new_manifest, new_version = normalized_manifest(head, manifest_path)
+    if old_manifest != new_manifest:
+        raise ValueError("Release manifest source/dependency drift; rerun CI")
+    if lock_path in before or lock_path in after:
+        if (
+            lock_path not in before
+            or lock_path not in after
+            or normalized_lock(validated, lock_path, old_manifest, old_version)
+            != normalized_lock(head, lock_path, new_manifest, new_version)
+        ):
+            raise ValueError("Release locked dependency drift; rerun CI")
+    for path in before.keys() | after.keys():
+        if before.get(path) == after.get(path):
+            continue
+        if path in (manifest_path, lock_path, changelog_path):
+            if (
+                path not in after
+                or after[path][0] != "100644"
+                or (path in before and before[path][0] != after[path][0])
+            ):
+                raise ValueError(f"Invalid release metadata mode/deletion: {path}")
+            continue
+        fragment = Path(path)
+        if (
+            fragment.parent.as_posix() == fragment_dir
+            and fragment.suffix == ".md"
+            and fragment.name != "README.md"
+            and path in before
+            and path not in after
+            and before[path][0] == "100644"
+        ):
+            continue
+        raise ValueError(f"Release source/dependency drift at {path}; rerun CI")
+    if old_version == new_version:
+        raise ValueError("Release metadata child must change project.version; rerun CI")
+
+
 def check_remote_changes(
     pyproject_path: Path,
     pyproject_git_path: str,
+    validated_sha: str | None = None,
 ) -> tuple[bool, str]:
     """
     Check if remote main has advanced (handles re-runs).
     Returns (already_released, remote_version).
     """
     print("\nChecking for remote changes...")
+    assert_clean_checkout()
+    validated_sha = validated_sha or git_text(["rev-parse", "HEAD"])
+    attest_release(validated_sha, "HEAD", pyproject_git_path)
     run_command(["git", "fetch", "origin", "main"])
 
     # Get commit SHAs
@@ -236,7 +412,16 @@ def check_remote_changes(
         print(f"Remote main has advanced (local: {local_head}, remote: {remote_head})")
         print("This may indicate a previous attempt partially succeeded.")
 
-        # Get remote version
+        attest_release(validated_sha, remote_head, pyproject_git_path)
+        if remote_head == validated_sha:
+            # A prior attempt committed locally but did not publish its child.
+            push_branch_with_rebase_retry(
+                "main",
+                validated_sha=validated_sha,
+                pyproject_git_path=pyproject_git_path,
+            )
+            return True, get_current_version(pyproject_path)
+        # Get remote version only after the complete source/lock attestation.
         remote_content = run_command(
             ["git", "show", f"origin/main:{pyproject_git_path}"],
             capture=True,
@@ -250,16 +435,12 @@ def check_remote_changes(
 
         print(f"Remote version: {remote_version}")
 
-        # Check if versions differ (indicating work was done)
-        local_version = get_current_version(pyproject_path)
-        if local_version != remote_version:
-            print("Local and remote versions differ, rebasing...")
-            run_command(["git", "rebase", "origin/main"])
-            return False, remote_version
-        else:
-            print("Versions match, assuming previous run completed successfully")
-            return True, remote_version
+        print("Adopting attested metadata-only release commit")
+        run_command(["git", "reset", "--hard", remote_head])
+        return True, remote_version
 
+    if remote_head != validated_sha:
+        return True, get_current_version(pyproject_path)
     return False, ""
 
 
@@ -294,6 +475,15 @@ def main() -> int:
         return 1
 
     try:
+        validated_sha = git_text(
+            [
+                "rev-parse",
+                "--verify",
+                f"{os.environ.get('VALIDATED_SHA', 'HEAD')}^{{commit}}",
+            ]
+        )
+        assert_clean_checkout()
+        attest_release(validated_sha, "HEAD", pyproject_git_path)
         # Configure git
         configure_git()
 
@@ -301,6 +491,7 @@ def main() -> int:
         already_released, remote_version = check_remote_changes(
             pyproject_path,
             pyproject_git_path,
+            validated_sha,
         )
 
         if already_released:
@@ -337,6 +528,8 @@ def main() -> int:
         # Get new version
         new_version = get_current_version(pyproject_path)
         print(f"New version: {new_version}")
+        if (project_root / "uv.lock").exists():
+            run_command(["uv", "lock", "--offline"])
 
         if fragments:
             print(f"Collecting {len(fragments)} changelog fragment(s)...")
@@ -361,7 +554,11 @@ def main() -> int:
             run_command(["git", "commit", "-m", new_version])
 
             # Push to main; only a genuine lost race is retried (issue #73)
-            push_branch_with_rebase_retry("main")
+            push_branch_with_rebase_retry(
+                "main",
+                validated_sha=validated_sha,
+                pyproject_git_path=pyproject_git_path,
+            )
 
             print(
                 f"\n✅ Version bump committed and pushed: {old_version} → {new_version}"

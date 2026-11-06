@@ -1,0 +1,16 @@
+REPRODUCED: internal push error classified OTHER instead of transient
+REPRODUCED: successful invocation hides extraction errors
+
+Checking for remote changes...
+Remote main has advanced (local: validated, remote: unvalidated-source-and-dependencies)
+This may indicate a previous attempt partially succeeded.
+Remote version: 1.0.0
+Versions match, assuming previous run completed successfully
+REPRODUCED: matching version accepts unvalidated remote without adopting it
+
+Checking for remote changes...
+Remote main has advanced (local: validated, remote: unvalidated-source-and-dependencies)
+This may indicate a previous attempt partially succeeded.
+Remote version: 1.0.1
+Local and remote versions differ, rebasing...
+REPRODUCED: different version rebases without source/lock attestation

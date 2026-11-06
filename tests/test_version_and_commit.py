@@ -23,6 +23,14 @@ sys.modules[spec.name] = module
 spec.loader.exec_module(module)  # type: ignore[union-attr]
 
 
+def mock_push_attestation(monkeypatch):
+    """Isolate subprocess retry policy; real Git attestation has its own suite."""
+    monkeypatch.setattr(module, "git_text", lambda args: "validated")
+    monkeypatch.setattr(module, "assert_clean_checkout", lambda: None)
+    monkeypatch.setattr(module, "attest_release", lambda *args: None)
+    monkeypatch.setattr(module, "run_command", lambda *args, **kwargs: None)
+
+
 def test_parse_version_reads_project_table_not_other_tables() -> None:
     """A version key in another table must not shadow project.version."""
     content = """
@@ -194,6 +202,7 @@ def test_lost_race_is_rebased_and_push_succeeds(monkeypatch, capsys) -> None:
             return subprocess.CompletedProcess(cmd, 1, stdout="", stderr=LOST_RACE)
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
+    mock_push_attestation(monkeypatch)
     monkeypatch.setattr(module, "run_git_capturing", fake_run)
     module.push_branch_with_rebase_retry("main")
 
@@ -215,6 +224,7 @@ def test_repository_rules_exit_without_retrying(monkeypatch, capsys) -> None:
             )
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
+    mock_push_attestation(monkeypatch)
     monkeypatch.setattr(module, "run_git_capturing", fake_run)
     with pytest.raises(SystemExit) as exc_info:
         module.push_branch_with_rebase_retry("main")
@@ -235,6 +245,7 @@ def test_other_failures_exit_without_retrying(monkeypatch, capsys) -> None:
             return subprocess.CompletedProcess(cmd, 128, stdout="", stderr=REAL_ERROR)
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
+    mock_push_attestation(monkeypatch)
     monkeypatch.setattr(module, "run_git_capturing", fake_run)
     with pytest.raises(SystemExit) as exc_info:
         module.push_branch_with_rebase_retry("main")
@@ -253,6 +264,7 @@ def test_persistent_race_gives_up_after_max_attempts(monkeypatch, capsys) -> Non
             return subprocess.CompletedProcess(cmd, 1, stdout="", stderr=LOST_RACE)
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
+    mock_push_attestation(monkeypatch)
     monkeypatch.setattr(module, "run_git_capturing", fake_run)
     with pytest.raises(SystemExit) as exc_info:
         module.push_branch_with_rebase_retry("main", max_attempts=3)
@@ -278,6 +290,7 @@ def test_failed_rebase_aborts_and_exits(monkeypatch, capsys) -> None:
             return subprocess.CompletedProcess(cmd, 1, stdout="", stderr=LOST_RACE)
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
+    mock_push_attestation(monkeypatch)
     monkeypatch.setattr(module, "run_git_capturing", fake_run)
     with pytest.raises(SystemExit) as exc_info:
         module.push_branch_with_rebase_retry("main")
@@ -285,3 +298,96 @@ def test_failed_rebase_aborts_and_exits(monkeypatch, capsys) -> None:
     assert exc_info.value.code == 1
     assert ["git", "rebase", "--abort"] in commands
     assert "Error during pull --rebase:" in capsys.readouterr().err
+
+
+INTERNAL_ERROR = "remote: fatal error in commit_refs_rules\n! [remote rejected] HEAD -> main (fatal error in commit_refs_rules)"
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        INTERNAL_ERROR,
+        "fatal: HTTP 429",
+        "error: RPC failed; HTTP 503 curl 22",
+        "fatal: unable to access: The requested URL returned error: 502",
+    ],
+)
+def test_classifies_explicit_transient_failures(error):
+    assert module.classify_push_failure(error) is module.PushFailure.TRANSIENT
+
+
+@pytest.mark.parametrize("code", ["GH006", "GH013"])
+def test_policy_precedes_internal_and_http_errors(code):
+    assert (
+        module.classify_push_failure(f"{code}: {INTERNAL_ERROR} HTTP 503")
+        is module.PushFailure.REPOSITORY_RULES
+    )
+
+
+@pytest.mark.parametrize("succeed", [True, False])
+def test_transient_push_retries_identical_commit_with_bounded_backoff(
+    monkeypatch, capsys, succeed
+):
+    commands = []
+    sleeps = []
+
+    def fake_run(cmd):
+        commands.append(cmd)
+        ok = succeed and len(commands) == 2
+        return subprocess.CompletedProcess(
+            cmd, 0 if ok else 1, stdout="", stderr="" if ok else INTERNAL_ERROR
+        )
+
+    mock_push_attestation(monkeypatch)
+    monkeypatch.setattr(module, "run_git_capturing", fake_run)
+    monkeypatch.setattr(module.time, "sleep", sleeps.append)
+    if succeed:
+        module.push_branch_with_rebase_retry("main")
+    else:
+        with pytest.raises(SystemExit):
+            module.push_branch_with_rebase_retry("main")
+    assert commands == [["git", "push", "origin", "main"]] * (2 if succeed else 3)
+    assert sleeps == ([1] if succeed else [1, 2])
+    assert INTERNAL_ERROR in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("debug", [False, True])
+def test_attempt_diagnostics_are_default_off(monkeypatch, capsys, debug):
+    monkeypatch.delenv("RELEASE_DEBUG", raising=False)
+    if debug:
+        monkeypatch.setenv("RELEASE_DEBUG", "1")
+    responses = iter(
+        [
+            subprocess.CompletedProcess([], 1, stdout="", stderr=INTERNAL_ERROR),
+            subprocess.CompletedProcess([], 0, stdout="", stderr=""),
+        ]
+    )
+    mock_push_attestation(monkeypatch)
+    monkeypatch.setattr(module, "run_git_capturing", lambda cmd: next(responses))
+    monkeypatch.setattr(module.time, "sleep", lambda seconds: None)
+    module.push_branch_with_rebase_retry("main")
+    output = capsys.readouterr().err
+    assert ("Release push attempt 1/3: TRANSIENT" in output) is debug
+    assert INTERNAL_ERROR in output
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "HTTP 401",
+        "HTTP 403",
+        "HTTP 404",
+        "HTTP 5000",
+        "error 503",
+        "commit_refs_rules",
+        "permission denied",
+    ],
+)
+def test_unrelated_errors_are_not_transient(message):
+    assert module.classify_push_failure(message) is module.PushFailure.OTHER
+
+
+@pytest.mark.parametrize("attempts", [0, 4])
+def test_retry_budget_cannot_exceed_three_or_skip_push(attempts):
+    with pytest.raises(ValueError, match="between 1 and 3"):
+        module.push_branch_with_rebase_retry("main", max_attempts=attempts)
