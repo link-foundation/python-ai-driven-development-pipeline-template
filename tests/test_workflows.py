@@ -115,11 +115,11 @@ def test_links_workflow_fails_for_every_broken_live_link() -> None:
     assert "timeout-minutes: 10" in link_job
     assert "cancel-in-progress: true" in link_job
     assert "uses: actions/checkout@v7" in link_job
-    assert "uses: lycheeverse/lychee-action@v2" in lychee_step
+    assert "bash scripts/check-links.sh" in lychee_step
     assert "--exclude-path docs/case-studies" in lychee_step
     assert "examples/universal-app/index.html" not in lychee_step
-    assert "fail: false" in lychee_step
-    assert "output: lychee/out.md" in lychee_step
+    assert "lycheeverse/lychee-action@" not in workflow
+    assert "LYCHEE_VERSION: v0.24.2" in link_job
     # Issue #78: --max-retries cannot retry a connect-phase reset
     # (lycheeverse/lychee#2297), so unanswered failures are re-asked
     # outside lychee before anything is declared broken.
@@ -207,7 +207,7 @@ def test_docs_workflow_deploys_pages_only_when_opted_in() -> None:
     workflow = read_workflow("docs.yml")
     build_job = workflow_job_block(workflow, "build")
     deploy_job = workflow_job_block(workflow, "deploy")
-    configure_step = workflow_step_block(build_job, "Configure GitHub Pages")
+    configure_step = workflow_step_block(deploy_job, "Configure GitHub Pages")
     upload_step = workflow_step_block(build_job, "Upload GitHub Pages artifact")
     skip_step = workflow_step_block(build_job, "Report skipped GitHub Pages deployment")
 
@@ -222,7 +222,7 @@ def test_docs_workflow_deploys_pages_only_when_opted_in() -> None:
         "vars.DEPLOY_GITHUB_PAGES != 'true'"
     )
 
-    assert f"if: {deploy_condition}" in configure_step
+    assert "uses: actions/configure-pages@v6" in configure_step
     assert f"if: {deploy_condition}" in upload_step
     assert f"if: {deploy_condition}" in deploy_job
     assert f"if: {skip_condition}" in skip_step

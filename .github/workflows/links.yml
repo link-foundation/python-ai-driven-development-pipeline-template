@@ -12,6 +12,8 @@ on:
       - '.lycheeignore'
       - 'scripts/check_web_archive.py'
       - 'scripts/recheck_broken_links.py'
+      - 'scripts/install-lychee.sh'
+      - 'scripts/check-links.sh'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
@@ -22,6 +24,8 @@ on:
       - '.lycheeignore'
       - 'scripts/check_web_archive.py'
       - 'scripts/recheck_broken_links.py'
+      - 'scripts/install-lychee.sh'
+      - 'scripts/check-links.sh'
   workflow_dispatch:
   # Links rot without commits: recheck weekly even when no Markdown or HTML
   # changed, so a dead external URL is caught by the schedule instead of the
@@ -67,11 +71,15 @@ jobs:
           key: cache-lychee-${{ steps.link-cache.outputs.day }}-${{ github.sha }}
           restore-keys: cache-lychee-${{ steps.link-cache.outputs.day }}-
 
+      - name: Install pinned lychee with retries
+        run: bash scripts/install-lychee.sh
+        env:
+          LYCHEE_VERSION: v0.24.2
+
       - name: Check links with lychee
         id: lychee
-        uses: lycheeverse/lychee-action@v2
-        with:
-          args: >-
+        run: >-
+            bash scripts/check-links.sh
             --config lychee.toml
             --verbose
             --no-progress
@@ -84,9 +92,6 @@ jobs:
             --exclude-path docs/case-studies
             --exclude-path scripts/fixtures
             .
-          fail: false
-          output: lychee/out.md
-          jobSummary: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -118,6 +123,7 @@ jobs:
       - name: Fail if broken links were found
         if: >-
           always() &&
+          steps.lychee.outcome == 'success' &&
           steps.lychee.outputs.exit_code != 0 &&
           steps.recheck.outputs.all_recovered != 'true'
         run: |
