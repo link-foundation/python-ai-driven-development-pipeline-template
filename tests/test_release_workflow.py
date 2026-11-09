@@ -35,7 +35,7 @@ def test_changelog_check_safely_requires_a_fragment() -> None:
 
 
 def test_release_workflow_separates_check_and_write_concurrency() -> None:
-    """Checks supersede off main while release writes share one group."""
+    """Checks supersede on every ref while release writes share one group."""
     workflow = read_workflow("release.yml")
     workflow_header = workflow.split("\njobs:\n", maxsplit=1)[0]
 
@@ -51,15 +51,15 @@ def test_release_workflow_separates_check_and_write_concurrency() -> None:
     ):
         block = workflow_job_block(workflow, job_name)
         expected_group = (
-            "group: ${{ github.workflow }}-${{ github.ref }}-" f"{job_name}"
+            "group: check-${{ github.workflow }}-${{ github.ref }}-" f"{job_name}"
         )
         assert expected_group in block
-        assert "cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}" in block
+        assert "cancel-in-progress: true" in block
 
     write_concurrency = "\n".join(
         (
             "    concurrency:",
-            "      group: ${{ github.workflow }}-main-write",
+            "      group: main-writer-${{ github.repository }}-main",
             "      cancel-in-progress: false",
         )
     )

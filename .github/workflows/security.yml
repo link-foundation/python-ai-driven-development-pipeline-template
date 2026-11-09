@@ -112,6 +112,9 @@ jobs:
 
   dependency-review:
     name: Dependency Review
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-dependency-review
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

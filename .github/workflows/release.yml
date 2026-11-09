@@ -44,8 +44,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-detect-changes
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      group: check-${{ github.workflow }}-${{ github.ref }}-detect-changes
+      cancel-in-progress: true
     if: github.event_name != 'workflow_dispatch'
     outputs:
       any-code-changed: ${{ steps.changes.outputs.any-code-changed }}
@@ -106,8 +106,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-lint
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      group: check-${{ github.workflow }}-${{ github.ref }}-lint
+      cancel-in-progress: true
     needs: [detect-changes]
     # !cancelled() lets this job evaluate even though detect-changes is skipped
     # for workflow_dispatch while still propagating workflow cancellation.
@@ -209,8 +209,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-validate-docs
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      group: check-${{ github.workflow }}-${{ github.ref }}-validate-docs
+      cancel-in-progress: true
     needs: [detect-changes]
     # !cancelled() lets this job evaluate even though detect-changes is skipped
     # for workflow_dispatch while still propagating workflow cancellation.
@@ -240,6 +240,9 @@ jobs:
   # gate on `result == 'success'` rather than on the run being green.
   release-preflight:
     name: Release Preflight (credentials)
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-release-preflight
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -275,8 +278,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-test
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      group: check-${{ github.workflow }}-${{ github.ref }}-test
+      cancel-in-progress: true
     needs: [detect-changes]
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -364,8 +367,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-build
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      group: check-${{ github.workflow }}-${{ github.ref }}-build
+      cancel-in-progress: true
     needs: [detect-changes, lint, test]
     # Build change-bearing automatic events and all manually dispatched releases.
     if: |
@@ -441,8 +444,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-changelog
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      group: check-${{ github.workflow }}-${{ github.ref }}-changelog
+      cancel-in-progress: true
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
@@ -497,8 +500,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-docker-build
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      group: check-${{ github.workflow }}-${{ github.ref }}-docker-build
+      cancel-in-progress: true
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
@@ -545,7 +548,7 @@ jobs:
       released: ${{ steps.github_release.outputs.released }}
       version: ${{ steps.github_release.outputs.version }}
     concurrency:
-      group: ${{ github.workflow }}-main-write
+      group: main-writer-${{ github.repository }}-main
       cancel-in-progress: false
       queue: max
     if: |
@@ -662,7 +665,7 @@ jobs:
       released: ${{ steps.github_release.outputs.released }}
       version: ${{ steps.github_release.outputs.version }}
     concurrency:
-      group: ${{ github.workflow }}-main-write
+      group: main-writer-${{ github.repository }}-main
       cancel-in-progress: false
       queue: max
     # !cancelled() prevents the skipped detect-changes dependency from propagating
@@ -808,6 +811,10 @@ jobs:
   # DOCKERHUB_TOKEN secret to enable it in repositories that ship a Dockerfile.
   docker-publish-config:
     name: Configure Docker Hub Publish
+    concurrency:
+      group: main-writer-${{ github.repository }}-main
+      cancel-in-progress: false
+      queue: max
     needs: [auto-release, manual-release, release-preflight]
     if: |
       !cancelled() &&
@@ -850,10 +857,15 @@ jobs:
             } >> "$GITHUB_OUTPUT"
           fi
 
-  # Native runners build both architectures in parallel and push immutable
-  # digests. This avoids the performance and reliability cost of QEMU.
+  # Native runners build both architectures and push immutable digests.
+  # Publishing shares the repository writer queue, including matrix entries.
+  # Native builds avoid the performance and reliability cost of QEMU.
   docker-publish-build:
     name: Build Docker Image (${{ matrix.platform }})
+    concurrency:
+      group: main-writer-${{ github.repository }}-main
+      cancel-in-progress: false
+      queue: max
     needs: [docker-publish-config, release-preflight]
     if: |
       needs.release-preflight.result == 'success' &&
@@ -912,6 +924,10 @@ jobs:
 
   docker-publish:
     name: Publish Multi-Architecture Docker Image
+    concurrency:
+      group: main-writer-${{ github.repository }}-main
+      cancel-in-progress: false
+      queue: max
     needs: [docker-publish-config, docker-publish-build, release-preflight]
     if: |
       needs.release-preflight.result == 'success' &&
