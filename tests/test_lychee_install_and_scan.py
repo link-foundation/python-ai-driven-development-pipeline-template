@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import gzip
 import http.server
 import io
 import os
@@ -32,7 +33,16 @@ def release_server():
         entry.mode = 0o755
         bundle.addfile(entry, io.BytesIO(binary))
     payload = archive.getvalue()
-    state = {"requests": {}, "bad_checksum": False, "always_fail": False}
+    replaced_payload = gzip.compress(
+        gzip.decompress(payload).replace(b"lychee 0.24.2", b"lychee 9.99.9")
+    )
+    state = {
+        "requests": {},
+        "bad_checksum": False,
+        "always_fail": False,
+        "digest": hashlib.sha256(payload).hexdigest(),
+        "replace_asset": False,
+    }
 
     class Handler(http.server.BaseHTTPRequestHandler):
         def do_GET(self):
@@ -41,12 +51,12 @@ def release_server():
             if counts[self.path] == 1 or state["always_fail"]:
                 self.send_error(503)
                 return
-            body = payload
+            body = replaced_payload if state["replace_asset"] else payload
             if self.path.endswith(".sha256"):
                 digest = (
                     "0" * 64
                     if state["bad_checksum"]
-                    else hashlib.sha256(payload).hexdigest()
+                    else hashlib.sha256(body).hexdigest()
                 )
                 body = f"{digest}  release.tar.gz\n".encode()
             self.send_response(200)
@@ -74,6 +84,8 @@ def install(tmp_path, url, **overrides):
         env={
             **os.environ,
             "LYCHEE_VERSION": "v0.24.2",
+            "LYCHEE_SHA256_X86_64": overrides.pop("digest", "0" * 64),
+            "LYCHEE_SHA256_AARCH64": overrides.pop("arm_digest", "0" * 64),
             "LYCHEE_DOWNLOAD_BASE_URL": url,
             "LYCHEE_DOWNLOAD_RETRY_DELAY": "1",
             "LYCHEE_DOWNLOAD_RETRIES": "1",
@@ -99,7 +111,7 @@ def test_installer_retries_both_assets_and_adds_verified_binary_to_path(
         timeout=5,
     )
     assert original.returncode == 22
-    result = install(tmp_path, url)
+    result = install(tmp_path, url, digest=state["digest"], arm_digest=state["digest"])
     assert result.returncode == 0, result.stderr
     assert "lychee 0.24.2" in result.stdout
     assert (tmp_path / "path").read_text().strip() == str(tmp_path / "bin")
@@ -110,16 +122,16 @@ def test_installer_retries_both_assets_and_adds_verified_binary_to_path(
     assert set(downloads.values()) == {2}
 
 
-@pytest.mark.parametrize("failure", ["bad_checksum", "always_fail"])
+@pytest.mark.parametrize("failure", ["bad_checksum", "always_fail", "replace_asset"])
 def test_installer_fails_closed(tmp_path, release_server, failure):
     url, state = release_server
     state[failure] = True
-    result = install(tmp_path, url)
+    result = install(tmp_path, url, digest=state["digest"], arm_digest=state["digest"])
     assert result.returncode != 0
     assert not (tmp_path / "bin/lychee").exists()
     assert not (tmp_path / "path").exists()
     assert (
-        "Checksum mismatch" if failure == "bad_checksum" else "after retries"
+        "Checksum mismatch" if failure != "always_fail" else "after retries"
     ) in result.stderr
 
 
@@ -128,6 +140,34 @@ def test_installer_rejects_unpinned_version(tmp_path, version):
     result = install(tmp_path, "http://127.0.0.1:1", LYCHEE_VERSION=version)
     assert result.returncode != 0
     assert not (tmp_path / "bin").exists()
+
+
+@pytest.mark.parametrize("digest", ["", "abc", "G" * 64])
+def test_installer_requires_committed_digest_before_downloading(
+    tmp_path, release_server, digest
+):
+    url, state = release_server
+    result = install(tmp_path, url, digest=digest, arm_digest=digest)
+    assert result.returncode != 0
+    assert "SHA-256 pin is required" in result.stderr
+    assert not state["requests"]
+
+
+def test_installer_uses_arm_pin_on_arm_runner(tmp_path, release_server):
+    url, state = release_server
+    stub_dir = tmp_path / "stubs"
+    stub_dir.mkdir()
+    uname = stub_dir / "uname"
+    uname.write_text("#!/bin/sh\necho aarch64\n")
+    uname.chmod(0o755)
+    result = install(
+        tmp_path,
+        url,
+        arm_digest=state["digest"],
+        PATH=f"{stub_dir}:{os.environ['PATH']}",
+    )
+    assert result.returncode == 0, result.stderr
+    assert all("aarch64" in path for path in state["requests"])
 
 
 @pytest.mark.parametrize(

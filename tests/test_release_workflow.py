@@ -75,7 +75,9 @@ def test_release_workflow_uses_least_privilege_permissions() -> None:
 
     for job_name in ("auto-release", "manual-release"):
         block = workflow_job_block(workflow, job_name)
-        assert "permissions:\n      contents: write\n      id-token: write" in block
+        assert "contents: write" in block
+        assert "id-token: write" in block
+        assert ("actions: write" in block) == (job_name == "manual-release")
 
 
 def test_release_workflow_jobs_have_explicit_timeouts() -> None:
@@ -466,7 +468,7 @@ def test_release_workflow_builds_docker_images_on_pull_requests() -> None:
     assert "push: false" in block
     assert "load: true" in block
     assert "cache-from: type=gha,scope=docker-pr-check" in block
-    assert "cache-to: type=gha,mode=max,scope=docker-pr-check" in block
+    assert "cache-to:" not in block
 
 
 def test_release_workflow_publishes_multi_arch_docker_images() -> None:

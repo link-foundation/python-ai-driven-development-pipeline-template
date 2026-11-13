@@ -192,24 +192,19 @@ def test_other_failures_never_trigger_a_rebase() -> None:
     assert module.classify_push_failure(REAL_ERROR) is module.PushFailure.OTHER
 
 
-def test_lost_race_is_rebased_and_push_succeeds(monkeypatch, capsys) -> None:
-    """A non-fast-forward triggers exactly one pull --rebase, then a retry."""
-    commands: list[list[str]] = []
+def test_stale_race_retries_unchanged_without_rebase(monkeypatch) -> None:
+    commands = []
 
     def fake_run(cmd):
         commands.append(cmd)
-        if cmd[:2] == ["git", "push"] and len(commands) == 1:
-            return subprocess.CompletedProcess(cmd, 1, stdout="", stderr=LOST_RACE)
-        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+        return subprocess.CompletedProcess(
+            cmd, int(len(commands) == 1), stdout="", stderr=LOST_RACE
+        )
 
     mock_push_attestation(monkeypatch)
     monkeypatch.setattr(module, "run_git_capturing", fake_run)
-    module.push_branch_with_rebase_retry("main")
-
-    assert commands[0] == ["git", "push", "origin", "HEAD:refs/heads/main"]
-    assert commands[1] == ["git", "pull", "--rebase", "origin", "main"]
-    assert commands[2] == ["git", "push", "origin", "HEAD:refs/heads/main"]
-    assert "Rebasing and retrying" in capsys.readouterr().err
+    module.push_branch_with_retry("main")
+    assert commands == [["git", "push", "origin", "HEAD:refs/heads/main"]] * 2
 
 
 def test_repository_rules_exit_without_retrying(monkeypatch, capsys) -> None:
@@ -227,7 +222,7 @@ def test_repository_rules_exit_without_retrying(monkeypatch, capsys) -> None:
     mock_push_attestation(monkeypatch)
     monkeypatch.setattr(module, "run_git_capturing", fake_run)
     with pytest.raises(SystemExit) as exc_info:
-        module.push_branch_with_rebase_retry("main")
+        module.push_branch_with_retry("main")
 
     assert exc_info.value.code == 1
     assert len(attempts) == 1
@@ -248,56 +243,25 @@ def test_other_failures_exit_without_retrying(monkeypatch, capsys) -> None:
     mock_push_attestation(monkeypatch)
     monkeypatch.setattr(module, "run_git_capturing", fake_run)
     with pytest.raises(SystemExit) as exc_info:
-        module.push_branch_with_rebase_retry("main")
+        module.push_branch_with_retry("main")
 
     assert exc_info.value.code == 1
     assert len(attempts) == 1
     assert "Error pushing:" in capsys.readouterr().err
 
 
-def test_persistent_race_gives_up_after_max_attempts(monkeypatch, capsys) -> None:
-    commands: list[list[str]] = []
+def test_persistent_stale_rejection_stops_without_rebase(monkeypatch):
+    commands = []
 
     def fake_run(cmd):
         commands.append(cmd)
-        if cmd[:2] == ["git", "push"]:
-            return subprocess.CompletedProcess(cmd, 1, stdout="", stderr=LOST_RACE)
-        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+        return subprocess.CompletedProcess(cmd, 1, stdout="", stderr=LOST_RACE)
 
     mock_push_attestation(monkeypatch)
     monkeypatch.setattr(module, "run_git_capturing", fake_run)
-    with pytest.raises(SystemExit) as exc_info:
-        module.push_branch_with_rebase_retry("main", max_attempts=3)
-
-    assert exc_info.value.code == 1
-    pushes = [cmd for cmd in commands if cmd[:2] == ["git", "push"]]
-    rebases = [cmd for cmd in commands if cmd[:2] == ["git", "pull"]]
-    assert len(pushes) == 3
-    assert len(rebases) == 2
-    assert "Error pushing after 3 attempts:" in capsys.readouterr().err
-
-
-def test_failed_rebase_aborts_and_exits(monkeypatch, capsys) -> None:
-    commands: list[list[str]] = []
-
-    def fake_run(cmd):
-        commands.append(cmd)
-        if cmd[:2] == ["git", "pull"]:
-            return subprocess.CompletedProcess(
-                cmd, 1, stdout="", stderr="CONFLICT (content): Merge conflict in x"
-            )
-        if cmd[:2] == ["git", "push"]:
-            return subprocess.CompletedProcess(cmd, 1, stdout="", stderr=LOST_RACE)
-        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
-
-    mock_push_attestation(monkeypatch)
-    monkeypatch.setattr(module, "run_git_capturing", fake_run)
-    with pytest.raises(SystemExit) as exc_info:
-        module.push_branch_with_rebase_retry("main")
-
-    assert exc_info.value.code == 1
-    assert ["git", "rebase", "--abort"] in commands
-    assert "Error during pull --rebase:" in capsys.readouterr().err
+    with pytest.raises(ValueError, match="after 3 attempts"):
+        module.push_branch_with_retry("main", max_attempts=3)
+    assert commands == [["git", "push", "origin", "HEAD:refs/heads/main"]] * 3
 
 
 INTERNAL_ERROR = "remote: fatal error in commit_refs_rules\n! [remote rejected] HEAD -> main (fatal error in commit_refs_rules)"
@@ -342,10 +306,10 @@ def test_transient_push_retries_identical_commit_with_bounded_backoff(
     monkeypatch.setattr(module, "run_git_capturing", fake_run)
     monkeypatch.setattr(module.time, "sleep", sleeps.append)
     if succeed:
-        module.push_branch_with_rebase_retry("main")
+        module.push_branch_with_retry("main")
     else:
         with pytest.raises(SystemExit):
-            module.push_branch_with_rebase_retry("main")
+            module.push_branch_with_retry("main")
     assert commands == [["git", "push", "origin", "HEAD:refs/heads/main"]] * (
         2 if succeed else 3
     )
@@ -367,7 +331,7 @@ def test_attempt_diagnostics_are_default_off(monkeypatch, capsys, debug):
     mock_push_attestation(monkeypatch)
     monkeypatch.setattr(module, "run_git_capturing", lambda cmd: next(responses))
     monkeypatch.setattr(module.time, "sleep", lambda seconds: None)
-    module.push_branch_with_rebase_retry("main")
+    module.push_branch_with_retry("main")
     output = capsys.readouterr().err
     assert ("Release push attempt 1/3: TRANSIENT" in output) is debug
     assert INTERNAL_ERROR in output
@@ -392,4 +356,4 @@ def test_unrelated_errors_are_not_transient(message):
 @pytest.mark.parametrize("attempts", [0, 4])
 def test_retry_budget_cannot_exceed_three_or_skip_push(attempts):
     with pytest.raises(ValueError, match="between 1 and 3"):
-        module.push_branch_with_rebase_retry("main", max_attempts=attempts)
+        module.push_branch_with_retry("main", max_attempts=attempts)

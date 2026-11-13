@@ -154,3 +154,14 @@ def test_main_keeps_hard_limit_violations_failing(
     output = capsys.readouterr()
     assert "over_limit.py: 1001 lines (exceeds 1000)" in output.out
     assert output.err == ""
+
+
+@pytest.mark.parametrize("suffix", [".sh", ".mjs", ".js", ".py"])
+def test_all_source_helpers_use_warning_and_error_bands(tmp_path, suffix):
+    path = tmp_path / f"helper{suffix}"
+    path.write_text("x\n" * 901)
+    result = module.check_directory(tmp_path)
+    assert len(result.warnings) == 1
+    path.write_text("x\n" * 1001)
+    result = module.check_directory(tmp_path)
+    assert len(result.violations) == 1

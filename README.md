@@ -105,6 +105,7 @@ ruff check . && ruff format --check . && mypy src/ && python scripts/check_file_
 │   ├── bump_version.py         # Version bumping utility
 │   ├── version_and_commit.py   # CI/CD version management
 │   ├── publish_to_pypi.py      # PyPI publishing script
+│   ├── check_dist_size.py      # Per-file upload budget for wheels and sdists
 │   └── create_github_release.py # GitHub release creation
 ├── src/
 │   └── my_package/

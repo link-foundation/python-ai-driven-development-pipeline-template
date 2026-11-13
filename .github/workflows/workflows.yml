@@ -136,7 +136,10 @@ jobs:
           persist-credentials: false
 
       - name: Shellcheck every tracked shell script
-        run: git ls-files -z '*.sh' | xargs -0 pipx run --spec shellcheck-py==0.11.0.1 shellcheck
+        run: |
+          python3 -m venv "$RUNNER_TEMP/shellcheck-venv"
+          "$RUNNER_TEMP/shellcheck-venv/bin/pip" install --quiet --disable-pip-version-check shellcheck-py==0.11.0.1
+          git ls-files -z '*.sh' | xargs -0 -r "$RUNNER_TEMP/shellcheck-venv/bin/shellcheck"
 
   artifact-roundtrip:
     name: Artifact Transport Regression

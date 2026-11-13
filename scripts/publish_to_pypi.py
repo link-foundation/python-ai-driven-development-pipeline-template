@@ -79,6 +79,19 @@ def check_package(dist_dir: Path) -> None:
         print(f"  - {file.name}")
 
     run_command([sys.executable, "-m", "twine", "check"] + [str(f) for f in dist_files])
+    check_distribution_sizes(dist_dir)
+
+
+def check_distribution_sizes(dist_dir: Path) -> None:
+    """Use the same gate as CI, including the configured byte budget."""
+    run_command(
+        [
+            sys.executable,
+            str(Path(__file__).with_name("check_dist_size.py")),
+            "--dist-dir",
+            str(dist_dir),
+        ]
+    )
 
 
 def publish_package(dist_dir: Path, dry_run: bool = False) -> None:
@@ -88,6 +101,8 @@ def publish_package(dist_dir: Path, dry_run: bool = False) -> None:
     if not dist_files:
         print("Error: No distribution files found in dist/", file=sys.stderr)
         sys.exit(1)
+
+    check_distribution_sizes(dist_dir)
 
     if dry_run:
         print("\n[DRY RUN] Would publish the following files:")

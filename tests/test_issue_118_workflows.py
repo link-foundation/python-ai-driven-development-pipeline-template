@@ -48,7 +48,7 @@ def test_link_scan_uses_directory_extensions_and_persists_cache() -> None:
     assert "--exclude-path scripts/fixtures" in scan
     assert "'./**/*.html'" not in scan
     assert re.search(r"^            \.$", scan, re.MULTILINE)
-    assert "uses: actions/cache@v5" in job
+    assert "uses: actions/cache/restore@v5" in job
     assert "path: .lycheecache" in job
     # Issue #131: scoped to the UTC day so a restored cache is never too old.
     day = "${{ steps.link-cache.outputs.day }}"
@@ -134,7 +134,9 @@ def test_standalone_shellcheck_is_pinned_and_required() -> None:
     assert workflow.count("- '**.sh'") == 2
     job = workflow_job_block(workflow, "shellcheck")
     assert "git ls-files -z '*.sh'" in job
-    assert "shellcheck-py==0.11.0.1 shellcheck" in job
+    assert "shellcheck-py==0.11.0.1" in job
+    assert "pipx run" not in job
+    assert '"$RUNNER_TEMP/shellcheck-venv/bin/shellcheck"' in job
     assert "shellcheck" in workflow_job_block(workflow, "pipeline-status")
     hooks = (ROOT / ".pre-commit-config.yaml").read_text()
     assert "repo: https://github.com/shellcheck-py/shellcheck-py" in hooks

@@ -4,7 +4,8 @@
 # Issue #141: retry release downloads and verify the published checksum.
 # Adapted from link-assistant/hive-mind PR #4026 (Unlicense).
 #
-# Usage: LYCHEE_VERSION=v0.24.2 scripts/install-lychee.sh [install-dir]
+# Usage: set LYCHEE_VERSION and LYCHEE_SHA256_X86_64 / LYCHEE_SHA256_AARCH64
+# to the reviewed pins in links.yml, then run scripts/install-lychee.sh [install-dir].
 # Debug:  LYCHEE_INSTALL_DEBUG=1 prints every command.
 set -euo pipefail
 [ "${LYCHEE_INSTALL_DEBUG:-}" = 1 ] && set -x
@@ -16,13 +17,17 @@ if ! [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 install_dir="${1:-${RUNNER_TEMP:-${TMPDIR:-/tmp}}/lychee/bin}"
 case "$(uname -m)" in
-  x86_64 | amd64) arch=x86_64 ;;
-  aarch64 | arm64) arch=aarch64 ;;
+  x86_64 | amd64) arch=x86_64; expected="${LYCHEE_SHA256_X86_64:-}" ;;
+  aarch64 | arm64) arch=aarch64; expected="${LYCHEE_SHA256_AARCH64:-}" ;;
   *)
     echo "::error title=lychee install::Unsupported architecture $(uname -m)." >&2
     exit 1
     ;;
 esac
+if ! [[ "$expected" =~ ^[0-9a-f]{64}$ ]]; then
+  echo "::error title=lychee install::A committed SHA-256 pin is required for ${arch}." >&2
+  exit 1
+fi
 asset="lychee-${arch}-unknown-linux-gnu.tar.gz"
 base_url="${LYCHEE_DOWNLOAD_BASE_URL:-https://github.com/lycheeverse/lychee/releases/download}/lychee-${version}"
 
@@ -44,9 +49,9 @@ if ! fetch "${base_url}/${asset}" "$work/$asset" || ! fetch "${base_url}/${asset
   exit 1
 fi
 
-expected="$(awk '{print $1; exit}' "$work/$asset.sha256")"
+published="$(awk '{print $1; exit}' "$work/$asset.sha256")"
 actual="$(sha256sum "$work/$asset" | awk '{print $1}')"
-if [ -z "$expected" ] || [ "$expected" != "$actual" ]; then
+if [ "$published" != "$expected" ] || [ "$expected" != "$actual" ]; then
   echo "::error title=lychee install::Checksum mismatch for ${asset}: expected '${expected}', got '${actual}'." >&2
   exit 1
 fi
