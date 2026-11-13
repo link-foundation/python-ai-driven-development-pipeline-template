@@ -135,6 +135,8 @@ This project uses:
 - Write docstrings for all public APIs (Google style)
 - Keep functions under 50 lines when possible
 - Keep files under 1000 lines
+- Python, shell, JavaScript and MJS files warn above 900 lines and fail above
+  1000; Markdown warns above 2250 and fails above 2500.
 - Maintain test coverage above 80%
 
 ### Docstring Format
@@ -192,6 +194,31 @@ class TestMyFeature:
 5. Link any related issues in the PR description
 6. Wait for CI checks to pass
 7. Address any review feedback
+
+## Pipeline Safeguards
+
+Built distributions are checked after `twine check` and before every PyPI upload,
+including `scripts/publish_to_pypi.py`. Run `python scripts/check_dist_size.py`
+locally after building. Each file has a conservative 99,000,000-byte budget;
+set the `DIST_SIZE_LIMIT_BYTES` repository variable for CI, the environment
+variable locally, or pass `--max-bytes` for a different project limit.
+The gate reports the largest individual file as `dist_size_bytes` in
+`GITHUB_OUTPUT` and lists the ten largest archive members on a failure.
+Missing distributions also fail. PyPI's project storage quota is separate from
+this per-file gate.
+
+If main advances during a manual release, the release script dispatches
+`release.yml` on main with the original bump type and description. The new run
+validates the new source before releasing; the old run skips publication.
+The manual release job therefore needs `actions: write` and `GH_TOKEN` in
+addition to its existing publishing permissions. A failed dispatch fails the
+job visibly. No unvalidated source is rebased into the release.
+
+When updating lychee, review and update `LYCHEE_VERSION` and both architecture
+SHA-256 pins together in `.github/workflows/links.yml`. The installer checks
+the archive against those pins as well as the release checksum. Local callers
+must supply the same pins via `LYCHEE_SHA256_X86_64` and
+`LYCHEE_SHA256_AARCH64`.
 
 ## Changelog Management
 

@@ -29,6 +29,7 @@ env:
   GIT_CONFIG_COUNT: '1'
   GIT_CONFIG_KEY_0: init.defaultBranch
   GIT_CONFIG_VALUE_0: main
+  DIST_SIZE_LIMIT_BYTES: ${{ vars.DIST_SIZE_LIMIT_BYTES || '99000000' }}
 
 # Concurrency is intentionally job-scoped. Superseded read-only jobs cancel
 # independently away from main. Jobs on main are never superseded, which lets
@@ -429,6 +430,7 @@ jobs:
         run: |
           cd "$PYTHON_ROOT"
           twine check dist/*
+          python scripts/check_dist_size.py
 
       - name: Upload artifacts
         uses: $/.github/actions/artifact
@@ -532,11 +534,8 @@ jobs:
           push: false
           load: true
           tags: app:pr-check
-          # Scoped like the per-platform writes below (issue #66): an unscoped
-          # GHA cache export lands in the shared `buildkit` scope, where builds
-          # overwrite each other and crowd out actions/cache entries.
+          # PR merge-ref caches cannot be read by main; restore only.
           cache-from: type=gha,scope=docker-pr-check
-          cache-to: type=gha,mode=max,scope=docker-pr-check
 
   # RELEASE JOBS - Only run after all CI checks pass
 
@@ -621,6 +620,10 @@ jobs:
           name: dist
           path: dist/
 
+      - name: Check distribution sizes before upload
+        if: steps.version_check.outputs.should_release == 'true'
+        run: python "$PYTHON_ROOT/scripts/check_dist_size.py" --dist-dir dist
+
       - name: Publish to PyPI
         if: steps.version_check.outputs.should_release == 'true'
         uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086  # v1.14.3 @ 2026-10-20
@@ -684,6 +687,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: write
+      actions: write  # Redispatch validation if main advances during release.
       id-token: write
     steps:
       # The only checkout in this repository that keeps credentials in
@@ -741,6 +745,7 @@ jobs:
       - name: Version and commit
         id: version
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BUMP_TYPE: ${{ github.event.inputs.bump_type }}
           DESCRIPTION: ${{ github.event.inputs.description }}
           VALIDATED_SHA: ${{ github.sha }}
@@ -768,6 +773,7 @@ jobs:
         run: |
           cd "$PYTHON_ROOT"
           twine check dist/*
+          python scripts/check_dist_size.py
 
       - name: Publish to PyPI
         if: steps.version_check.outputs.should_release == 'true'

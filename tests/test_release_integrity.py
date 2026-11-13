@@ -171,8 +171,9 @@ def test_remote_recovery_rejects_unvalidated_source(repository, tmp_path, versio
     assert git("rev-parse", "HEAD") == validated
 
 
-def test_push_race_rejects_remote_source_before_rebase(
-    repository, tmp_path, monkeypatch
+@pytest.mark.parametrize("attempts", [1, 3])
+def test_push_race_defers_remote_source_without_rebase(
+    repository, tmp_path, monkeypatch, attempts
 ):
     root, validated = remote_for(repository, tmp_path)
     (root / "source.py").write_text("unvalidated\n")
@@ -180,14 +181,73 @@ def test_push_race_rejects_remote_source_before_rebase(
     git("push", "origin", "main")
     git("reset", "--hard", validated)
     local_child = metadata_child(root)
-    with pytest.raises(ValueError, match="drift"):
-        release.push_branch_with_rebase_retry(
+    with pytest.raises(release.ReleaseSuperseded, match="drift"):
+        release.push_branch_with_retry(
             "main",
+            max_attempts=attempts,
             validated_sha=validated,
             pyproject_git_path=(root / "pyproject.toml").as_posix(),
         )
     assert git("rev-parse", "HEAD") == local_child
     assert git("rev-parse", "origin/main") == remote_child
+
+
+@pytest.mark.parametrize("dispatch_ok", [True, False])
+def test_main_dispatches_fresh_ci_with_original_inputs(
+    repository, tmp_path, monkeypatch, dispatch_ok
+):
+    root, validated = remote_for(repository, tmp_path)
+    (root / "source.py").write_text("new source\n")
+    remote_child = commit("concurrent source change")
+    git("push", "origin", "main")
+    git("reset", "--hard", validated)
+    output = tmp_path / "output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(output))
+    monkeypatch.setenv("GITHUB_REPOSITORY", "owner/repo")
+    monkeypatch.setenv("GH_TOKEN", "test-token")
+    monkeypatch.setattr(
+        release, "__file__", str(root.resolve() / "scripts/version_and_commit.py")
+    )
+    description = "release description\nwith `literal` $(shell)"
+    monkeypatch.setattr(
+        "sys.argv",
+        ["version_and_commit.py", "--bump-type", "minor", "--description", description],
+    )
+    original_run = release.run_command
+    dispatches = []
+
+    def run(cmd, *args, **kwargs):
+        if cmd[0] != "gh":
+            return original_run(cmd, *args, **kwargs)
+        dispatches.append(cmd)
+        if not dispatch_ok:
+            raise SystemExit(1)
+        return subprocess.CompletedProcess(cmd, 0)
+
+    monkeypatch.setattr(release, "run_command", run)
+    assert release.main() == (0 if dispatch_ok else 1)
+    assert dispatches == [
+        [
+            "gh",
+            "workflow",
+            "run",
+            "release.yml",
+            "--repo",
+            "owner/repo",
+            "--ref",
+            "main",
+            "--raw-field",
+            "bump_type=minor",
+            "--raw-field",
+            f"description={description}",
+        ]
+    ]
+    assert git("rev-parse", "HEAD") == validated
+    assert git("rev-parse", "origin/main") == remote_child
+    if dispatch_ok:
+        assert output.read_text() == "release_deferred=true\n"
+    else:
+        assert not output.exists()
 
 
 def test_dirty_checkout_is_not_reset_or_pushed(repository, tmp_path):
@@ -205,36 +265,6 @@ def test_manual_workflow_carries_validated_sha():
     assert "VALIDATED_SHA: ${{ github.sha }}" in workflow.read_text()
 
 
-def test_rebase_result_is_attested_before_another_push(
-    repository, tmp_path, monkeypatch
-):
-    root, validated = remote_for(repository, tmp_path)
-    metadata_child(root)
-    calls = []
-
-    def fake_git(cmd):
-        calls.append(cmd)
-        if cmd[:2] == ["git", "push"]:
-            return subprocess.CompletedProcess(
-                cmd, 1, stdout="", stderr="! [rejected] (fetch first)"
-            )
-        assert cmd[:3] == ["git", "pull", "--rebase"]
-        # Simulate a second remote movement arriving with pull's own fetch.
-        (root / "source.py").write_text("unvalidated during rebase")
-        git("add", "-A")
-        git("commit", "--amend", "--no-edit")
-        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
-
-    monkeypatch.setattr(release, "run_git_capturing", fake_git)
-    with pytest.raises(ValueError, match="drift"):
-        release.push_branch_with_rebase_retry(
-            "main",
-            validated_sha=validated,
-            pyproject_git_path=(root / "pyproject.toml").as_posix(),
-        )
-    assert len(calls) == 2
-
-
 def test_push_race_adopts_verified_equivalent_release(repository, tmp_path):
     root, validated = remote_for(repository, tmp_path)
     child = metadata_child(root)
@@ -243,7 +273,7 @@ def test_push_race_adopts_verified_equivalent_release(repository, tmp_path):
     metadata_child(root)
     git("commit", "--amend", "-m", "different metadata commit identity")
     assert git("rev-parse", "HEAD") != child
-    release.push_branch_with_rebase_retry(
+    release.push_branch_with_retry(
         "main",
         validated_sha=validated,
         pyproject_git_path=(root / "pyproject.toml").as_posix(),
@@ -291,7 +321,7 @@ def test_push_publishes_attested_head_from_detached_checkout(repository, tmp_pat
     git("checkout", "--detach")
     child = metadata_child(root)
     assert git("rev-parse", "main") == validated
-    release.push_branch_with_rebase_retry(
+    release.push_branch_with_retry(
         "main",
         validated_sha=validated,
         pyproject_git_path=(root / "pyproject.toml").as_posix(),

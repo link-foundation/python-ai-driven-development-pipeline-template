@@ -135,6 +135,37 @@ class PushFailure(Enum):
     OTHER = auto()
 
 
+class ReleaseSuperseded(ValueError):
+    """Remote source needs a fresh CI run before a release can be created."""
+
+
+def dispatch_release_retry(bump_type: str, description: str) -> None:
+    """Revalidate main even when its push used GITHUB_TOKEN (issue #145)."""
+    repository = os.environ.get("GITHUB_REPOSITORY")
+    if not repository or not os.environ.get("GH_TOKEN"):
+        raise ValueError(
+            "Main advanced; rerun CI on main (dispatch credentials missing)"
+        )
+    run_command(
+        [
+            "gh",
+            "workflow",
+            "run",
+            "release.yml",
+            "--repo",
+            repository,
+            "--ref",
+            "main",
+            "--raw-field",
+            f"bump_type={bump_type}",
+            "--raw-field",
+            f"description={description}",
+        ]
+    )
+    set_github_output("release_deferred", "true")
+    print("::notice::Main advanced; dispatched full CI and release on the new head.")
+
+
 def classify_push_failure(raw_output: str) -> PushFailure:
     """Separate permanent policy failures, transient server failures and races."""
     haystack = raw_output.lower()
@@ -157,18 +188,18 @@ def run_git_capturing(cmd: list[str]) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, capture_output=True, text=True, check=False)
 
 
-def push_branch_with_rebase_retry(
+def push_branch_with_retry(
     branch: str,
     *,
     max_attempts: int = 3,
     validated_sha: str | None = None,
     pyproject_git_path: str = "pyproject.toml",
 ) -> None:
-    """Push to a branch, retrying a lost race with a rebase (issue #73).
+    """Push attested metadata; retry transient errors or defer a source race.
 
     Transient server failures retry the unchanged commit with backoff. Policy
-    errors remain permanent. Remote recovery and rebases must retain the
-    validated source and dependency tree. Local callers default to starting HEAD.
+    errors remain permanent. Remote recovery must retain the validated source
+    and dependency tree. A source race requires a fresh CI run, never a rebase.
     """
     if not 1 <= max_attempts <= 3:
         raise ValueError("Push attempts must be between 1 and 3")
@@ -213,7 +244,7 @@ def push_branch_with_rebase_retry(
             print(f"Error pushing: {push_error}", file=sys.stderr)
             sys.exit(1)
 
-        if attempt >= max_attempts:
+        if attempt >= max_attempts and failure is PushFailure.TRANSIENT:
             print(
                 f"Error pushing after {max_attempts} attempts: {push_error}",
                 file=sys.stderr,
@@ -226,34 +257,26 @@ def push_branch_with_rebase_retry(
 
         run_command(["git", "fetch", "origin", branch])
         remote = f"origin/{branch}"
-        attest_release(validated_sha, remote, pyproject_git_path)
-        if git_text(["rev-parse", remote]) != validated_sha:
-            # A lost response may have published an equivalent release.
-            local_version = parse_version(
-                git_text(["show", f"HEAD:{pyproject_git_path}"])
-            )
-            remote_version = parse_version(
-                git_text(["show", f"{remote}:{pyproject_git_path}"])
-            )
-            if local_version != remote_version:
+        try:
+            attest_release(validated_sha, remote, pyproject_git_path)
+        except ValueError as error:
+            raise ReleaseSuperseded(f"Remote main needs validation: {error}") from error
+        if git_text(["rev-parse", remote]) == validated_sha:
+            # A stale rejection without remote movement can retry unchanged.
+            if attempt >= max_attempts:
                 raise ValueError(
-                    "Remote release version differs; rerun CI on the new revision"
+                    f"Error pushing after {max_attempts} attempts: {push_error}"
                 )
-            run_command(["git", "reset", "--hard", remote])
-            return
-        print(
-            f"Push rejected as non-fast-forward (attempt {attempt}/"
-            f"{max_attempts}); the remote branch moved. Rebasing and retrying...",
-            file=sys.stderr,
+            continue
+        local_version = parse_version(git_text(["show", f"HEAD:{pyproject_git_path}"]))
+        remote_version = parse_version(
+            git_text(["show", f"{remote}:{pyproject_git_path}"])
         )
-        rebase = run_git_capturing(["git", "pull", "--rebase", "origin", branch])
-        if rebase.returncode != 0:
-            rebase_error = f"{rebase.stdout}{rebase.stderr}".strip()
-            print(f"Error during pull --rebase: {rebase_error}", file=sys.stderr)
-            run_git_capturing(["git", "rebase", "--abort"])
-            sys.exit(1)
-        attest_release(validated_sha, "HEAD", pyproject_git_path)
-        retry_head = git_text(["rev-parse", "HEAD"])
+        if local_version != remote_version:
+            raise ReleaseSuperseded("Remote release version differs; revalidate main")
+        # A lost response may have published an equivalent attested release.
+        run_command(["git", "reset", "--hard", remote])
+        return
 
 
 def configure_git() -> None:
@@ -414,10 +437,13 @@ def check_remote_changes(
         print(f"Remote main has advanced (local: {local_head}, remote: {remote_head})")
         print("This may indicate a previous attempt partially succeeded.")
 
-        attest_release(validated_sha, remote_head, pyproject_git_path)
+        try:
+            attest_release(validated_sha, remote_head, pyproject_git_path)
+        except ValueError as error:
+            raise ReleaseSuperseded(f"Remote main needs validation: {error}") from error
         if remote_head == validated_sha:
             # A prior attempt committed locally but did not publish its child.
-            push_branch_with_rebase_retry(
+            push_branch_with_retry(
                 "main",
                 validated_sha=validated_sha,
                 pyproject_git_path=pyproject_git_path,
@@ -555,8 +581,8 @@ def main() -> int:
             # Commit with version as message
             run_command(["git", "commit", "-m", new_version])
 
-            # Push to main; only a genuine lost race is retried (issue #73)
-            push_branch_with_rebase_retry(
+            # Push attested metadata; source races dispatch fresh validation.
+            push_branch_with_retry(
                 "main",
                 validated_sha=validated_sha,
                 pyproject_git_path=pyproject_git_path,
@@ -572,6 +598,14 @@ def main() -> int:
 
         return 0
 
+    except ReleaseSuperseded as error:
+        print(str(error), file=sys.stderr)
+        try:
+            dispatch_release_retry(args.bump_type, args.description)
+        except (Exception, SystemExit) as dispatch_error:
+            print(f"Error redispatching release: {dispatch_error}", file=sys.stderr)
+            return 1
+        return 0
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1

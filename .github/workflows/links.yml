@@ -65,7 +65,8 @@ jobs:
         run: echo "day=$(date -u +%F)" >> "$GITHUB_OUTPUT"
 
       - name: Restore lychee cache
-        uses: actions/cache@v5
+        id: lychee-cache
+        uses: actions/cache/restore@v5
         with:
           path: .lycheecache
           key: cache-lychee-${{ steps.link-cache.outputs.day }}-${{ github.sha }}
@@ -75,6 +76,9 @@ jobs:
         run: bash scripts/install-lychee.sh
         env:
           LYCHEE_VERSION: v0.24.2
+          # Pin independently of the release's replaceable checksum assets.
+          LYCHEE_SHA256_X86_64: 1f4e0ef7f6554a6ed33dd7ac144fb2e1bbed98598e7af973042fc5cd43951c9a
+          LYCHEE_SHA256_AARCH64: 91a7bd65685da41b90ccb9bc867a3d649a7818042dae04ff405e55a25bddee4c
 
       - name: Check links with lychee
         id: lychee
@@ -140,6 +144,13 @@ jobs:
           echo ""
           echo "Report location: lychee/out.md."
           exit 1
+
+      - name: Save lychee cache on main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.lychee-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: .lycheecache
+          key: ${{ steps.lychee-cache.outputs.cache-primary-key }}
 
       - name: Upload lychee report
         if: failure()

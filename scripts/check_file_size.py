@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+from fnmatch import fnmatch
 import sys
 from pathlib import Path
 
@@ -19,6 +20,9 @@ MAX_DOC_LINES = 2500
 WARN_DOC_LINES = 2250
 LIMITS = {
     ".py": (MAX_LINES, WARN_LINES),
+    ".sh": (MAX_LINES, WARN_LINES),
+    ".mjs": (MAX_LINES, WARN_LINES),
+    ".js": (MAX_LINES, WARN_LINES),
     ".md": (MAX_DOC_LINES, WARN_DOC_LINES),
 }
 EXCLUDE_PATTERNS = [
@@ -71,8 +75,11 @@ def should_exclude(path: Path, exclude_patterns: list[str]) -> bool:
     Returns:
         True if path should be excluded
     """
-    path_str = str(path)
-    return any(pattern in path_str for pattern in exclude_patterns)
+    # Match components, not substrings: .git must not hide .github helpers,
+    # and dist must not hide check_dist_size.py or other handwritten sources.
+    return any(
+        fnmatch(part, pattern) for part in path.parts for pattern in exclude_patterns
+    )
 
 
 def find_files(directory: Path, exclude_patterns: list[str]) -> list[Path]:

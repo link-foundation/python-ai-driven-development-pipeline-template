@@ -1,0 +1,32 @@
+To /tmp/issue147-repro-yemh0t16/remote.git
+ ! [rejected]        HEAD -> main (non-fast-forward)
+error: failed to push some refs to '/tmp/issue147-repro-yemh0t16/remote.git'
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. If you want to integrate the remote changes,
+hint: use 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+From /tmp/issue147-repro-yemh0t16/remote
+ * branch            main       -> FETCH_HEAD
+BASELINE: 1001-line shell/JS/MJS and .github helpers escape the size gate
+BASELINE: modified lychee archive + matching replacement checksum accepted
+Running: git rev-parse HEAD
+Running: git status --porcelain --untracked-files=all
+Running: git rev-parse HEAD
+Running: git rev-parse --verify f857b14fed947515a8802e0a333c6b97fc0a2ee2^{commit}
+Running: git rev-parse --verify HEAD^{commit}
+Running: git show -s --format=%P 6a021f58af7aeac4d859a3d409503b5ab3f7dc88
+Running: git ls-tree --full-tree -rz f857b14fed947515a8802e0a333c6b97fc0a2ee2
+Running: git ls-tree --full-tree -rz 6a021f58af7aeac4d859a3d409503b5ab3f7dc88
+Running: git show f857b14fed947515a8802e0a333c6b97fc0a2ee2:pyproject.toml
+Running: git show 6a021f58af7aeac4d859a3d409503b5ab3f7dc88:pyproject.toml
+Running: git push origin HEAD:refs/heads/main
+Running: git fetch origin main
+Running: git rev-parse --verify f857b14fed947515a8802e0a333c6b97fc0a2ee2^{commit}
+Running: git rev-parse --verify origin/main^{commit}
+Running: git show -s --format=%P 308ac3b8df47cdb1486da194e89940c58bf4699a
+Running: git ls-tree --full-tree -rz f857b14fed947515a8802e0a333c6b97fc0a2ee2
+Running: git ls-tree --full-tree -rz 308ac3b8df47cdb1486da194e89940c58bf4699a
+Running: git show f857b14fed947515a8802e0a333c6b97fc0a2ee2:pyproject.toml
+Running: git show 308ac3b8df47cdb1486da194e89940c58bf4699a:pyproject.toml
+BASELINE: real non-fast-forward fails before rebase/redispatch: Release source/dependency drift at source.py; rerun CI
+BASELINE: build and publication have no distribution size gate
