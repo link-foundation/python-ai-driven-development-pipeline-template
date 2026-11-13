@@ -165,3 +165,25 @@ def test_all_source_helpers_use_warning_and_error_bands(tmp_path, suffix):
     path.write_text("x\n" * 1001)
     result = module.check_directory(tmp_path)
     assert len(result.violations) == 1
+
+
+def test_exclusions_do_not_hide_github_actions_or_similarly_named_sources(tmp_path):
+    sources = [
+        ".github/actions/helper.mjs",
+        "scripts/check_dist_size.py",
+        "scripts/build_helper.js",
+        "scripts/environment.sh",
+    ]
+    generated = [
+        ".git/helper.js",
+        "dist/bundle.mjs",
+        "node_modules/pkg/x.js",
+        "build/generated.py",
+        "demo.egg-info/info.py",
+    ]
+    for name in sources + generated:
+        path = tmp_path / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("x\n" * 1001)
+    result = module.check_directory(tmp_path)
+    assert {finding.file.as_posix() for finding in result.violations} == set(sources)

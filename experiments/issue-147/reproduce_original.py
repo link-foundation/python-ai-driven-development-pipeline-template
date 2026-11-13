@@ -38,8 +38,11 @@ def reproduce(work):
     source.mkdir()
     for suffix in (".sh", ".mjs", ".js"):
         (source / f"helper{suffix}").write_text("x\n" * 1001)
+    github = source / ".github/actions"
+    github.mkdir(parents=True)
+    (github / "helper.py").write_text("x\n" * 1001)
     assert not size.check_directory(source).violations
-    print("BASELINE: all three 1001-line non-Python helpers escape the size gate")
+    print("BASELINE: 1001-line shell/JS/MJS and .github helpers escape the size gate")
 
     from tests.test_lychee_install_and_scan import release_server
 

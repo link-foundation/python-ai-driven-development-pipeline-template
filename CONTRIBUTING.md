@@ -195,7 +195,7 @@ class TestMyFeature:
 6. Wait for CI checks to pass
 7. Address any review feedback
 
-## Changelog Management
+## Pipeline Safeguards
 
 Built distributions are checked after `twine check` and before every PyPI upload,
 including `scripts/publish_to_pypi.py`. Run `python scripts/check_dist_size.py`
@@ -219,6 +219,8 @@ SHA-256 pins together in `.github/workflows/links.yml`. The installer checks
 the archive against those pins as well as the release checksum. Local callers
 must supply the same pins via `LYCHEE_SHA256_X86_64` and
 `LYCHEE_SHA256_AARCH64`.
+
+## Changelog Management
 
 This project uses [Scriv](https://scriv.readthedocs.io/) for changelog management, which works similarly to [Changesets](https://github.com/changesets/changesets) in JavaScript projects.
 
