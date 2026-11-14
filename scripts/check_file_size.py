@@ -6,10 +6,10 @@ Exits with error code 1 if any files exceed the limit.
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass
 from enum import Enum
 from fnmatch import fnmatch
-import sys
 from pathlib import Path
 
 MAX_LINES = 1000
@@ -33,6 +33,8 @@ EXCLUDE_PATTERNS = [
     "__pycache__",
     ".git",
     "build",
+    "_build",
+    "_site",
     "dist",
     ".eggs",
     "*.egg-info",
@@ -93,11 +95,21 @@ def find_files(directory: Path, exclude_patterns: list[str]) -> list[Path]:
         List of file paths
     """
     files = []
-    for path in directory.rglob("*"):
-        if should_exclude(path, exclude_patterns):
-            continue
-        if path.is_file() and path.suffix in LIMITS:
-            files.append(path)
+    for parent, directories, filenames in directory.walk():
+        # Path.walk can prune ignored trees before visiting them, avoiding a
+        # traversal of node_modules, virtual environments and generated output.
+        directories[:] = [
+            name
+            for name in directories
+            if not should_exclude(parent / name, exclude_patterns)
+        ]
+        files.extend(
+            parent / name
+            for name in filenames
+            if (parent / name).suffix in LIMITS
+            and not should_exclude(parent / name, exclude_patterns)
+            and (parent / name).is_file()
+        )
     return sorted(files)
 
 

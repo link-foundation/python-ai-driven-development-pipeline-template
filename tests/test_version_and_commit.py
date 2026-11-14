@@ -13,7 +13,6 @@ import pytest
 
 from scripts.create_github_release import extract_changelog_entry
 
-
 SCRIPT_PATH = (
     Path(__file__).resolve().parent.parent / "scripts" / "version_and_commit.py"
 )

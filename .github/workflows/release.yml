@@ -42,7 +42,7 @@ jobs:
   # === DETECT CHANGES - determines which jobs should run ===
   detect-changes:
     name: Detect Changes
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-detect-changes
@@ -52,15 +52,15 @@ jobs:
       any-code-changed: ${{ steps.changes.outputs.any-code-changed }}
       docs-changed: ${{ steps.changes.outputs.docs-changed }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v7.1.0
         with:
-          python-version: '3.13'
+          python-version: '3.15.2'
 
       - name: Detect Python layout
         id: python_layout
@@ -104,7 +104,7 @@ jobs:
   # See: https://github.com/link-assistant/hive-mind/pull/1024 for why this dependency was removed
   lint:
     name: Lint and Format Check
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-lint
@@ -118,7 +118,7 @@ jobs:
         needs.detect-changes.outputs.any-code-changed == 'true'
       )
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -130,9 +130,9 @@ jobs:
         run: bash scripts/simulate-fresh-merge.sh
 
       - name: Setup Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v7.1.0
         with:
-          python-version: '3.13'
+          python-version: '3.15.2'
 
       - name: Detect Python layout
         id: python_layout
@@ -168,8 +168,7 @@ jobs:
           bash scripts/run-with-budget-warning.sh \
             "$INSTALL_BUDGET_SECONDS" "Install dependencies" \
             bash -euo pipefail -c '
-              python -m pip install --upgrade pip
-              pip install -e ".[dev]"
+              bash scripts/install-python-dependencies.sh
             '
 
       - name: Run Ruff linting
@@ -192,13 +191,25 @@ jobs:
           cd "$PYTHON_ROOT"
           python scripts/check_file_size.py
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '26.13.1'
+
+      - name: Install pinned npm
+        run: npm install --global npm@12.2.2
+
       - name: Check for secrets
         env:
           SECRETLINT_BUDGET_SECONDS: 300
         run: |
           bash "$PYTHON_ROOT/scripts/run-with-budget-warning.sh" \
             "$SECRETLINT_BUDGET_SECONDS" "Check for secrets" \
-            npx --yes -p secretlint@13.0.7 -p @secretlint/secretlint-rule-preset-recommend@13.0.7 secretlint "**/*"
+            bash -euo pipefail -c '
+              npm ci --prefix .github/actions/artifact --ignore-scripts --no-audit --no-fund
+              npm exec --prefix .github/actions/artifact -- secretlint "**/*"
+            '
+
 
   # === DOCUMENTATION VALIDATION ===
   # Principle 12 (issue #72): documentation-only pull requests skip the
@@ -207,7 +218,7 @@ jobs:
   # link to, and enforces the markdown size budget.
   validate-docs:
     name: Validate Documentation
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-validate-docs
@@ -221,7 +232,7 @@ jobs:
         needs.detect-changes.outputs.docs-changed == 'true'
       )
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
@@ -244,7 +255,7 @@ jobs:
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-release-preflight
       cancel-in-progress: true
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions:
       contents: read
@@ -252,7 +263,7 @@ jobs:
       # upload token -- the same exchange the publish step performs.
       id-token: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
@@ -275,8 +286,8 @@ jobs:
   # === TEST ===
   # Test on latest Python version only
   test:
-    name: Test (Python 3.13)
-    runs-on: ubuntu-24.04
+    name: Test (Python 3.15)
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-test
@@ -292,14 +303,14 @@ jobs:
         needs.detect-changes.outputs.any-code-changed == 'true'
       )
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: Setup Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v7.1.0
         with:
-          python-version: '3.13'
+          python-version: '3.15.2'
 
       - name: Detect Python layout
         id: python_layout
@@ -335,8 +346,7 @@ jobs:
           bash scripts/run-with-budget-warning.sh \
             "$INSTALL_BUDGET_SECONDS" "Install dependencies" \
             bash -euo pipefail -c '
-              python -m pip install --upgrade pip
-              pip install -e ".[dev]"
+              bash scripts/install-python-dependencies.sh
             '
 
       - name: Run tests
@@ -354,7 +364,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: env.CODECOV_TOKEN != ''
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5  # v7.0.0 @ 2026-06-07
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5  # v7.1.1 @ 2026-11-14
         with:
           files: ${{ steps.python_layout.outputs.root }}/coverage.xml
           token: ${{ env.CODECOV_TOKEN }}
@@ -365,7 +375,7 @@ jobs:
   # Build package after required checks pass for detected code changes or dispatches.
   build:
     name: Build Package
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-build
@@ -381,14 +391,14 @@ jobs:
         needs.test.result == 'success'
       )
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: Setup Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v7.1.0
         with:
-          python-version: '3.13'
+          python-version: '3.15.2'
 
       - name: Detect Python layout
         id: python_layout
@@ -418,13 +428,13 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install build twine
+          cd "$PYTHON_ROOT"
+          bash scripts/install-python-dependencies.sh
 
       - name: Build package
         run: |
           cd "$PYTHON_ROOT"
-          python -m build
+          python -m build --no-isolation
 
       - name: Check package
         run: |
@@ -443,7 +453,7 @@ jobs:
   # Docs-only PRs (./docs folder, markdown files) don't require changelog fragments
   changelog:
     name: Changelog Fragment Check
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-changelog
@@ -451,15 +461,15 @@ jobs:
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v7.1.0
         with:
-          python-version: "3.13"
+          python-version: "3.15.2"
 
       - name: Detect Python layout
         id: python_layout
@@ -499,7 +509,7 @@ jobs:
   # Skip cleanly when a generated repository does not include a Dockerfile.
   docker-build:
     name: Docker Image Build Check
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-docker-build
@@ -507,7 +517,7 @@ jobs:
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
@@ -523,12 +533,12 @@ jobs:
 
       - name: Set up Docker Buildx
         if: steps.dockerfile.outputs.exists == 'true'
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@v4.4.1
 
       - name: Build Docker image (no push)
         if: steps.dockerfile.outputs.exists == 'true'
         timeout-minutes: 40
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@v7.4.0
         with:
           context: .
           push: false
@@ -559,21 +569,21 @@ jobs:
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.release-preflight.result == 'success'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     permissions:
       contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v7.1.0
         with:
-          python-version: '3.13'
+          python-version: '3.15.2'
 
       - name: Detect Python layout
         id: python_layout
@@ -603,8 +613,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install build twine
+          cd "$PYTHON_ROOT"
+          bash scripts/install-python-dependencies.sh
 
       - name: Check release artifacts
         id: version_check
@@ -683,7 +693,7 @@ jobs:
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.release-preflight.result == 'success'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     permissions:
       contents: write
@@ -694,16 +704,16 @@ jobs:
       # .git/config: scripts/version_and_commit.py runs `git push origin HEAD:refs/heads/main`
       # to publish the version bump, which needs the token wired into the
       # remote. Every other checkout sets persist-credentials: false.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: true
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v7.1.0
         with:
-          python-version: '3.13'
+          python-version: '3.15.2'
 
       - name: Detect Python layout
         id: python_layout
@@ -734,8 +744,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd "$PYTHON_ROOT"
-          python -m pip install --upgrade pip
-          pip install build twine "scriv[toml]" uv
+          bash scripts/install-python-dependencies.sh
 
       - name: Configure git
         run: |
@@ -766,7 +775,7 @@ jobs:
         if: steps.version_check.outputs.should_release == 'true'
         run: |
           cd "$PYTHON_ROOT"
-          python -m build
+          python -m build --no-isolation
 
       - name: Check package
         if: steps.version_check.outputs.should_release == 'true'
@@ -828,7 +837,7 @@ jobs:
         needs.auto-release.outputs.released == 'true' ||
         needs.manual-release.outputs.released == 'true'
       )
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions:
       contents: read
@@ -842,7 +851,7 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       RELEASE_VERSION: ${{ needs.auto-release.outputs.version || needs.manual-release.outputs.version }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
@@ -882,22 +891,22 @@ jobs:
       matrix:
         include:
           - platform: linux/amd64
-            runner: ubuntu-24.04
+            runner: ubuntu-26.04
           - platform: linux/arm64
-            runner: ubuntu-24.04-arm
+            runner: ubuntu-26.04-arm
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@v4.4.1
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v4
+        uses: docker/login-action@v4.8.0
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -905,7 +914,7 @@ jobs:
       - name: Build and push platform image by digest
         id: docker_build
         timeout-minutes: 40
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@v7.4.0
         with:
           context: .
           platforms: ${{ matrix.platform }}
@@ -938,16 +947,16 @@ jobs:
     if: |
       needs.release-preflight.result == 'success' &&
       needs.docker-publish-build.result == 'success'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     permissions:
       contents: read
     steps:
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@v4.4.1
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v4
+        uses: docker/login-action@v4.8.0
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -987,14 +996,14 @@ jobs:
   # Observe every other job so that state cannot silently hide a broken run.
   pipeline-status:
     name: Pipeline Status
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     if: always()
     needs: [detect-changes, validate-docs, release-preflight, lint, test, build,
             changelog, docker-build, auto-release, manual-release,
             docker-publish-config, docker-publish-build, docker-publish]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 

@@ -3,16 +3,16 @@
 A comprehensive template for AI-driven Python development with full CI/CD pipeline support.
 
 [![CI/CD Pipeline](https://github.com/link-foundation/python-ai-driven-development-pipeline-template/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/link-foundation/python-ai-driven-development-pipeline-template/actions)
-[![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.15%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
 
 ## Features
 
-- **Multi-version Python support**: Works with Python 3.9-3.13
+- **Current Python support**: Works with Python 3.15+
 - **Comprehensive testing**: pytest with async support and coverage reporting
 - **Code quality**: Ruff (linting + formatting) + mypy (type checking)
 - **Pre-commit hooks**: Automated code quality checks before commits
-- **CI/CD pipeline**: GitHub Actions CI/CD with Python 3.13
+- **CI/CD pipeline**: GitHub Actions CI/CD with Python 3.15
 - **Changelog management**: Scriv for conflict-free changelog (like Changesets in JS)
 - **Release automation**: Automatic PyPI publishing and GitHub releases
 - **API documentation**: Sphinx + opt-in GitHub Pages deploy on push to `main`
@@ -40,7 +40,9 @@ python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install in editable mode with development dependencies
-pip install -e ".[dev]"
+python -m pip install uv==0.13.8
+uv sync --locked --all-extras
+source .venv/bin/activate
 
 # Install pre-commit hooks
 pip install pre-commit
@@ -184,7 +186,7 @@ The GitHub Actions workflow provides:
 
 1. **Linting**: Ruff linting, formatting, and mypy type checking
 2. **Changelog check**: Requires a newly added, valid fragment for source-changing PRs, using a verified Git merge base (see [validation details](changelog.d/README.md#pull-request-validation))
-3. **Testing**: Python 3.13 test suite
+3. **Testing**: Python 3.15 test suite
 4. **Building**: Package building and validation
 5. **Coverage**: Automatic upload to Codecov
 
@@ -202,7 +204,7 @@ setting is disabled. Set `DEPENDENCY_GRAPH_DEBUG=1` for response tracing.
 
 ### Runner and link-check policy
 
-Ubuntu jobs and Linux matrix entries use `ubuntu-24.04`. A workflow regression
+Ubuntu jobs and Linux matrix entries use `ubuntu-26.04`. A workflow regression
 check rejects floating Ubuntu, Windows, and macOS runner aliases; upgrades
 should change the versioned labels in a reviewed pull request.
 
@@ -408,9 +410,11 @@ import asyncio
 result = add(2, 3)  # 5
 product = multiply(2, 3)  # 6
 
+
 # Async operations
 async def main():
     await delay(1.0)  # Wait for 1 second
+
 
 asyncio.run(main())
 ```

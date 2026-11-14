@@ -44,7 +44,7 @@ env:
 jobs:
   link-checker:
     name: Check Links
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-link-checker
@@ -52,7 +52,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
@@ -66,7 +66,7 @@ jobs:
 
       - name: Restore lychee cache
         id: lychee-cache
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@v6.1.0
         with:
           path: .lycheecache
           key: cache-lychee-${{ steps.link-cache.outputs.day }}-${{ github.sha }}
@@ -147,7 +147,7 @@ jobs:
 
       - name: Save lychee cache on main
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.lychee-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v6
+        uses: actions/cache/save@v6.1.0
         with:
           path: .lycheecache
           key: ${{ steps.lychee-cache.outputs.cache-primary-key }}
@@ -169,10 +169,10 @@ jobs:
     needs:
       - link-checker
     if: always()
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 

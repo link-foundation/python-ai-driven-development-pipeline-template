@@ -8,7 +8,6 @@ from pathlib import Path
 
 import pytest
 
-
 SCRIPT_PATH = Path(__file__).resolve().parent.parent / "scripts" / "check_file_size.py"
 spec = importlib.util.spec_from_file_location("check_file_size", SCRIPT_PATH)
 module = importlib.util.module_from_spec(spec)
@@ -187,3 +186,23 @@ def test_exclusions_do_not_hide_github_actions_or_similarly_named_sources(tmp_pa
         path.write_text("x\n" * 1001)
     result = module.check_directory(tmp_path)
     assert {finding.file.as_posix() for finding in result.violations} == set(sources)
+
+
+def test_find_files_prunes_ignored_trees(tmp_path, monkeypatch) -> None:
+    """The size check must not traverse installed dependency trees."""
+    (tmp_path / "node_modules/nested").mkdir(parents=True)
+    (tmp_path / "node_modules/nested/dependency.js").write_text("ignored")
+    (tmp_path / "source.py").write_text("checked")
+    visited = []
+    original_walk = Path.walk
+
+    def traced_walk(path, *args, **kwargs):
+        for entry in original_walk(path, *args, **kwargs):
+            visited.append(entry[0])
+            yield entry
+
+    monkeypatch.setattr(Path, "walk", traced_walk)
+    assert module.find_files(tmp_path, module.EXCLUDE_PATTERNS) == [
+        tmp_path / "source.py"
+    ]
+    assert visited == [tmp_path]

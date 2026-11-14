@@ -7,9 +7,9 @@ import re
 import pytest
 
 from tests.workflow_helpers import (
-    assert_action_reference_count,
     ROOT,
     WORKFLOWS,
+    assert_action_reference_count,
     job_condition,
     read_workflow,
     workflow_job_block,

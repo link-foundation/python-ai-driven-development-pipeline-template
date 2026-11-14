@@ -4,7 +4,7 @@
 // `!` exclusions, implicit descendants of a matched directory, hidden entries
 // skipped, and symbolic links never followed or uploaded.
 import { Minimatch } from 'minimatch';
-import { lstat, mkdtemp, readdir, rm } from 'node:fs/promises';
+import { glob, lstat, mkdtemp, rm } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -40,7 +40,12 @@ async function walk(item, visit) {
   try { stats = await lstat(item); } catch (error) { if (error.code === 'ENOENT') return; throw error; }
   if (stats.isFile()) visit(item);
   else if (stats.isDirectory()) {
-    for (const child of await readdir(item)) await walk(path.join(item, child), visit);
+    // Node 24's stable glob iterator handles traversal without a recursive
+    // JavaScript walker. Prune hidden entries and links before descending.
+    for await (const entry of glob('**/*', {
+      cwd: item, withFileTypes: true,
+      exclude: entry => entry.name.startsWith('.') || entry.isSymbolicLink(),
+    })) if (entry.isFile()) visit(path.join(entry.parentPath, entry.name));
   }
 }
 

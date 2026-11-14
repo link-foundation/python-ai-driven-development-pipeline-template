@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Resolve and audit every Python dependency surface supported by the template.
 
-The audit runs pip-audit over the resolved environment, never over pip
-itself: the target environment is created ``--without-pip`` and populated
-through the running interpreter's pip (issue #68). Auditing a bundled pip
-reports known PYSEC advisories against the tool used to install, which the
-application cannot fix and which masks advisories in real dependencies.
+The audit uses the committed uv lock as constraints for every dependency surface.
+The target starts without a bundled pip (issue #68); only the explicitly declared,
+locked pip tool is included, so an old virtualenv seed cannot create a false
+positive. Reports stream to the caller even when vulnerabilities cause failure.
 """
 
 from __future__ import annotations
@@ -17,7 +16,7 @@ import tomllib
 from pathlib import Path
 
 PIP_AUDIT_VERSION = "2.10.1"
-DEPENDENCY_SURFACES = ("pyproject.toml", "docs/requirements.txt")
+DEPENDENCY_SURFACES = ("pyproject.toml", "docs/requirements.txt", "uv.lock")
 
 
 def run(command: list[str], *, cwd: Path, capture: bool = False) -> str:
@@ -72,14 +71,30 @@ def audit_dependencies(project_root: Path) -> None:
         temporary_root = Path(temporary)
         target_venv = temporary_root / "target"
         audit_venv = temporary_root / "audit"
-        # --without-pip keeps pip itself out of the audited environment; the
-        # running interpreter's pip populates the target through --python.
+        # Avoid an untracked bundled pip. The locked tools extra supplies the
+        # current pip explicitly, through the host interpreter's --python.
         run(
             [sys.executable, "-m", "venv", "--without-pip", str(target_venv)],
             cwd=project_root,
         )
         run([sys.executable, "-m", "venv", str(audit_venv)], cwd=project_root)
 
+        constraints = temporary_root / "locked-requirements.txt"
+        run(
+            [
+                sys.executable,
+                "-m",
+                "uv",
+                "export",
+                "--locked",
+                "--all-extras",
+                "--no-emit-project",
+                "--no-hashes",
+                "--output-file",
+                str(constraints),
+            ],
+            cwd=project_root,
+        )
         target_python = python_executable(target_venv)
         audit_python = python_executable(audit_venv)
         run(
@@ -90,6 +105,8 @@ def audit_dependencies(project_root: Path) -> None:
                 "--python",
                 str(target_python),
                 "install",
+                "-c",
+                str(constraints),
                 project_install_target(project_root),
             ],
             cwd=project_root,
@@ -102,6 +119,8 @@ def audit_dependencies(project_root: Path) -> None:
                 "--python",
                 str(target_python),
                 "install",
+                "-c",
+                str(constraints),
                 "-r",
                 "docs/requirements.txt",
             ],
@@ -113,6 +132,8 @@ def audit_dependencies(project_root: Path) -> None:
                 "-m",
                 "pip",
                 "install",
+                "-c",
+                str(constraints),
                 f"pip-audit=={PIP_AUDIT_VERSION}",
             ],
             cwd=project_root,

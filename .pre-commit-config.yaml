@@ -5,12 +5,13 @@ repos:
       - id: shellcheck
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
-        exclude: ^\.github/actions/artifact/dist/.*\.mjs$
+        # Preserve archived command output verbatim.
+        exclude: ^(dev/log/|\.github/actions/artifact/dist/.*\.mjs$)
       - id: end-of-file-fixer
-        exclude: ^\.github/actions/artifact/dist/.*\.mjs$
+        exclude: ^(dev/log/|\.github/actions/artifact/dist/.*\.mjs$)
       - id: check-yaml
       - id: check-added-large-files
         exclude: ^\.github/actions/artifact/dist/.*\.mjs$
@@ -19,15 +20,16 @@ repos:
       - id: debug-statements
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.4
+    rev: v0.17.5
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: [--fix, --exit-non-zero-on-fix]
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.13.0
+    rev: v2.4.1
     hooks:
       - id: mypy
-        additional_dependencies: [pytest, pytest-asyncio]
+        files: ^src/
+        additional_dependencies: [pytest==9.2.0, pytest-asyncio==1.5.0]
         args: [--strict, --ignore-missing-imports]

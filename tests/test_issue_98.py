@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
@@ -10,9 +11,9 @@ import tomllib
 import pytest
 
 from tests.workflow_helpers import (
-    assert_action_reference_count,
     ROOT,
     WORKFLOWS,
+    assert_action_reference_count,
     read_workflow,
     workflow_job_block,
     workflow_run_blocks,
@@ -83,10 +84,18 @@ def test_npx_scanners_are_exactly_pinned() -> None:
                 match = re.fullmatch(r"(.+)@(\d+\.\d+\.\d+)", package)
                 assert match, f"{path.name}: unpinned npx package {package}"
                 versions[match[1]] = match[2]
-    assert (
-        versions["secretlint"]
-        == versions["@secretlint/secretlint-rule-preset-recommend"]
-    )
+    action = ROOT / ".github/actions/artifact"
+    manifest = json.loads((action / "package.json").read_text())
+    lock = json.loads((action / "package-lock.json").read_text())
+    scanners = ("secretlint", "@secretlint/secretlint-rule-preset-recommend")
+    pinned = [manifest["devDependencies"][name] for name in scanners]
+    assert pinned[0] == pinned[1]
+    for name, version in zip(scanners, pinned, strict=True):
+        assert re.fullmatch(r"\d+\.\d+\.\d+", version)
+        assert lock["packages"][f"node_modules/{name}"]["version"] == version
+    lint = workflow_job_block(read_workflow("release.yml"), "lint")
+    assert "npm ci --prefix .github/actions/artifact" in lint
+    assert "npm exec --prefix .github/actions/artifact -- secretlint" in lint
 
 
 @pytest.mark.parametrize("job_name", ["auto-release", "manual-release"])

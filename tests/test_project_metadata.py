@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import tomllib
+from pathlib import Path
 
 from packaging.requirements import Requirement
 
@@ -20,11 +20,12 @@ def dev_requirement(name: str) -> Requirement:
 
 
 def test_mypy_dependency_supports_configured_python_target() -> None:
-    """The dev extra must not install mypy versions that reject Python 3.9."""
+    """The dev extra must use the current mypy major without a stale ceiling."""
     mypy = dev_requirement("mypy")
 
-    assert "1.13.0" in mypy.specifier
-    assert "2.0" not in mypy.specifier
+    assert "2.4.1" in mypy.specifier
+    assert "2.4.0" not in mypy.specifier
+    assert "3.0" in mypy.specifier
 
 
 def test_mypy_uses_extra_checks_without_deprecated_concatenate() -> None:
@@ -32,3 +33,25 @@ def test_mypy_uses_extra_checks_without_deprecated_concatenate() -> None:
     config = tomllib.loads((ROOT / "pyproject.toml").read_text())["tool"]["mypy"]
     assert config["extra_checks"] is True
     assert "strict_concatenate" not in config
+
+
+def test_documentation_requirements_match_the_locked_project_extra() -> None:
+    """The separate docs manifest must stay covered by the universal lock."""
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text())
+    docs = {
+        str(Requirement(line))
+        for line in (ROOT / "docs/requirements.txt").read_text().splitlines()
+        if line.strip() and not line.startswith("#")
+    }
+    assert docs == {
+        str(Requirement(value))
+        for value in project["project"]["optional-dependencies"]["docs"]
+    }
+    locked = tomllib.loads((ROOT / "uv.lock").read_text())
+    versions = {item["name"]: item["version"] for item in locked["package"]}
+    for value in (
+        project["project"]["optional-dependencies"]["dev"]
+        + project["project"]["optional-dependencies"]["docs"]
+    ):
+        requirement = Requirement(value)
+        assert versions[requirement.name] in requirement.specifier

@@ -57,3 +57,11 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "furo"
 html_static_path: list[str] = []
 html_title = f"{project} {release}"
+
+
+def setup(app):
+    """Apply the narrowly versioned upstream compatibility fix."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from sphinx_compat import fix_napoleon_options_truthiness
+
+    fix_napoleon_options_truthiness()

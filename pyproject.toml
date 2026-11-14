@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling==1.33.0"]
 build-backend = "hatchling.build"
 
 [project]
@@ -7,8 +7,8 @@ name = "my-package"
 version = "0.1.0"
 description = "A Python package template for AI-driven development"
 readme = "README.md"
-license = {text = "Unlicense"}
-requires-python = ">=3.9"
+license = "Unlicense"
+requires-python = ">=3.15"
 authors = [
     {name = "Your Name", email = "your.email@example.com"},
 ]
@@ -16,29 +16,37 @@ keywords = ["template", "python", "ai-driven"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: The Unlicense (Unlicense)",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.15",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "ruff>=0.8.0,<0.9",
-    "mypy>=1.13.0,<2.0",
-    "pytest>=8.3.0",
-    "pytest-asyncio>=0.24.0",
-    "pytest-cov>=6.0.0",
-    "pre-commit>=4.0.0",
-    "scriv[toml]>=1.7.0",
+    "ruff>=0.17.5",
+    "mypy>=2.4.1",
+    "pytest>=9.2.0",
+    "pytest-asyncio>=1.5.0",
+    "pytest-cov>=7.1.0",
+    "pre-commit>=4.7.0",
+    "scriv>=1.8.1",
+    "packaging>=26.3",
+    "pyyaml>=6.0.3",
 ]
 docs = [
-    "sphinx>=7.4",
-    "furo>=2024.8.6",
-    "myst-parser>=3.0",
+    "sphinx>=9.2.0",
+    "furo>=2025.12.19",
+    "myst-parser>=5.2.0",
+]
+
+tools = [
+    "hatchling>=1.33.0",
+    "build>=1.6.1",
+    "twine>=7.0.0",
+    "uv>=0.13.8",
+    "pip>=26.3",
+    "pip-audit>=2.10.1",
+    "shellcheck-py>=0.11.0.1",
+    "zizmor>=1.32.0",
 ]
 
 [project.urls]
@@ -51,7 +59,7 @@ packages = ["src/my_package"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py39"
+target-version = "py315"
 
 [tool.ruff.lint]
 select = [
@@ -102,7 +110,7 @@ line-ending = "lf"
 skip-magic-trailing-comma = false
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.15"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -116,8 +124,10 @@ strict_equality = true
 extra_checks = true
 
 [tool.pytest.ini_options]
-minversion = "7.0"
-addopts = "-ra -q --strict-markers"
+minversion = "9.2"
+addopts = "-ra -q"
+strict = true
+asyncio_default_fixture_loop_scope = "fixture-scope"
 testpaths = ["tests"]
 pythonpath = ["src"]
 

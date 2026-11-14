@@ -10,7 +10,6 @@ from pathlib import Path
 
 import pytest
 
-
 SCRIPT_PATH = (
     Path(__file__).resolve().parent.parent / "scripts" / "create_github_release.py"
 )

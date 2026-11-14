@@ -10,15 +10,10 @@ import subprocess
 import sys
 import tempfile
 import time
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-
-try:
-    import tomllib
-except ModuleNotFoundError:  # pragma: no cover - workflow runs on Python 3.13.
-    tomllib = None  # type: ignore[assignment]
-
 
 DEFAULT_INSTALL_ATTEMPTS = 6
 DEFAULT_INSTALL_DELAY_SECONDS = 20.0
@@ -85,10 +80,6 @@ def run_command(
 
 def load_pyproject(pyproject_path: Path) -> dict[str, Any]:
     """Load pyproject.toml with a structured TOML parser."""
-    if tomllib is None:
-        message = "smoke_test_published_package.py requires Python 3.11+"
-        raise SmokeTestError(message)
-
     with pyproject_path.open("rb") as pyproject_file:
         return tomllib.load(pyproject_file)
 

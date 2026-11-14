@@ -1,5 +1,9 @@
-# Ruff configuration
-# This file provides additional settings beyond pyproject.toml
+# Pin the effective lint policy explicitly: newer Ruff defaults enable more
+# rule families. Keep the existing error checks and enforce import sorting.
+target-version = "py315"
+
+[lint]
+select = ["E4", "E7", "E9", "F", "I"]
 
 [lint.isort]
 known-first-party = ["my_package"]

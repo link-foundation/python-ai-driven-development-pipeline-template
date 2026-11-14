@@ -23,7 +23,6 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 from read_manifest import read_field
 from release_naming import build_release_tag, detect_python_layout
 
-
 REQUEST_TIMEOUT_SECONDS = 10
 WAIT_TIMEOUT_SECONDS = 600
 WAIT_INTERVAL_SECONDS = 15

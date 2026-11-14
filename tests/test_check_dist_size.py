@@ -9,8 +9,8 @@ import zipfile
 
 import pytest
 
-from scripts.check_dist_size import DEFAULT_MAX_BYTES, check_dist_size, largest_members
 from scripts import publish_to_pypi
+from scripts.check_dist_size import DEFAULT_MAX_BYTES, check_dist_size, largest_members
 from tests.workflow_helpers import (
     ROOT,
     read_workflow,

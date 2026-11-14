@@ -25,6 +25,9 @@ on:
       - 'docs/**'
       - 'src/**'
       - 'pyproject.toml'
+      - 'uv.lock'
+      - '.python-version'
+      - 'scripts/install-python-dependencies.sh'
       - '.github/workflows/docs.yml'
       - '.github/actions/deploy-pages/**'
   pull_request:
@@ -33,6 +36,9 @@ on:
       - 'docs/**'
       - 'src/**'
       - 'pyproject.toml'
+      - 'uv.lock'
+      - '.python-version'
+      - 'scripts/install-python-dependencies.sh'
       - '.github/workflows/docs.yml'
       - '.github/actions/deploy-pages/**'
   workflow_dispatch:
@@ -53,7 +59,7 @@ jobs:
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-build
       cancel-in-progress: true
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     permissions:
       contents: read
@@ -61,23 +67,21 @@ jobs:
       # Empty unless the Pages artifact was uploaded; deploy only runs then.
       pages-artifact-id: ${{ steps.pages-artifact.outputs.artifact-id }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: Setup Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v7.1.0
         with:
-          python-version: '3.13'
+          python-version: '3.15.2'
 
       - name: Install package and docs dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -e .
-          pip install -r docs/requirements.txt
+          bash scripts/install-python-dependencies.sh
 
       - name: Build Sphinx documentation
-        run: sphinx-build -W --keep-going -b html docs _site
+        run: python -W error -m sphinx -W --keep-going -b html docs _site
 
       - name: Upload build artifact
         uses: $/.github/actions/artifact
@@ -108,7 +112,7 @@ jobs:
       queue: max
     needs: [build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_GITHUB_PAGES == 'true'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     permissions:
       contents: read
@@ -120,7 +124,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Configure GitHub Pages
-        uses: actions/configure-pages@v6
+        uses: actions/configure-pages@v6.0.0
 
       - name: Deploy Pages artifact
         id: deployment
@@ -138,10 +142,10 @@ jobs:
       - build
       - deploy
     if: always()
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
