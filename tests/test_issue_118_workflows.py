@@ -7,6 +7,7 @@ import re
 import pytest
 
 from tests.workflow_helpers import (
+    assert_action_reference_count,
     ROOT,
     WORKFLOWS,
     job_condition,
@@ -33,11 +34,13 @@ def test_writers_queue_without_cancelling_pending_releases() -> None:
 
 
 @pytest.mark.parametrize("path", sorted(WORKFLOWS.glob("*.yml")))
-def test_first_party_checkout_and_python_actions_use_v7(path) -> None:
+def test_first_party_checkout_and_python_actions_are_versioned(path) -> None:
     workflow = path.read_text()
     for action in ("checkout", "setup-python"):
         pins = re.findall(rf"uses: actions/{action}@([^\s]+)", workflow)
-        assert all(pin == "v7" for pin in pins)
+        assert all(
+            re.fullmatch(r"v\d+(?:\.\d+){0,2}|[0-9a-f]{40}", pin) for pin in pins
+        )
 
 
 def test_link_scan_uses_directory_extensions_and_persists_cache() -> None:
@@ -48,7 +51,7 @@ def test_link_scan_uses_directory_extensions_and_persists_cache() -> None:
     assert "--exclude-path scripts/fixtures" in scan
     assert "'./**/*.html'" not in scan
     assert re.search(r"^            \.$", scan, re.MULTILINE)
-    assert "uses: actions/cache/restore@v5" in job
+    assert_action_reference_count(job, "actions/cache/restore", 1)
     assert "path: .lycheecache" in job
     # Issue #131: scoped to the UTC day so a restored cache is never too old.
     day = "${{ steps.link-cache.outputs.day }}"

@@ -42,6 +42,32 @@ updates after a seven-day cooldown. Dependabot does not rebuild `dist`, so an np
 update pull request fails "Verify committed action bundle" until someone runs the
 commands above on its branch and pushes the rebuilt bundle.
 
+The **Dependabot Health** workflow runs daily at 15:07 UTC and can be run with
+`workflow_dispatch`. It reads every open pull-request page using `gh api
+--paginate --slurp` with read-only permissions. A Dependabot PR older than 14
+days, or containing more than two "Dependabot is rebasing this PR" banners,
+fails the scan even if Dependabot's own update jobs pass. Annotations and the
+job summary link each affected PR and explain the reason. Fix and merge current
+updates, or close obsolete PRs to let Dependabot propose replacements. API errors
+fail the scan. PR runs test the policy offline; the scheduled/manual scan reports
+repository health without making unrelated PRs depend on existing stale PRs.
+
+Run the same scan locally with authenticated `gh`:
+
+```sh
+python scripts/check_dependabot_health.py --repo OWNER/REPO
+```
+
+The defaults can be overridden with `--max-open-days` and
+`--max-rebase-banners`; set `DEPENDABOT_HEALTH_DEBUG=1` to show page counts.
+The workflow uses the defaults. Workflow tests check action identities, version
+or hash pinning, inputs and behavior while allowing Dependabot to change the
+references. The zizmor job additionally runs
+`python3 scripts/check_zizmor_compatibility.py`: it reads both the action ref and
+`ZIZMOR_VERSION` from `workflows.yml`, then checks that ref's upstream digest
+table or per-version lockfiles. Unsupported combinations fail with instructions
+to update the shared CLI pin; compatible action updates need no test edits.
+
 The Workflows pipeline tests injected transport errors and a real artifact
 round trip, compares every downloaded byte, verifies the Pages tar, and runs
 downloads with `NODE_OPTIONS=--throw-deprecation`. It also checks the bundle is

@@ -10,8 +10,7 @@ from tests.workflow_helpers import (
     ROOT,
     STATUS_CHECK_FUNCTIONS,
     assert_action_hash_pin,
-    assert_action_pin_absent,
-    assert_action_pin_count,
+    assert_action_reference_count,
     job_condition,
     read_workflow,
     workflow_job_block,
@@ -212,24 +211,17 @@ def test_pipeline_status_script_handles_all_job_conclusions() -> None:
     assert "Cancelled jobs in a superseded run" in behind_head.stdout
 
 
-def test_release_workflow_action_versions_are_current() -> None:
-    """Release workflow actions should use the current major versions."""
+def test_release_workflow_uses_expected_pinned_actions() -> None:
+    """Release actions keep their identity and required hash or version pins."""
     release_workflow = read_workflow("release.yml")
 
-    assert_action_pin_count(release_workflow, "actions/checkout", "v7", 13)
-    assert_action_pin_count(release_workflow, "actions/setup-python", "v7", 7)
+    assert_action_reference_count(release_workflow, "actions/checkout", 13)
+    assert_action_reference_count(release_workflow, "actions/setup-python", 7)
     assert release_workflow.count("uses: $/.github/actions/artifact") == 4
     assert release_workflow.count("operation: download") == 2
-    assert_action_pin_absent(release_workflow, "actions/download-artifact", "v7")
+    assert "uses: actions/download-artifact@" not in release_workflow
     assert_action_hash_pin(release_workflow, "codecov/codecov-action", 1)
     assert_action_hash_pin(release_workflow, "pypa/gh-action-pypi-publish", 2)
-
-    assert_action_pin_absent(release_workflow, "actions/setup-python", "v5")
-    assert_action_pin_absent(release_workflow, "codecov/codecov-action", "v4")
-    # A mutable branch pin executes whatever that branch holds at run time.
-    assert_action_pin_absent(
-        release_workflow, "pypa/gh-action-pypi-publish", "release/v1"
-    )
 
 
 def test_manual_release_collects_changelog_in_version_step() -> None:
@@ -249,7 +241,7 @@ def test_release_workflow_sets_git_default_branch_before_checkout() -> None:
     assert "  GIT_CONFIG_VALUE_0: main" in workflow
 
     env_index = workflow.index("env:\n  GIT_CONFIG_COUNT: '1'")
-    first_checkout_index = workflow.index("uses: actions/checkout@v7")
+    first_checkout_index = workflow.index("uses: actions/checkout@")
     assert env_index < first_checkout_index
 
 
@@ -463,8 +455,8 @@ def test_release_workflow_builds_docker_images_on_pull_requests() -> None:
         "if: github.event_name == 'pull_request' && "
         "needs.detect-changes.outputs.any-code-changed == 'true'" in block
     )
-    assert "uses: docker/setup-buildx-action@v4" in block
-    assert "uses: docker/build-push-action@v7" in block
+    assert_action_reference_count(block, "docker/setup-buildx-action", 1)
+    assert_action_reference_count(block, "docker/build-push-action", 1)
     assert "push: false" in block
     assert "load: true" in block
     assert "cache-from: type=gha,scope=docker-pr-check" in block
