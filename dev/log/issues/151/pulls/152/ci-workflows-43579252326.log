@@ -1,0 +1,1255 @@
+ShellCheck	Set up job	﻿2026-11-14T09:11:59.7966752Z Current runner version: '2.338.2'
+ShellCheck	Set up job	2026-11-14T09:11:59.7994926Z ##[group]Runner Image Provisioner
+ShellCheck	Set up job	2026-11-14T09:11:59.7995818Z Hosted Compute Agent
+ShellCheck	Set up job	2026-11-14T09:11:59.7996368Z Version: 20261103.629
+ShellCheck	Set up job	2026-11-14T09:11:59.7997079Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+ShellCheck	Set up job	2026-11-14T09:11:59.7997808Z Build Date: 2026-11-03T17:26:59Z
+ShellCheck	Set up job	2026-11-14T09:11:59.7998788Z Worker ID: {4b725417-89b1-4aa3-89f1-55f6656fa2b7}
+ShellCheck	Set up job	2026-11-14T09:11:59.7999534Z Region: us-east-1
+ShellCheck	Set up job	2026-11-14T09:11:59.8000123Z Cloud: AWS
+ShellCheck	Set up job	2026-11-14T09:11:59.8000678Z ##[endgroup]
+ShellCheck	Set up job	2026-11-14T09:11:59.8002349Z ##[group]Operating System
+ShellCheck	Set up job	2026-11-14T09:11:59.8002954Z Ubuntu
+ShellCheck	Set up job	2026-11-14T09:11:59.8003461Z 26.04.1
+ShellCheck	Set up job	2026-11-14T09:11:59.8003960Z LTS
+ShellCheck	Set up job	2026-11-14T09:11:59.8004462Z ##[endgroup]
+ShellCheck	Set up job	2026-11-14T09:11:59.8005049Z ##[group]Runner Image
+ShellCheck	Set up job	2026-11-14T09:11:59.8005646Z Image: ubuntu-26.04
+ShellCheck	Set up job	2026-11-14T09:11:59.8006221Z Version: 20261111.82.6
+ShellCheck	Set up job	2026-11-14T09:11:59.8007256Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261111.82/images/ubuntu/Ubuntu2604-Readme.md
+ShellCheck	Set up job	2026-11-14T09:11:59.8009335Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261111.82
+ShellCheck	Set up job	2026-11-14T09:11:59.8010343Z ##[endgroup]
+ShellCheck	Set up job	2026-11-14T09:11:59.8011429Z ##[group]GITHUB_TOKEN Permissions
+ShellCheck	Set up job	2026-11-14T09:11:59.8013924Z Contents: read
+ShellCheck	Set up job	2026-11-14T09:11:59.8014627Z Metadata: read
+ShellCheck	Set up job	2026-11-14T09:11:59.8015153Z ##[endgroup]
+ShellCheck	Set up job	2026-11-14T09:11:59.8017311Z Secret source: Actions
+ShellCheck	Set up job	2026-11-14T09:11:59.8018210Z Cache mode: write
+ShellCheck	Set up job	2026-11-14T09:11:59.8019214Z Prepare workflow directory
+ShellCheck	Set up job	2026-11-14T09:11:59.8389382Z Prepare all required actions
+ShellCheck	Set up job	2026-11-14T09:11:59.8426931Z Getting action download info
+ShellCheck	Set up job	2026-11-14T09:11:59.9673711Z Download action repository 'actions/checkout@v7.0.1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+ShellCheck	Set up job	2026-11-14T09:12:01.1984132Z Complete job name: ShellCheck
+ShellCheck	Run actions/checkout@v7.0.1	﻿2026-11-14T09:12:01.2736677Z ##[group]Run actions/checkout@v7.0.1
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2738008Z with:
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2739078Z   persist-credentials: false
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2740558Z   repository: link-foundation/python-ai-driven-development-pipeline-template
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2748238Z   token: ***
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2749169Z   ssh-strict: true
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2750041Z   ssh-user: git
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2750825Z   clean: true
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2751703Z   sparse-checkout-cone-mode: true
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2752656Z   fetch-depth: 1
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2753452Z   fetch-tags: false
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2754301Z   show-progress: true
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2755149Z   lfs: false
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2755938Z   submodules: false
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2756791Z   set-safe-directory: true
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2757705Z   allow-unsafe-pr-checkout: false
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2759044Z env:
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2759817Z   GIT_CONFIG_COUNT: 1
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2760748Z   GIT_CONFIG_KEY_0: init.defaultBranch
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2761740Z   GIT_CONFIG_VALUE_0: main
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2762709Z   ZIZMOR_VERSION: 1.32.0
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:01.2763555Z ##[endgroup]
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:03.9056704Z Syncing repository: link-foundation/python-ai-driven-development-pipeline-template
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:03.9059319Z ##[group]Getting Git version info
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:03.9060439Z Working directory is '/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template'
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:03.9061869Z [command]/usr/bin/git version
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:03.9064915Z git version 2.56.1
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:03.9078995Z ##[endgroup]
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:03.9087005Z Temporarily overriding HOME='/home/runner/work/_temp/be447326-62ce-4249-995e-04a918c6e77e' before making global git config changes
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:03.9088211Z Adding repository directory to the temporary git global config as a safe directory
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:03.9091899Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:03.9530584Z Deleting the contents of '/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template'
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:03.9534067Z ##[group]Determining repository object format
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:03.9535339Z ##[endgroup]
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:03.9536225Z ##[group]Initializing the repository
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:03.9551215Z [command]/usr/bin/git init /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.0018103Z Initialized empty Git repository in /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.0026310Z [command]/usr/bin/git remote add origin https://github.com/link-foundation/python-ai-driven-development-pipeline-template
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.0085326Z ##[endgroup]
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.0086252Z ##[group]Disabling automatic garbage collection
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.0088161Z [command]/usr/bin/git config --local gc.auto 0
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.0111288Z ##[endgroup]
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.0111806Z ##[group]Setting up auth
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.0112225Z Removing SSH command configuration
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.0115612Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.0138988Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.2880435Z Removing HTTP extra header
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.2885140Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.2910702Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.3084424Z Removing includeIf entries pointing to credentials config files
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.3088311Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.3111219Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.3286623Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-5e508354-7ffb-4c53-8c0d-2a29c4771fcc.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.3315933Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path /home/runner/work/_temp/git-credentials-5e508354-7ffb-4c53-8c0d-2a29c4771fcc.config
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.3336990Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-5e508354-7ffb-4c53-8c0d-2a29c4771fcc.config
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.3361221Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-5e508354-7ffb-4c53-8c0d-2a29c4771fcc.config
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.3381291Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-5e508354-7ffb-4c53-8c0d-2a29c4771fcc.config
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.3399755Z ##[endgroup]
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.3400191Z ##[group]Fetching the repository
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.3404369Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +2f28fcd9b29048695c119ab6948e241712b1a004:refs/remotes/pull/152/merge
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7626330Z From https://github.com/link-foundation/python-ai-driven-development-pipeline-template
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7627179Z  * [new ref]         2f28fcd9b29048695c119ab6948e241712b1a004 -> pull/152/merge
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7629693Z ##[endgroup]
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7630237Z ##[group]Determining the checkout info
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7630903Z ##[endgroup]
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7635307Z [command]/usr/bin/git sparse-checkout disable
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7689774Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7712705Z ##[group]Checking out the ref
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7716108Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/152/merge
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7963226Z Note: switching to 'refs/remotes/pull/152/merge'.
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7963655Z 
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7963843Z You are in 'detached HEAD' state. You can look around, make experimental
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7964330Z changes and commit them, and you can discard any commits you make in this
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7964748Z state without impacting any branches by switching back to a branch.
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7965037Z 
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7965264Z If you want to create a new branch to retain commits you create, you may
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7965719Z do so (now or later) by using -c with the switch command. Example:
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7965958Z 
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7966111Z   git switch -c <new-branch-name>
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7966304Z 
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7966439Z Or undo this operation with:
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7966654Z 
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7966769Z   git switch -
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7966929Z 
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7967172Z Turn off this advice by setting config variable advice.detachedHead to false
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7967415Z 
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7967707Z HEAD is now at 2f28fcd Merge 3ebb7516c438b6de7066b5e80c6c9c833f438eeb into 78024ea7244c3d94d5b4474106d23f739837c497
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.7976786Z ##[endgroup]
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8014242Z [command]/usr/bin/git log -1 --format=%H
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8031249Z 2f28fcd9b29048695c119ab6948e241712b1a004
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8036831Z ##[group]Removing auth
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8039688Z Removing SSH command configuration
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8040284Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8060347Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8244102Z Removing HTTP extra header
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8246500Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8266415Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8442117Z Removing includeIf entries pointing to credentials config files
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8444656Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8460556Z includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8461571Z includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8462318Z includeif.gitdir:/github/workspace/.git.path
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8462706Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8465872Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8480887Z /home/runner/work/_temp/git-credentials-5e508354-7ffb-4c53-8c0d-2a29c4771fcc.config
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8487195Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-5e508354\-7ffb\-4c53\-8c0d\-2a29c4771fcc\.config
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8518143Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8533123Z /home/runner/work/_temp/git-credentials-5e508354-7ffb-4c53-8c0d-2a29c4771fcc.config
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8539147Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-5e508354\-7ffb\-4c53\-8c0d\-2a29c4771fcc\.config
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8559532Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8574285Z /github/runner_temp/git-credentials-5e508354-7ffb-4c53-8c0d-2a29c4771fcc.config
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8579641Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-5e508354\-7ffb\-4c53\-8c0d\-2a29c4771fcc\.config
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8606939Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8622493Z /github/runner_temp/git-credentials-5e508354-7ffb-4c53-8c0d-2a29c4771fcc.config
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8627004Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-5e508354\-7ffb\-4c53\-8c0d\-2a29c4771fcc\.config
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8649898Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8821651Z Removing credentials config '/home/runner/work/_temp/git-credentials-5e508354-7ffb-4c53-8c0d-2a29c4771fcc.config'
+ShellCheck	Run actions/checkout@v7.0.1	2026-11-14T09:12:04.8826647Z ##[endgroup]
+ShellCheck	Shellcheck every tracked shell script	﻿2026-11-14T09:12:04.8979171Z ##[group]Run python3 -m venv "$RUNNER_TEMP/shellcheck-venv"
+ShellCheck	Shellcheck every tracked shell script	2026-11-14T09:12:04.8979704Z ^[[36;1mpython3 -m venv "$RUNNER_TEMP/shellcheck-venv"^[[0m
+ShellCheck	Shellcheck every tracked shell script	2026-11-14T09:12:04.8980270Z ^[[36;1m"$RUNNER_TEMP/shellcheck-venv/bin/pip" install --quiet --disable-pip-version-check shellcheck-py==0.11.0.1^[[0m
+ShellCheck	Shellcheck every tracked shell script	2026-11-14T09:12:04.8980827Z ^[[36;1mgit ls-files -z '*.sh' | xargs -0 -r "$RUNNER_TEMP/shellcheck-venv/bin/shellcheck"^[[0m
+ShellCheck	Shellcheck every tracked shell script	2026-11-14T09:12:04.9003240Z shell: /usr/bin/bash -e {0}
+ShellCheck	Shellcheck every tracked shell script	2026-11-14T09:12:04.9003555Z env:
+ShellCheck	Shellcheck every tracked shell script	2026-11-14T09:12:04.9003821Z   GIT_CONFIG_COUNT: 1
+ShellCheck	Shellcheck every tracked shell script	2026-11-14T09:12:04.9004073Z   GIT_CONFIG_KEY_0: init.defaultBranch
+ShellCheck	Shellcheck every tracked shell script	2026-11-14T09:12:04.9004337Z   GIT_CONFIG_VALUE_0: main
+ShellCheck	Shellcheck every tracked shell script	2026-11-14T09:12:04.9004632Z   ZIZMOR_VERSION: 1.32.0
+ShellCheck	Shellcheck every tracked shell script	2026-11-14T09:12:04.9004887Z ##[endgroup]
+ShellCheck	Post Run actions/checkout@v7.0.1	﻿2026-11-14T09:12:08.3601584Z Post job cleanup.
+ShellCheck	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:08.4288915Z [command]/usr/bin/git version
+ShellCheck	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:08.4320543Z git version 2.56.1
+ShellCheck	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:08.4349608Z Temporarily overriding HOME='/home/runner/work/_temp/d37ed559-2d7a-43bd-bca0-f4000974e454' before making global git config changes
+ShellCheck	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:08.4350294Z Adding repository directory to the temporary git global config as a safe directory
+ShellCheck	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:08.4354218Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template
+ShellCheck	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:08.4380713Z Removing SSH command configuration
+ShellCheck	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:08.4389975Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+ShellCheck	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:08.4419980Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+ShellCheck	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:08.4611637Z Removing HTTP extra header
+ShellCheck	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:08.4615757Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+ShellCheck	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:08.4639023Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+ShellCheck	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:08.4829047Z Removing includeIf entries pointing to credentials config files
+ShellCheck	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:08.4842197Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+ShellCheck	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:08.4874549Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+ShellCheck	Complete job	﻿2026-11-14T09:12:08.5152959Z Cleaning up orphan processes
+Audit Workflows	Set up job	﻿2026-11-14T09:11:22.6706845Z Current runner version: '2.338.2'
+Audit Workflows	Set up job	2026-11-14T09:11:22.6729208Z ##[group]Runner Image Provisioner
+Audit Workflows	Set up job	2026-11-14T09:11:22.6730067Z Hosted Compute Agent
+Audit Workflows	Set up job	2026-11-14T09:11:22.6730551Z Version: 20261103.629
+Audit Workflows	Set up job	2026-11-14T09:11:22.6731116Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+Audit Workflows	Set up job	2026-11-14T09:11:22.6731725Z Build Date: 2026-11-03T17:26:59Z
+Audit Workflows	Set up job	2026-11-14T09:11:22.6732281Z Worker ID: {fd517900-5b69-4719-8043-cae825512260}
+Audit Workflows	Set up job	2026-11-14T09:11:22.6732918Z Region: westus3
+Audit Workflows	Set up job	2026-11-14T09:11:22.6733373Z Cloud: Azure
+Audit Workflows	Set up job	2026-11-14T09:11:22.6733802Z ##[endgroup]
+Audit Workflows	Set up job	2026-11-14T09:11:22.6734889Z ##[group]Operating System
+Audit Workflows	Set up job	2026-11-14T09:11:22.6735407Z Ubuntu
+Audit Workflows	Set up job	2026-11-14T09:11:22.6735941Z 26.04.1
+Audit Workflows	Set up job	2026-11-14T09:11:22.6736364Z LTS
+Audit Workflows	Set up job	2026-11-14T09:11:22.6736772Z ##[endgroup]
+Audit Workflows	Set up job	2026-11-14T09:11:22.6737425Z ##[group]Runner Image
+Audit Workflows	Set up job	2026-11-14T09:11:22.6737929Z Image: ubuntu-26.04
+Audit Workflows	Set up job	2026-11-14T09:11:22.6738442Z Version: 20261111.196.1
+Audit Workflows	Set up job	2026-11-14T09:11:22.6739306Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261111.196/images/ubuntu/Ubuntu2604-Readme.md
+Audit Workflows	Set up job	2026-11-14T09:11:22.6740723Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261111.196
+Audit Workflows	Set up job	2026-11-14T09:11:22.6741541Z ##[endgroup]
+Audit Workflows	Set up job	2026-11-14T09:11:22.6742507Z ##[group]GITHUB_TOKEN Permissions
+Audit Workflows	Set up job	2026-11-14T09:11:22.6744078Z Contents: read
+Audit Workflows	Set up job	2026-11-14T09:11:22.6744631Z Metadata: read
+Audit Workflows	Set up job	2026-11-14T09:11:22.6745111Z ##[endgroup]
+Audit Workflows	Set up job	2026-11-14T09:11:22.6747228Z Secret source: Actions
+Audit Workflows	Set up job	2026-11-14T09:11:22.6748113Z Cache mode: write
+Audit Workflows	Set up job	2026-11-14T09:11:22.6748693Z Prepare workflow directory
+Audit Workflows	Set up job	2026-11-14T09:11:22.7095379Z Prepare all required actions
+Audit Workflows	Set up job	2026-11-14T09:11:22.7132770Z Getting action download info
+Audit Workflows	Set up job	2026-11-14T09:11:23.0312201Z Download action repository 'actions/checkout@v7.0.1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+Audit Workflows	Set up job	2026-11-14T09:11:23.1602564Z Download action repository 'zizmorcore/zizmor-action@v0.8.1' (SHA:45d7276c9ca790aabd705e31ca99c6185c3e76dd)
+Audit Workflows	Set up job	2026-11-14T09:11:23.5579201Z Getting action download info
+Audit Workflows	Set up job	2026-11-14T09:11:23.6704657Z Download action repository 'github/codeql-action@9b3254085494b55a0f7c4c2b3d2d52cc712ce370' (SHA:9b3254085494b55a0f7c4c2b3d2d52cc712ce370)
+Audit Workflows	Set up job	2026-11-14T09:11:24.4097669Z Complete job name: Audit Workflows
+Audit Workflows	Run actions/checkout@v7.0.1	﻿2026-11-14T09:11:24.4881854Z ##[group]Run actions/checkout@v7.0.1
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4883016Z with:
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4883722Z   persist-credentials: false
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4884988Z   repository: link-foundation/python-ai-driven-development-pipeline-template
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4892513Z   token: ***
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4893206Z   ssh-strict: true
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4893902Z   ssh-user: git
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4894580Z   clean: true
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4895308Z   sparse-checkout-cone-mode: true
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4896164Z   fetch-depth: 1
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4896852Z   fetch-tags: false
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4897687Z   show-progress: true
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4898408Z   lfs: false
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4899066Z   submodules: false
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4899812Z   set-safe-directory: true
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4900626Z   allow-unsafe-pr-checkout: false
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4901702Z env:
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4902342Z   GIT_CONFIG_COUNT: 1
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4903382Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4904484Z   GIT_CONFIG_VALUE_0: main
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4905512Z   ZIZMOR_VERSION: 1.32.0
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.4906510Z ##[endgroup]
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.6837971Z Syncing repository: link-foundation/python-ai-driven-development-pipeline-template
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.6841466Z ##[group]Getting Git version info
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.6843861Z Working directory is '/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template'
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.6847207Z [command]/usr/bin/git version
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.6848291Z git version 2.56.1
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.6851664Z ##[endgroup]
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.6858242Z Temporarily overriding HOME='/home/runner/work/_temp/a88f2460-45eb-4363-93fb-b923704ad9c4' before making global git config changes
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.6861603Z Adding repository directory to the temporary git global config as a safe directory
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.6865640Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.6913550Z Deleting the contents of '/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template'
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.6918253Z ##[group]Determining repository object format
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.6920669Z ##[endgroup]
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.6922850Z ##[group]Initializing the repository
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.6926005Z [command]/usr/bin/git init /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.7006830Z Initialized empty Git repository in /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.7014155Z [command]/usr/bin/git remote add origin https://github.com/link-foundation/python-ai-driven-development-pipeline-template
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.7057897Z ##[endgroup]
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.7059824Z ##[group]Disabling automatic garbage collection
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.7061538Z [command]/usr/bin/git config --local gc.auto 0
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.7091475Z ##[endgroup]
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.7093093Z ##[group]Setting up auth
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.7094252Z Removing SSH command configuration
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.7096779Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.7141735Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.7567522Z Removing HTTP extra header
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.7575491Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.7619812Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.7869427Z Removing includeIf entries pointing to credentials config files
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.7874299Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.7906271Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.8138032Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-01689670-50d6-4c1f-a172-4027271e98c3.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.8171189Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path /home/runner/work/_temp/git-credentials-01689670-50d6-4c1f-a172-4027271e98c3.config
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.8199808Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-01689670-50d6-4c1f-a172-4027271e98c3.config
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.8228713Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-01689670-50d6-4c1f-a172-4027271e98c3.config
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.8256446Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-01689670-50d6-4c1f-a172-4027271e98c3.config
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.8281790Z ##[endgroup]
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.8282988Z ##[group]Fetching the repository
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:24.8286893Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +2f28fcd9b29048695c119ab6948e241712b1a004:refs/remotes/pull/152/merge
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6191137Z From https://github.com/link-foundation/python-ai-driven-development-pipeline-template
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6192277Z  * [new ref]         2f28fcd9b29048695c119ab6948e241712b1a004 -> pull/152/merge
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6194709Z ##[endgroup]
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6195243Z ##[group]Determining the checkout info
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6196009Z ##[endgroup]
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6200407Z [command]/usr/bin/git sparse-checkout disable
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6247657Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6274371Z ##[group]Checking out the ref
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6277816Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/152/merge
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6532734Z Note: switching to 'refs/remotes/pull/152/merge'.
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6533229Z 
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6533475Z You are in 'detached HEAD' state. You can look around, make experimental
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6533960Z changes and commit them, and you can discard any commits you make in this
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6534481Z state without impacting any branches by switching back to a branch.
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6534758Z 
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6535065Z If you want to create a new branch to retain commits you create, you may
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6535519Z do so (now or later) by using -c with the switch command. Example:
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6535759Z 
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6535910Z   git switch -c <new-branch-name>
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6536105Z 
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6536238Z Or undo this operation with:
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6536418Z 
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6536532Z   git switch -
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6536705Z 
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6537145Z Turn off this advice by setting config variable advice.detachedHead to false
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6537464Z 
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6537829Z HEAD is now at 2f28fcd Merge 3ebb7516c438b6de7066b5e80c6c9c833f438eeb into 78024ea7244c3d94d5b4474106d23f739837c497
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6541970Z ##[endgroup]
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6583778Z [command]/usr/bin/git log -1 --format=%H
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6607486Z 2f28fcd9b29048695c119ab6948e241712b1a004
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6614858Z ##[group]Removing auth
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6615327Z Removing SSH command configuration
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6618011Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6645570Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6921915Z Removing HTTP extra header
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6924828Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.6953217Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7183808Z Removing includeIf entries pointing to credentials config files
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7186554Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7209303Z includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7210489Z includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7211535Z includeif.gitdir:/github/workspace/.git.path
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7212063Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7216102Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7235761Z /home/runner/work/_temp/git-credentials-01689670-50d6-4c1f-a172-4027271e98c3.config
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7246562Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-01689670\-50d6\-4c1f\-a172\-4027271e98c3\.config
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7280906Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7305812Z /home/runner/work/_temp/git-credentials-01689670-50d6-4c1f-a172-4027271e98c3.config
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7313257Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-01689670\-50d6\-4c1f\-a172\-4027271e98c3\.config
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7342017Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7363745Z /github/runner_temp/git-credentials-01689670-50d6-4c1f-a172-4027271e98c3.config
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7378282Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-01689670\-50d6\-4c1f\-a172\-4027271e98c3\.config
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7401640Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7422431Z /github/runner_temp/git-credentials-01689670-50d6-4c1f-a172-4027271e98c3.config
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7429135Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-01689670\-50d6\-4c1f\-a172\-4027271e98c3\.config
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7458824Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7686812Z Removing credentials config '/home/runner/work/_temp/git-credentials-01689670-50d6-4c1f-a172-4027271e98c3.config'
+Audit Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:25.7695325Z ##[endgroup]
+Audit Workflows	Check zizmor action/CLI compatibility	﻿2026-11-14T09:11:25.7891191Z ##[group]Run python3 scripts/check_zizmor_compatibility.py
+Audit Workflows	Check zizmor action/CLI compatibility	2026-11-14T09:11:25.7891753Z ^[[36;1mpython3 scripts/check_zizmor_compatibility.py^[[0m
+Audit Workflows	Check zizmor action/CLI compatibility	2026-11-14T09:11:25.7941537Z shell: /usr/bin/bash -e {0}
+Audit Workflows	Check zizmor action/CLI compatibility	2026-11-14T09:11:25.7941853Z env:
+Audit Workflows	Check zizmor action/CLI compatibility	2026-11-14T09:11:25.7942085Z   GIT_CONFIG_COUNT: 1
+Audit Workflows	Check zizmor action/CLI compatibility	2026-11-14T09:11:25.7942366Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Audit Workflows	Check zizmor action/CLI compatibility	2026-11-14T09:11:25.7942674Z   GIT_CONFIG_VALUE_0: main
+Audit Workflows	Check zizmor action/CLI compatibility	2026-11-14T09:11:25.7942948Z   ZIZMOR_VERSION: 1.32.0
+Audit Workflows	Check zizmor action/CLI compatibility	2026-11-14T09:11:25.7945262Z   GH_TOKEN: ***
+Audit Workflows	Check zizmor action/CLI compatibility	2026-11-14T09:11:25.7945516Z ##[endgroup]
+Audit Workflows	Check zizmor action/CLI compatibility	2026-11-14T09:11:26.3606777Z zizmor-action@v0.8.1 supports ZIZMOR_VERSION=1.32.0
+Audit Workflows	Audit workflow files	﻿2026-11-14T09:11:26.3814290Z ##[group]Run zizmorcore/zizmor-action@v0.8.1
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3814667Z with:
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3814941Z   advanced-security: false
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3815244Z   annotations: true
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3815543Z   config: .github/zizmor.yml
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3815858Z   min-confidence: low
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3816139Z   version: 1.32.0
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3816399Z   inputs: .
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3816655Z   collect: default
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3817116Z   online-audits: true
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3817408Z   persona: regular
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3819515Z   token: ***
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3819784Z   color: true
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3820058Z   fail-on-no-inputs: true
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3820351Z env:
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3820606Z   GIT_CONFIG_COUNT: 1
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3820897Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3821236Z   GIT_CONFIG_VALUE_0: main
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3821532Z   ZIZMOR_VERSION: 1.32.0
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3821827Z ##[endgroup]
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3871327Z ##[start-action display=Run zizmor;id=__zizmorcore_zizmor-action.run-zizmor]
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3903690Z ##[group]Run "${GITHUB_ACTION_PATH}/action.sh"
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3904117Z ^[[36;1m"${GITHUB_ACTION_PATH}/action.sh"^[[0m
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3953353Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3953748Z env:
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3954007Z   GIT_CONFIG_COUNT: 1
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3954301Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3954650Z   GIT_CONFIG_VALUE_0: main
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3954963Z   ZIZMOR_VERSION: 1.32.0
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3955279Z   GHA_ZIZMOR_INPUTS: .
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3955567Z   GHA_ZIZMOR_COLLECT: default
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3955875Z   GHA_ZIZMOR_ONLINE_AUDITS: true
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3956182Z   GHA_ZIZMOR_PERSONA: regular
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3956476Z   GHA_ZIZMOR_MIN_SEVERITY: 
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3956774Z   GHA_ZIZMOR_MIN_CONFIDENCE: low
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3957263Z   GHA_ZIZMOR_VERSION: 1.32.0
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3959408Z   GHA_ZIZMOR_TOKEN: ***
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3959744Z   GHA_ZIZMOR_ADVANCED_SECURITY: false
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3960072Z   GHA_ZIZMOR_COLOR: true
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3960368Z   GHA_ZIZMOR_ANNOTATIONS: true
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3960684Z   GHA_ZIZMOR_CONFIG: .github/zizmor.yml
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3961027Z   GHA_ZIZMOR_FAIL_ON_NO_INPUTS: true
+Audit Workflows	Audit workflow files	2026-11-14T09:11:26.3961339Z ##[endgroup]
+Audit Workflows	Audit workflow files	2026-11-14T09:11:28.7706352Z ^[[32m INFO^[[0m ^[[2mzizmor^[[0m^[[2m:^[[0m 🌈 zizmor v1.32.0
+Audit Workflows	Audit workflow files	2026-11-14T09:11:28.8263214Z ^[[32m INFO^[[0m ^[[1maudit^[[0m^[[2m:^[[0m ^[[2mzizmor^[[0m^[[2m:^[[0m 🌈 completed ./.github/actions/artifact/action.yml
+Audit Workflows	Audit workflow files	2026-11-14T09:11:28.8264260Z ^[[32m INFO^[[0m ^[[1maudit^[[0m^[[2m:^[[0m ^[[2mzizmor^[[0m^[[2m:^[[0m 🌈 completed ./.github/actions/deploy-pages/action.yml
+Audit Workflows	Audit workflow files	2026-11-14T09:11:28.8265251Z ^[[32m INFO^[[0m ^[[1maudit^[[0m^[[2m:^[[0m ^[[2mzizmor^[[0m^[[2m:^[[0m 🌈 completed ./.github/dependabot.yml
+Audit Workflows	Audit workflow files	2026-11-14T09:11:29.4073973Z ^[[32m INFO^[[0m ^[[1maudit^[[0m^[[2m:^[[0m ^[[2mzizmor^[[0m^[[2m:^[[0m 🌈 completed ./.github/workflows/dependabot-health.yml
+Audit Workflows	Audit workflow files	2026-11-14T09:11:29.6153782Z ^[[32m INFO^[[0m ^[[1maudit^[[0m^[[2m:^[[0m ^[[2mzizmor^[[0m^[[2m:^[[0m 🌈 completed ./.github/workflows/docs.yml
+Audit Workflows	Audit workflow files	2026-11-14T09:11:29.8256159Z ^[[32m INFO^[[0m ^[[1maudit^[[0m^[[2m:^[[0m ^[[2mzizmor^[[0m^[[2m:^[[0m 🌈 completed ./.github/workflows/links.yml
+Audit Workflows	Audit workflow files	2026-11-14T09:11:30.6799502Z ^[[32m INFO^[[0m ^[[1maudit^[[0m^[[2m:^[[0m ^[[2mzizmor^[[0m^[[2m:^[[0m 🌈 completed ./.github/workflows/release.yml
+Audit Workflows	Audit workflow files	2026-11-14T09:11:31.0821012Z ^[[32m INFO^[[0m ^[[1maudit^[[0m^[[2m:^[[0m ^[[2mzizmor^[[0m^[[2m:^[[0m 🌈 completed ./.github/workflows/security.yml
+Audit Workflows	Audit workflow files	2026-11-14T09:11:31.2893913Z ^[[32m INFO^[[0m ^[[1maudit^[[0m^[[2m:^[[0m ^[[2mzizmor^[[0m^[[2m:^[[0m 🌈 completed ./.github/workflows/workflows.yml
+Audit Workflows	Audit workflow files	2026-11-14T09:11:31.6888485Z ^[[32m INFO^[[0m ^[[1maudit^[[0m^[[2m:^[[0m ^[[2mzizmor^[[0m^[[2m:^[[0m 🌈 completed ./.pre-commit-config.yaml
+Audit Workflows	Audit workflow files	2026-11-14T09:11:31.6909559Z ##[warning]release.yml:200: ad-hoc installation of packages: installs a package outside of a lockfile
+Audit Workflows	Audit workflow files	2026-11-14T09:11:31.6911243Z ##[warning]security.yml:63: ad-hoc installation of packages: installs a package outside of a lockfile
+Audit Workflows	Audit workflow files	2026-11-14T09:11:31.6912557Z ##[warning]workflows.yml:168: ad-hoc installation of packages: installs a package outside of a lockfile
+Audit Workflows	Audit workflow files	2026-11-14T09:11:31.6941651Z ##[error]Process completed with exit code 12.
+Audit Workflows	Audit workflow files	2026-11-14T09:11:31.6954248Z ##[end-action id=__zizmorcore_zizmor-action.run-zizmor;outcome=failure;conclusion=failure;duration_ms=5308]
+Audit Workflows	Audit workflow files	2026-11-14T09:11:31.6958060Z ##[start-action display=Upload SARIF file to GitHub Advanced Security;id=__zizmorcore_zizmor-action.__github_codeql-action]
+Audit Workflows	Audit workflow files	2026-11-14T09:11:31.6969064Z ##[end-action id=__zizmorcore_zizmor-action.__github_codeql-action;outcome=skipped;conclusion=skipped;duration_ms=0]
+Audit Workflows	Post Audit workflow files	﻿2026-11-14T09:11:31.7101221Z Post job cleanup.
+Audit Workflows	Post Run actions/checkout@v7.0.1	﻿2026-11-14T09:11:31.7181962Z Post job cleanup.
+Audit Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:31.7920232Z [command]/usr/bin/git version
+Audit Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:31.7950424Z git version 2.56.1
+Audit Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:31.7984177Z Temporarily overriding HOME='/home/runner/work/_temp/fe2cb1b2-1623-44fc-b3d0-60522ae1f876' before making global git config changes
+Audit Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:31.7985152Z Adding repository directory to the temporary git global config as a safe directory
+Audit Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:31.7991403Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template
+Audit Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:31.8022157Z Removing SSH command configuration
+Audit Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:31.8027459Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Audit Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:31.8059032Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Audit Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:31.8306304Z Removing HTTP extra header
+Audit Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:31.8311758Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Audit Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:31.8344855Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Audit Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:31.8609741Z Removing includeIf entries pointing to credentials config files
+Audit Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:31.8610478Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Audit Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:31.8635588Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Audit Workflows	Complete job	﻿2026-11-14T09:11:31.8996522Z Cleaning up orphan processes
+Lint Workflows	Set up job	﻿2026-11-14T09:11:35.7457391Z Current runner version: '2.338.2'
+Lint Workflows	Set up job	2026-11-14T09:11:35.7478533Z ##[group]Runner Image Provisioner
+Lint Workflows	Set up job	2026-11-14T09:11:35.7479535Z Hosted Compute Agent
+Lint Workflows	Set up job	2026-11-14T09:11:35.7480020Z Version: 20261103.629
+Lint Workflows	Set up job	2026-11-14T09:11:35.7480591Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+Lint Workflows	Set up job	2026-11-14T09:11:35.7481192Z Build Date: 2026-11-03T17:26:59Z
+Lint Workflows	Set up job	2026-11-14T09:11:35.7481732Z Worker ID: {20361447-ca8f-45aa-b402-308b18e81925}
+Lint Workflows	Set up job	2026-11-14T09:11:35.7482351Z Region: eastus
+Lint Workflows	Set up job	2026-11-14T09:11:35.7482826Z Cloud: Azure
+Lint Workflows	Set up job	2026-11-14T09:11:35.7483289Z ##[endgroup]
+Lint Workflows	Set up job	2026-11-14T09:11:35.7484438Z ##[group]Operating System
+Lint Workflows	Set up job	2026-11-14T09:11:35.7485248Z Ubuntu
+Lint Workflows	Set up job	2026-11-14T09:11:35.7485721Z 26.04.1
+Lint Workflows	Set up job	2026-11-14T09:11:35.7486140Z LTS
+Lint Workflows	Set up job	2026-11-14T09:11:35.7486591Z ##[endgroup]
+Lint Workflows	Set up job	2026-11-14T09:11:35.7487046Z ##[group]Runner Image
+Lint Workflows	Set up job	2026-11-14T09:11:35.7487516Z Image: ubuntu-26.04
+Lint Workflows	Set up job	2026-11-14T09:11:35.7488024Z Version: 20261111.196.1
+Lint Workflows	Set up job	2026-11-14T09:11:35.7488912Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261111.196/images/ubuntu/Ubuntu2604-Readme.md
+Lint Workflows	Set up job	2026-11-14T09:11:35.7490371Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261111.196
+Lint Workflows	Set up job	2026-11-14T09:11:35.7491204Z ##[endgroup]
+Lint Workflows	Set up job	2026-11-14T09:11:35.7492168Z ##[group]GITHUB_TOKEN Permissions
+Lint Workflows	Set up job	2026-11-14T09:11:35.7494289Z Contents: read
+Lint Workflows	Set up job	2026-11-14T09:11:35.7494815Z Metadata: read
+Lint Workflows	Set up job	2026-11-14T09:11:35.7495657Z ##[endgroup]
+Lint Workflows	Set up job	2026-11-14T09:11:35.7497778Z Secret source: Actions
+Lint Workflows	Set up job	2026-11-14T09:11:35.7498607Z Cache mode: write
+Lint Workflows	Set up job	2026-11-14T09:11:35.7499236Z Prepare workflow directory
+Lint Workflows	Set up job	2026-11-14T09:11:35.7801429Z Prepare all required actions
+Lint Workflows	Set up job	2026-11-14T09:11:35.7841857Z Getting action download info
+Lint Workflows	Set up job	2026-11-14T09:11:35.9369261Z Download action repository 'actions/checkout@v7.0.1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+Lint Workflows	Set up job	2026-11-14T09:11:36.1394146Z Complete job name: Lint Workflows
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	﻿2026-11-14T09:11:36.1843832Z ##[group]Pull down action image 'rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667'
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:36.1988007Z ##[command]/usr/bin/docker pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:36.5246564Z docker.io/rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667: Pulling from rhysd/actionlint
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:36.7413296Z 589002ba0eae: Pulling fs layer
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:36.7416140Z b6b4b7b0e257: Pulling fs layer
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:36.7417003Z c09af8888d6a: Pulling fs layer
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:36.7417762Z 4ccd7d76ca98: Pulling fs layer
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:36.8996148Z c09af8888d6a: Download complete
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:36.8997499Z 402b0b0a10fa: Download complete
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:37.0005261Z 589002ba0eae: Download complete
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:37.0018511Z b6b4b7b0e257: Download complete
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:37.0020635Z 4ccd7d76ca98: Download complete
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:37.0996766Z c09af8888d6a: Pull complete
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:37.1005194Z 589002ba0eae: Pull complete
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:37.1022793Z 4ccd7d76ca98: Pull complete
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:37.3542556Z b6b4b7b0e257: Pull complete
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:37.3544291Z Digest: sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:37.3547012Z Status: Downloaded newer image for rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:37.3551573Z docker.io/rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
+Lint Workflows	Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667	2026-11-14T09:11:37.3582801Z ##[endgroup]
+Lint Workflows	Run actions/checkout@v7.0.1	﻿2026-11-14T09:11:37.4003861Z ##[group]Run actions/checkout@v7.0.1
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4005282Z with:
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4006063Z   persist-credentials: false
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4007437Z   repository: link-foundation/python-ai-driven-development-pipeline-template
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4015394Z   token: ***
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4016158Z   ssh-strict: true
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4016933Z   ssh-user: git
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4017681Z   clean: true
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4018467Z   sparse-checkout-cone-mode: true
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4019402Z   fetch-depth: 1
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4020453Z   fetch-tags: false
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4021267Z   show-progress: true
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4022077Z   lfs: false
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4022809Z   submodules: false
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4023601Z   set-safe-directory: true
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4024504Z   allow-unsafe-pr-checkout: false
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4025834Z env:
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4026552Z   GIT_CONFIG_COUNT: 1
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4027394Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4028377Z   GIT_CONFIG_VALUE_0: main
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4029288Z   ZIZMOR_VERSION: 1.32.0
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.4030111Z ##[endgroup]
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6464106Z Syncing repository: link-foundation/python-ai-driven-development-pipeline-template
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6466457Z ##[group]Getting Git version info
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6467446Z Working directory is '/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template'
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6468689Z [command]/usr/bin/git version
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6471214Z git version 2.56.1
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6486929Z ##[endgroup]
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6506379Z Temporarily overriding HOME='/home/runner/work/_temp/3bf9b0e5-6fc0-462e-8969-322a74d8553a' before making global git config changes
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6507990Z Adding repository directory to the temporary git global config as a safe directory
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6509608Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6558631Z Deleting the contents of '/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template'
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6560909Z ##[group]Determining repository object format
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6562376Z ##[endgroup]
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6562991Z ##[group]Initializing the repository
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6567304Z [command]/usr/bin/git init /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6669255Z Initialized empty Git repository in /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6678186Z [command]/usr/bin/git remote add origin https://github.com/link-foundation/python-ai-driven-development-pipeline-template
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6726689Z ##[endgroup]
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6727377Z ##[group]Disabling automatic garbage collection
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6729531Z [command]/usr/bin/git config --local gc.auto 0
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6761129Z ##[endgroup]
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6761705Z ##[group]Setting up auth
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6762114Z Removing SSH command configuration
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6765091Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.6795174Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.7182519Z Removing HTTP extra header
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.7187508Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.7216634Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.7447376Z Removing includeIf entries pointing to credentials config files
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.7451739Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.7479933Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.7710583Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-295823e9-ad2c-46f8-a2b0-3b5603802da0.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.7742607Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path /home/runner/work/_temp/git-credentials-295823e9-ad2c-46f8-a2b0-3b5603802da0.config
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.7769976Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-295823e9-ad2c-46f8-a2b0-3b5603802da0.config
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.7798244Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-295823e9-ad2c-46f8-a2b0-3b5603802da0.config
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.7826814Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-295823e9-ad2c-46f8-a2b0-3b5603802da0.config
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.7852681Z ##[endgroup]
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.7853264Z ##[group]Fetching the repository
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:37.7858626Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +2f28fcd9b29048695c119ab6948e241712b1a004:refs/remotes/pull/152/merge
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.1689978Z From https://github.com/link-foundation/python-ai-driven-development-pipeline-template
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.1691023Z  * [new ref]         2f28fcd9b29048695c119ab6948e241712b1a004 -> pull/152/merge
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.1693522Z ##[endgroup]
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.1694111Z ##[group]Determining the checkout info
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.1695072Z ##[endgroup]
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.1699972Z [command]/usr/bin/git sparse-checkout disable
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.1750565Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.1780777Z ##[group]Checking out the ref
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.1785238Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/152/merge
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2047871Z Note: switching to 'refs/remotes/pull/152/merge'.
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2048835Z 
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2049126Z You are in 'detached HEAD' state. You can look around, make experimental
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2049837Z changes and commit them, and you can discard any commits you make in this
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2050535Z state without impacting any branches by switching back to a branch.
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2050960Z 
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2051243Z If you want to create a new branch to retain commits you create, you may
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2051913Z do so (now or later) by using -c with the switch command. Example:
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2052289Z 
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2052495Z   git switch -c <new-branch-name>
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2052762Z 
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2052922Z Or undo this operation with:
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2053173Z 
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2053308Z   git switch -
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2053506Z 
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2053827Z Turn off this advice by setting config variable advice.detachedHead to false
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2054268Z 
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2054774Z HEAD is now at 2f28fcd Merge 3ebb7516c438b6de7066b5e80c6c9c833f438eeb into 78024ea7244c3d94d5b4474106d23f739837c497
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2059825Z ##[endgroup]
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2107469Z [command]/usr/bin/git log -1 --format=%H
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2133006Z 2f28fcd9b29048695c119ab6948e241712b1a004
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2142165Z ##[group]Removing auth
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2142596Z Removing SSH command configuration
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2146692Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2175326Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2429364Z Removing HTTP extra header
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2432732Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2462800Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2706670Z Removing includeIf entries pointing to credentials config files
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2707499Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2730147Z includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2732186Z includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2733596Z includeif.gitdir:/github/workspace/.git.path
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2734393Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2738680Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2759778Z /home/runner/work/_temp/git-credentials-295823e9-ad2c-46f8-a2b0-3b5603802da0.config
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2774149Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-295823e9\-ad2c\-46f8\-a2b0\-3b5603802da0\.config
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2811189Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2831375Z /home/runner/work/_temp/git-credentials-295823e9-ad2c-46f8-a2b0-3b5603802da0.config
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2839510Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-295823e9\-ad2c\-46f8\-a2b0\-3b5603802da0\.config
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2868521Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2889580Z /github/runner_temp/git-credentials-295823e9-ad2c-46f8-a2b0-3b5603802da0.config
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2897354Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-295823e9\-ad2c\-46f8\-a2b0\-3b5603802da0\.config
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2928139Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2948482Z /github/runner_temp/git-credentials-295823e9-ad2c-46f8-a2b0-3b5603802da0.config
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2955288Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-295823e9\-ad2c\-46f8\-a2b0\-3b5603802da0\.config
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.2983902Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.3211729Z Removing credentials config '/home/runner/work/_temp/git-credentials-295823e9-ad2c-46f8-a2b0-3b5603802da0.config'
+Lint Workflows	Run actions/checkout@v7.0.1	2026-11-14T09:11:38.3220328Z ##[endgroup]
+Lint Workflows	Lint workflow files	﻿2026-11-14T09:11:38.3387014Z ##[group]Run docker://rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
+Lint Workflows	Lint workflow files	2026-11-14T09:11:38.3387503Z with:
+Lint Workflows	Lint workflow files	2026-11-14T09:11:38.3387727Z   args: -color
+Lint Workflows	Lint workflow files	2026-11-14T09:11:38.3387936Z env:
+Lint Workflows	Lint workflow files	2026-11-14T09:11:38.3388136Z   GIT_CONFIG_COUNT: 1
+Lint Workflows	Lint workflow files	2026-11-14T09:11:38.3454522Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint Workflows	Lint workflow files	2026-11-14T09:11:38.3454973Z   GIT_CONFIG_VALUE_0: main
+Lint Workflows	Lint workflow files	2026-11-14T09:11:38.3455250Z   ZIZMOR_VERSION: 1.32.0
+Lint Workflows	Lint workflow files	2026-11-14T09:11:38.3455473Z ##[endgroup]
+Lint Workflows	Lint workflow files	2026-11-14T09:11:38.3532844Z ##[command]/usr/bin/docker run --name rhysdactionlintsha256b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667_300ed9 --label 482fc8 --workdir /github/workspace --rm -e "GIT_CONFIG_COUNT" -e "GIT_CONFIG_KEY_0" -e "GIT_CONFIG_VALUE_0" -e "ZIZMOR_VERSION" -e "INPUT_ARGS" -e "HOME" -e "GITHUB_JOB" -e "GITHUB_REF" -e "GITHUB_SHA" -e "GITHUB_REPOSITORY" -e "GITHUB_REPOSITORY_OWNER" -e "GITHUB_REPOSITORY_OWNER_ID" -e "GITHUB_RUN_ID" -e "GITHUB_RUN_NUMBER" -e "GITHUB_RETENTION_DAYS" -e "GITHUB_RUN_ATTEMPT" -e "GITHUB_ACTOR_ID" -e "GITHUB_ACTOR" -e "GITHUB_WORKFLOW" -e "GITHUB_HEAD_REF" -e "GITHUB_BASE_REF" -e "GITHUB_EVENT_NAME" -e "GITHUB_SERVER_URL" -e "GITHUB_API_URL" -e "GITHUB_GRAPHQL_URL" -e "GITHUB_REF_NAME" -e "GITHUB_REF_PROTECTED" -e "GITHUB_REF_TYPE" -e "GITHUB_WORKFLOW_REF" -e "GITHUB_WORKFLOW_SHA" -e "GITHUB_REPOSITORY_ID" -e "GITHUB_TRIGGERING_ACTOR" -e "GITHUB_WORKSPACE" -e "GITHUB_ACTION" -e "GITHUB_EVENT_PATH" -e "GITHUB_ACTION_REPOSITORY" -e "GITHUB_ACTION_REF" -e "GITHUB_PATH" -e "GITHUB_ENV" -e "GITHUB_STEP_SUMMARY" -e "GITHUB_STATE" -e "GITHUB_OUTPUT" -e "GITHUB_ARTIFACTS" -e "GITHUB_ARTIFACTS_LIST" -e "RUNNER_OS" -e "RUNNER_ARCH" -e "RUNNER_NAME" -e "RUNNER_ENVIRONMENT" -e "RUNNER_TOOL_CACHE" -e "RUNNER_TEMP" -e "RUNNER_WORKSPACE" -e "ACTIONS_RUNTIME_URL" -e "ACTIONS_RUNTIME_TOKEN" -e "ACTIONS_CACHE_URL" -e "ACTIONS_RESULTS_URL" -e "ACTIONS_CACHE_MODE" -e "ACTIONS_ORCHESTRATION_ID" -e GITHUB_ACTIONS=true -e CI=true -v "/var/run/docker.sock":"/var/run/docker.sock" -v "/home/runner/work/_temp":"/github/runner_temp" -v "/home/runner/work/_temp/_github_home":"/github/home" -v "/home/runner/work/_temp/_github_workflow":"/github/workflow" -v "/home/runner/work/_temp/_runner_file_commands":"/github/file_commands" -v "/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template":"/github/workspace" rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 -color
+Lint Workflows	Post Run actions/checkout@v7.0.1	﻿2026-11-14T09:11:39.3930141Z Post job cleanup.
+Lint Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:39.4650871Z [command]/usr/bin/git version
+Lint Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:39.4687600Z git version 2.56.1
+Lint Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:39.4715340Z Temporarily overriding HOME='/home/runner/work/_temp/ac1d5aff-429f-4c14-be22-8ad4b93646db' before making global git config changes
+Lint Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:39.4716457Z Adding repository directory to the temporary git global config as a safe directory
+Lint Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:39.4719060Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template
+Lint Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:39.4748578Z Removing SSH command configuration
+Lint Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:39.4753733Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Lint Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:39.4786290Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Lint Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:39.5026472Z Removing HTTP extra header
+Lint Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:39.5031160Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Lint Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:39.5063738Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Lint Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:39.5344324Z Removing includeIf entries pointing to credentials config files
+Lint Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:39.5345180Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Lint Workflows	Post Run actions/checkout@v7.0.1	2026-11-14T09:11:39.5372761Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Lint Workflows	Complete job	﻿2026-11-14T09:11:39.5729058Z Cleaning up orphan processes
+Artifact Transport Regression	Set up job	﻿2026-11-14T09:12:30.3946323Z Current runner version: '2.338.2'
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.3984332Z ##[group]Runner Image Provisioner
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.3985735Z Hosted Compute Agent
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.3986794Z Version: 20261103.629
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.3988096Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.3989582Z Build Date: 2026-11-03T17:26:59Z
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.3990833Z Worker ID: {b47bd5ec-61ee-48e8-b8a8-c5b03fdfe56d}
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.3992251Z Region: eastus
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.3993217Z Cloud: Azure
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.3994122Z ##[endgroup]
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.3996744Z ##[group]Operating System
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.3997984Z Ubuntu
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.3999027Z 26.04.1
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.3999879Z LTS
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.4000665Z ##[endgroup]
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.4001777Z ##[group]Runner Image
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.4002752Z Image: ubuntu-26.04
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.4003822Z Version: 20261111.196.1
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.4005678Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261111.196/images/ubuntu/Ubuntu2604-Readme.md
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.4008876Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261111.196
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.4010789Z ##[endgroup]
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.4012681Z ##[group]GITHUB_TOKEN Permissions
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.4015673Z Contents: read
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.4016671Z Metadata: read
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.4018003Z ##[endgroup]
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.4021238Z Secret source: Actions
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.4022954Z Cache mode: write
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.4024637Z Prepare workflow directory
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.4610182Z Prepare all required actions
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.4694739Z Getting action download info
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.6358658Z Download action repository 'actions/checkout@v7.0.1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.7487232Z Download action repository 'actions/setup-node@v7.1.0' (SHA:949feb2413d6458794dcd2491c4babbbce0c15c1)
+Artifact Transport Regression	Set up job	2026-11-14T09:12:30.8203173Z Download action repository 'link-foundation/python-ai-driven-development-pipeline-template@2f28fcd9b29048695c119ab6948e241712b1a004' (SHA:2f28fcd9b29048695c119ab6948e241712b1a004)
+Artifact Transport Regression	Set up job	2026-11-14T09:12:31.2682953Z Complete job name: Artifact Transport Regression
+Artifact Transport Regression	Run actions/checkout@v7.0.1	﻿2026-11-14T09:12:31.3685906Z ##[group]Run actions/checkout@v7.0.1
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3686835Z with:
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3687287Z   persist-credentials: false
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3688250Z   repository: link-foundation/python-ai-driven-development-pipeline-template
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3692214Z   token: ***
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3692660Z   ssh-strict: true
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3693093Z   ssh-user: git
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3693505Z   clean: true
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3693945Z   sparse-checkout-cone-mode: true
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3694468Z   fetch-depth: 1
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3694893Z   fetch-tags: false
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3695342Z   show-progress: true
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3695787Z   lfs: false
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3696198Z   submodules: false
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3696640Z   set-safe-directory: true
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3697140Z   allow-unsafe-pr-checkout: false
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3698092Z env:
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3698530Z   GIT_CONFIG_COUNT: 1
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3699022Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3699578Z   GIT_CONFIG_VALUE_0: main
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3700101Z   ZIZMOR_VERSION: 1.32.0
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.3700590Z ##[endgroup]
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6368967Z Syncing repository: link-foundation/python-ai-driven-development-pipeline-template
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6372547Z ##[group]Getting Git version info
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6375010Z Working directory is '/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template'
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6378298Z [command]/usr/bin/git version
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6379441Z git version 2.56.1
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6398946Z ##[endgroup]
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6412389Z Temporarily overriding HOME='/home/runner/work/_temp/1aaaea4c-a673-4711-bbaf-dca45fcb800e' before making global git config changes
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6415221Z Adding repository directory to the temporary git global config as a safe directory
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6420706Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6483735Z Deleting the contents of '/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template'
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6486660Z ##[group]Determining repository object format
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6492290Z ##[endgroup]
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6493609Z ##[group]Initializing the repository
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6495672Z [command]/usr/bin/git init /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6626274Z Initialized empty Git repository in /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6639507Z [command]/usr/bin/git remote add origin https://github.com/link-foundation/python-ai-driven-development-pipeline-template
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6696292Z ##[endgroup]
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6697634Z ##[group]Disabling automatic garbage collection
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6700062Z [command]/usr/bin/git config --local gc.auto 0
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6735474Z ##[endgroup]
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6736727Z ##[group]Setting up auth
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6737732Z Removing SSH command configuration
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6743031Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.6778714Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.7213073Z Removing HTTP extra header
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.7219367Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.7256722Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.7524952Z Removing includeIf entries pointing to credentials config files
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.7530724Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.7564269Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.7832983Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-de543185-0dae-45da-b90a-32153bef1847.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.7872072Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path /home/runner/work/_temp/git-credentials-de543185-0dae-45da-b90a-32153bef1847.config
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.7925295Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-de543185-0dae-45da-b90a-32153bef1847.config
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.7952543Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-de543185-0dae-45da-b90a-32153bef1847.config
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.7987037Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-de543185-0dae-45da-b90a-32153bef1847.config
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.8017487Z ##[endgroup]
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.8019212Z ##[group]Fetching the repository
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:31.8025627Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +2f28fcd9b29048695c119ab6948e241712b1a004:refs/remotes/pull/152/merge
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.1858103Z From https://github.com/link-foundation/python-ai-driven-development-pipeline-template
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.1860374Z  * [new ref]         2f28fcd9b29048695c119ab6948e241712b1a004 -> pull/152/merge
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.1863756Z ##[endgroup]
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.1864955Z ##[group]Determining the checkout info
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.1866215Z ##[endgroup]
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.1868991Z [command]/usr/bin/git sparse-checkout disable
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.1921651Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.1956302Z ##[group]Checking out the ref
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.1958209Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/152/merge
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2260566Z Note: switching to 'refs/remotes/pull/152/merge'.
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2261641Z 
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2262562Z You are in 'detached HEAD' state. You can look around, make experimental
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2264491Z changes and commit them, and you can discard any commits you make in this
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2266472Z state without impacting any branches by switching back to a branch.
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2268010Z 
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2269371Z If you want to create a new branch to retain commits you create, you may
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2272292Z do so (now or later) by using -c with the switch command. Example:
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2273925Z 
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2274707Z   git switch -c <new-branch-name>
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2275893Z 
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2276729Z Or undo this operation with:
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2278126Z 
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2278912Z   git switch -
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2279794Z 
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2281249Z Turn off this advice by setting config variable advice.detachedHead to false
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2283268Z 
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2285599Z HEAD is now at 2f28fcd Merge 3ebb7516c438b6de7066b5e80c6c9c833f438eeb into 78024ea7244c3d94d5b4474106d23f739837c497
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2290943Z ##[endgroup]
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2324384Z [command]/usr/bin/git log -1 --format=%H
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2351827Z 2f28fcd9b29048695c119ab6948e241712b1a004
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2361612Z ##[group]Removing auth
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2362890Z Removing SSH command configuration
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2365558Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2397996Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2667348Z Removing HTTP extra header
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2671005Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2709962Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2979071Z Removing includeIf entries pointing to credentials config files
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.2982208Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3012280Z includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3021106Z includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3026636Z includeif.gitdir:/github/workspace/.git.path
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3029446Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3035152Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3046684Z /home/runner/work/_temp/git-credentials-de543185-0dae-45da-b90a-32153bef1847.config
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3062733Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-de543185\-0dae\-45da\-b90a\-32153bef1847\.config
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3109034Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3130850Z /home/runner/work/_temp/git-credentials-de543185-0dae-45da-b90a-32153bef1847.config
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3146575Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-de543185\-0dae\-45da\-b90a\-32153bef1847\.config
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3178473Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3205986Z /github/runner_temp/git-credentials-de543185-0dae-45da-b90a-32153bef1847.config
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3220538Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-de543185\-0dae\-45da\-b90a\-32153bef1847\.config
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3253361Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3278371Z /github/runner_temp/git-credentials-de543185-0dae-45da-b90a-32153bef1847.config
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3287744Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-de543185\-0dae\-45da\-b90a\-32153bef1847\.config
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3322201Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3590929Z Removing credentials config '/home/runner/work/_temp/git-credentials-de543185-0dae-45da-b90a-32153bef1847.config'
+Artifact Transport Regression	Run actions/checkout@v7.0.1	2026-11-14T09:12:32.3598862Z ##[endgroup]
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	﻿2026-11-14T09:12:32.3974396Z ##[group]Run actions/setup-node@v7.1.0
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:32.3975638Z with:
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:32.3976484Z   node-version: 26.13.1
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:32.3977486Z   check-latest: false
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:32.3987552Z   token: ***
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:32.3988598Z   package-manager-cache: true
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:32.3989687Z env:
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:32.3990509Z   GIT_CONFIG_COUNT: 1
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:32.3991524Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:32.3992731Z   GIT_CONFIG_VALUE_0: main
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:32.3993764Z   ZIZMOR_VERSION: 1.32.0
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:32.3994766Z ##[endgroup]
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:32.5273990Z Attempting to download 26.13.1...
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:32.9336160Z Acquiring 26.13.1 - x64 from https://github.com/actions/node-versions/releases/download/26.13.1-43134154182/node-26.13.1-linux-x64.tar.gz
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:33.3854114Z Extracting ...
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:33.4028118Z [command]/usr/bin/tar xz --strip 1 --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/b4e2fcb5-9171-4440-b8e7-cd0e358c55c3 -f /home/runner/work/_temp/fa4eab65-c0a8-4b40-a91e-bb25d9a1052e
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:34.3658343Z Adding to the cache ...
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:36.1937241Z ##[group]Environment details
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:36.4116158Z node: v26.13.1
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:36.4116587Z npm: 11.20.0
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:36.4116906Z yarn: 1.22.22
+Artifact Transport Regression	Run actions/setup-node@v7.1.0	2026-11-14T09:12:36.4117433Z ##[endgroup]
+Artifact Transport Regression	Install pinned npm	﻿2026-11-14T09:12:36.4310222Z ##[group]Run npm install --global npm@12.2.2
+Artifact Transport Regression	Install pinned npm	2026-11-14T09:12:36.4310626Z ^[[36;1mnpm install --global npm@12.2.2^[[0m
+Artifact Transport Regression	Install pinned npm	2026-11-14T09:12:36.4365347Z shell: /usr/bin/bash -e {0}
+Artifact Transport Regression	Install pinned npm	2026-11-14T09:12:36.4365616Z env:
+Artifact Transport Regression	Install pinned npm	2026-11-14T09:12:36.4365815Z   GIT_CONFIG_COUNT: 1
+Artifact Transport Regression	Install pinned npm	2026-11-14T09:12:36.4366058Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Artifact Transport Regression	Install pinned npm	2026-11-14T09:12:36.4366346Z   GIT_CONFIG_VALUE_0: main
+Artifact Transport Regression	Install pinned npm	2026-11-14T09:12:36.4366582Z   ZIZMOR_VERSION: 1.32.0
+Artifact Transport Regression	Install pinned npm	2026-11-14T09:12:36.4366802Z ##[endgroup]
+Artifact Transport Regression	Install pinned npm	2026-11-14T09:12:39.6354226Z 
+Artifact Transport Regression	Install pinned npm	2026-11-14T09:12:39.6361463Z removed 8 packages, and changed 77 packages in 3s
+Artifact Transport Regression	Install pinned artifact dependencies	﻿2026-11-14T09:12:39.6831149Z ##[group]Run npm ci --ignore-scripts --no-audit --no-fund
+Artifact Transport Regression	Install pinned artifact dependencies	2026-11-14T09:12:39.6831622Z ^[[36;1mnpm ci --ignore-scripts --no-audit --no-fund^[[0m
+Artifact Transport Regression	Install pinned artifact dependencies	2026-11-14T09:12:39.6882156Z shell: /usr/bin/bash -e {0}
+Artifact Transport Regression	Install pinned artifact dependencies	2026-11-14T09:12:39.6882409Z env:
+Artifact Transport Regression	Install pinned artifact dependencies	2026-11-14T09:12:39.6882596Z   GIT_CONFIG_COUNT: 1
+Artifact Transport Regression	Install pinned artifact dependencies	2026-11-14T09:12:39.6882834Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Artifact Transport Regression	Install pinned artifact dependencies	2026-11-14T09:12:39.6883114Z   GIT_CONFIG_VALUE_0: main
+Artifact Transport Regression	Install pinned artifact dependencies	2026-11-14T09:12:39.6883344Z   ZIZMOR_VERSION: 1.32.0
+Artifact Transport Regression	Install pinned artifact dependencies	2026-11-14T09:12:39.6883568Z ##[endgroup]
+Artifact Transport Regression	Install pinned artifact dependencies	2026-11-14T09:12:44.0281117Z 
+Artifact Transport Regression	Install pinned artifact dependencies	2026-11-14T09:12:44.0282017Z added 300 packages in 4s
+Artifact Transport Regression	Test transport recovery and refusal	﻿2026-11-14T09:12:44.0666800Z ##[group]Run node --throw-deprecation --test tests/artifact.test.mjs
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.0667337Z ^[[36;1mnode --throw-deprecation --test tests/artifact.test.mjs^[[0m
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.0715444Z shell: /usr/bin/bash -e {0}
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.0715696Z env:
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.0715886Z   GIT_CONFIG_COUNT: 1
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.0716131Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.0716407Z   GIT_CONFIG_VALUE_0: main
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.0733427Z   ZIZMOR_VERSION: 1.32.0
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.0733846Z ##[endgroup]
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.1809928Z ✔ recovers ENOTFOUND without rerunning the producer (1.732807ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.1819052Z ✔ recovers EAI_AGAIN without rerunning the producer (0.280497ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.1820389Z ✔ recovers ECONNRESET without rerunning the producer (0.228629ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.1821620Z ✔ recovers ETIMEDOUT without rerunning the producer (0.198994ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.1823005Z ✔ recovers ECONNREFUSED without rerunning the producer (0.219252ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.1824357Z ✔ recovers EHOSTUNREACH without rerunning the producer (0.21817ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.1825473Z ✔ recovers EPIPE without rerunning the producer (0.274977ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.1826666Z ✔ replaces only its own artifact after a lost finalize response (0.36142ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.1828159Z ✔ never replaces a preexisting artifact (0.748226ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.1829378Z ✔ transport exhaustion fails after exactly three uploads (0.540957ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.1830763Z ✔ permanent refusal is immediate: Unable to make request: ENOTFOUND (0.259128ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.1832186Z ✔ permanent refusal is immediate: Artifact storage quota has been hit (0.120737ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.1833632Z ✔ permanent refusal is immediate: Failed to CreateArtifact: 409 Conflict (0.102502ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.1834902Z ✔ permanent refusal is immediate: 401 Unauthorized (0.085691ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.1836081Z ✔ permanent refusal is immediate: No files were found (0.125446ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.1837353Z ✔ nested transport errors retry but permanent statuses dominate (0.220063ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.1951564Z ✔ empty and missing evidence fails before network access; globs preserve root (21.232743ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.2086216Z ✔ findFiles keeps the @actions/glob semantics on patched minimatch (13.572633ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.2194707Z ✔ Pages artifact contains artifact.tar and the complete visible site (10.586711ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.2227350Z ✔ download retries transport, skips deprecated extraction and enforces digest (2.900692ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.3367520Z ✔ archiver-utils and readdir-glob use patched glob and minimatch without changing matches or ZIP bytes (114.37608ms)
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.3460766Z ℹ tests 21
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.3461406Z ℹ suites 0
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.3462598Z ℹ pass 21
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.3463421Z ℹ fail 0
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.3463898Z ℹ cancelled 0
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.3464331Z ℹ skipped 0
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.3464749Z ℹ todo 0
+Artifact Transport Regression	Test transport recovery and refusal	2026-11-14T09:12:44.3465299Z ℹ duration_ms 237.434874
+Artifact Transport Regression	Test Pages deployment retries and refusals	﻿2026-11-14T09:12:44.3548424Z ##[group]Run node --throw-deprecation --test tests/deploy-pages.test.mjs
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.3549021Z ^[[36;1mnode --throw-deprecation --test tests/deploy-pages.test.mjs^[[0m
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.3598409Z shell: /usr/bin/bash -e {0}
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.3598669Z env:
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.3598858Z   GIT_CONFIG_COUNT: 1
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.3599270Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.3599549Z   GIT_CONFIG_VALUE_0: main
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.3599779Z   ZIZMOR_VERSION: 1.32.0
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.3600002Z ##[endgroup]
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4949822Z ✔ creates one deployment of exactly the given artifact and reports its URL (2.308351ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4952603Z ✔ retries HTTP 500 from creating the deployment, then succeeds (0.840793ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4953498Z ✔ retries HTTP 502 from creating the deployment, then succeeds (0.362173ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4954931Z ✔ retries HTTP 503 from creating the deployment, then succeeds (0.30681ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4956553Z ✔ retries HTTP 504 from creating the deployment, then succeeds (0.314976ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4958457Z ✔ retries HTTP 429 from creating the deployment, then succeeds (1.138186ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4960023Z ✔ retries a lost connection and a timed-out request (0.673121ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4961558Z ✔ fails at once on HTTP 400, with the status and request ID (0.802412ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4963091Z ✔ fails at once on HTTP 401, with the status and request ID (0.34977ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4964663Z ✔ fails at once on HTTP 403, with the status and request ID (0.275692ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4966172Z ✔ fails at once on HTTP 404, with the status and request ID (0.239615ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4967722Z ✔ fails at once on HTTP 409, with the status and request ID (0.176989ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4969495Z ✔ fails at once on HTTP 422, with the status and request ID (0.139098ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4971136Z ✔ explains how to fix missing permissions and a disabled Pages site (0.305818ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4974142Z ✔ gives up after a bounded number of transient failures (0.301721ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4975813Z ✔ adopts the deployment a lost response created instead of creating another (0.490562ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4980285Z ✔ replaces an earlier deployment of the commit only when it failed (0.323391ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4981810Z ✔ a refused lookup before a retry fails without creating anything (0.246429ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.4998965Z ✔ fails with the upstream message for every final deployment state (0.444477ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.5000195Z ✔ keeps polling through temporary states and status read errors (0.378072ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.5001215Z ✔ caps the poll interval at 30 seconds (0.321889ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.5002155Z ✔ cancels the deployment after too many status read errors (0.40861ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.5002808Z ✔ cancels the deployment when it does not finish in time (0.253572ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.5003454Z ✔ refuses a missing or non-numeric artifact ID before calling the API (0.278048ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.5011469Z ✔ classifies only throttling, server errors and lost connections as transient (0.379275ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.5015629Z ✔ githubApi sends an authenticated JSON request and reports the request ID (29.778669ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.5017188Z ✔ oidcToken requires id-token: write and returns the token (0.524545ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.5053352Z ✔ main publishes the artifact from INPUT_ARTIFACT_ID and writes page_url (16.508269ms)
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.5153065Z ℹ tests 28
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.5153601Z ℹ suites 0
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.5154028Z ℹ pass 28
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.5154432Z ℹ fail 0
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.5169471Z ℹ cancelled 0
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.5178744Z ℹ skipped 0
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.5182727Z ℹ todo 0
+Artifact Transport Regression	Test Pages deployment retries and refusals	2026-11-14T09:12:44.5183520Z ℹ duration_ms 119.98943
+Artifact Transport Regression	Verify committed action bundle	﻿2026-11-14T09:12:44.5230697Z ##[group]Run npm run build
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.5231007Z ^[[36;1mnpm run build^[[0m
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.5231276Z ^[[36;1mif ! git diff --exit-code -- dist; then^[[0m
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.5231947Z ^[[36;1m  echo "::error file=.github/actions/artifact/dist/index.mjs::The committed bundle does not match package-lock.json and the action source."^[[0m
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.5232726Z ^[[36;1m  echo "Rebuild it and push the result to this branch (Dependabot PRs included):"^[[0m
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.5233273Z ^[[36;1m  echo "  npm ci --prefix .github/actions/artifact --ignore-scripts"^[[0m
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.5233910Z ^[[36;1m  echo "  npm run build --prefix .github/actions/artifact"^[[0m
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.5234470Z ^[[36;1m  echo "  git add -f .github/actions/artifact/dist && git commit -m 'chore(artifact): rebuild dist'"^[[0m
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.5234958Z ^[[36;1m  exit 1^[[0m
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.5235156Z ^[[36;1mfi^[[0m
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.5283006Z shell: /usr/bin/bash -e {0}
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.5283254Z env:
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.5283449Z   GIT_CONFIG_COUNT: 1
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.5283716Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.5283987Z   GIT_CONFIG_VALUE_0: main
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.5284231Z   ZIZMOR_VERSION: 1.32.0
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.5284452Z ##[endgroup]
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.6303429Z npm notice run build
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.6306843Z npm notice run ncc build index.mjs -o dist --minify --license licenses.txt
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.8467252Z ncc: Version 0.45.0
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:44.8470198Z ncc: Compiling file index.mjs into ESM
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:53.7212649Z    0kB  dist/50.index.mjs
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:53.7213385Z    3kB  dist/extract.py
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:53.7213887Z   24kB  dist/licenses.txt
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:53.7214592Z  667kB  dist/835.index.mjs
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:53.7215045Z 2105kB  dist/index.mjs
+Artifact Transport Regression	Verify committed action bundle	2026-11-14T09:12:53.7215485Z 2799kB  [9033ms] - ncc 0.45.0
+Artifact Transport Regression	Prepare round-trip evidence	﻿2026-11-14T09:12:53.8574435Z ##[group]Run mkdir -p /tmp/artifact-evidence/nested /tmp/pages-evidence
+Artifact Transport Regression	Prepare round-trip evidence	2026-11-14T09:12:53.8574983Z ^[[36;1mmkdir -p /tmp/artifact-evidence/nested /tmp/pages-evidence^[[0m
+Artifact Transport Regression	Prepare round-trip evidence	2026-11-14T09:12:53.8575434Z ^[[36;1mprintf '\000\377\102' > /tmp/artifact-evidence/nested/bytes.bin^[[0m
+Artifact Transport Regression	Prepare round-trip evidence	2026-11-14T09:12:53.8575821Z ^[[36;1mtouch /tmp/artifact-evidence/empty^[[0m
+Artifact Transport Regression	Prepare round-trip evidence	2026-11-14T09:12:53.8576283Z ^[[36;1mprintf '<html>artifact transport regression</html>' > /tmp/pages-evidence/index.html^[[0m
+Artifact Transport Regression	Prepare round-trip evidence	2026-11-14T09:12:53.8624387Z shell: /usr/bin/bash -e {0}
+Artifact Transport Regression	Prepare round-trip evidence	2026-11-14T09:12:53.8624652Z env:
+Artifact Transport Regression	Prepare round-trip evidence	2026-11-14T09:12:53.8624837Z   GIT_CONFIG_COUNT: 1
+Artifact Transport Regression	Prepare round-trip evidence	2026-11-14T09:12:53.8625072Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Artifact Transport Regression	Prepare round-trip evidence	2026-11-14T09:12:53.8625358Z   GIT_CONFIG_VALUE_0: main
+Artifact Transport Regression	Prepare round-trip evidence	2026-11-14T09:12:53.8625589Z   ZIZMOR_VERSION: 1.32.0
+Artifact Transport Regression	Prepare round-trip evidence	2026-11-14T09:12:53.8625810Z ##[endgroup]
+Artifact Transport Regression	Upload round-trip evidence	﻿2026-11-14T09:12:53.8809819Z ##[group]Run link-foundation/python-ai-driven-development-pipeline-template/.github/actions/artifact@2f28fcd9b29048695c119ab6948e241712b1a004
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:53.8810510Z with:
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:53.8810716Z   name: transport-roundtrip
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:53.8811045Z   path: /tmp/artifact-evidence
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:53.8811305Z   if-no-files-found: error
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:53.8811538Z   retention-days: 1
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:53.8811750Z   operation: upload
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:53.8811952Z   pages: false
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:53.8812155Z   merge-multiple: false
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:53.8812363Z env:
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:53.8812539Z   GIT_CONFIG_COUNT: 1
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:53.8812776Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:53.8813053Z   GIT_CONFIG_VALUE_0: main
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:53.8813279Z   ZIZMOR_VERSION: 1.32.0
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:53.8813488Z ##[endgroup]
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:54.1490789Z Artifact name is valid!
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:54.1492038Z Root directory input is valid!
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:54.3272423Z Uploading artifact: transport-roundtrip.zip
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:54.3310806Z Beginning upload of artifact content to blob storage
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:54.3984097Z Uploaded bytes 255
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:54.4146647Z Finished uploading artifact content to blob storage!
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:54.4147953Z SHA256 digest of uploaded artifact is 3f1c2affc428b8bab90f9faeb308fad18d349812e5106066c98860f8bad4fa00
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:54.4148757Z Finalizing artifact upload
+Artifact Transport Regression	Upload round-trip evidence	2026-11-14T09:12:54.7465075Z Artifact transport-roundtrip successfully finalized. Artifact ID 14107649193
+Artifact Transport Regression	Download with deprecations treated as errors	﻿2026-11-14T09:12:54.7608731Z ##[group]Run link-foundation/python-ai-driven-development-pipeline-template/.github/actions/artifact@2f28fcd9b29048695c119ab6948e241712b1a004
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:54.7609656Z with:
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:54.7609985Z   operation: download
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:54.7610401Z   name: transport-roundtrip
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:54.7610946Z   path: /tmp/artifact-downloaded
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:54.7611276Z   pages: false
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:54.7611683Z   if-no-files-found: error
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:54.7612049Z   merge-multiple: false
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:54.7612399Z env:
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:54.7612673Z   GIT_CONFIG_COUNT: 1
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:54.7613053Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:54.7613428Z   GIT_CONFIG_VALUE_0: main
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:54.7626710Z   ZIZMOR_VERSION: 1.32.0
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:54.7627066Z   NODE_OPTIONS: --throw-deprecation
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:54.7627349Z ##[endgroup]
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:55.1793391Z Redirecting to blob download url: https://productionresultssa10.blob.core.windows.net/actions-results/0a22fbbf-3399-86ef-9c77-2b61bc315c52/workflow-job-run-005f37f3-6bc3-58de-8c15-fae4a5a1abf8/artifacts/801fa1fb9408c7261d01e48247e0ae6cdf621c248e30434bda21fb8e50f72441.zip
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:55.1795847Z Starting download of artifact to: /tmp/artifact-download-uel5C6
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:55.2075813Z Downloading raw file (non-zip) to: /tmp/artifact-download-uel5C6/transport-roundtrip.zip
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:55.2099733Z SHA256 digest of downloaded artifact is 3f1c2affc428b8bab90f9faeb308fad18d349812e5106066c98860f8bad4fa00
+Artifact Transport Regression	Download with deprecations treated as errors	2026-11-14T09:12:55.2100862Z Artifact download completed successfully.
+Artifact Transport Regression	Verify every downloaded byte	﻿2026-11-14T09:12:55.2597689Z ##[group]Run diff -r /tmp/artifact-evidence /tmp/artifact-downloaded
+Artifact Transport Regression	Verify every downloaded byte	2026-11-14T09:12:55.2598593Z ^[[36;1mdiff -r /tmp/artifact-evidence /tmp/artifact-downloaded^[[0m
+Artifact Transport Regression	Verify every downloaded byte	2026-11-14T09:12:55.2645953Z shell: /usr/bin/bash -e {0}
+Artifact Transport Regression	Verify every downloaded byte	2026-11-14T09:12:55.2646218Z env:
+Artifact Transport Regression	Verify every downloaded byte	2026-11-14T09:12:55.2646414Z   GIT_CONFIG_COUNT: 1
+Artifact Transport Regression	Verify every downloaded byte	2026-11-14T09:12:55.2646665Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Artifact Transport Regression	Verify every downloaded byte	2026-11-14T09:12:55.2646949Z   GIT_CONFIG_VALUE_0: main
+Artifact Transport Regression	Verify every downloaded byte	2026-11-14T09:12:55.2647190Z   ZIZMOR_VERSION: 1.32.0
+Artifact Transport Regression	Verify every downloaded byte	2026-11-14T09:12:55.2647419Z ##[endgroup]
+Artifact Transport Regression	Upload Pages round-trip evidence	﻿2026-11-14T09:12:55.2782916Z ##[group]Run link-foundation/python-ai-driven-development-pipeline-template/.github/actions/artifact@2f28fcd9b29048695c119ab6948e241712b1a004
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.2783629Z with:
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.2783861Z   name: pages-roundtrip
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.2784102Z   pages: true
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.2784316Z   path: /tmp/pages-evidence
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.2784574Z   if-no-files-found: error
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.2784812Z   operation: upload
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.2785033Z   merge-multiple: false
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.2785251Z env:
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.2785439Z   GIT_CONFIG_COUNT: 1
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.2785676Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.2785953Z   GIT_CONFIG_VALUE_0: main
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.2786187Z   ZIZMOR_VERSION: 1.32.0
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.2786414Z ##[endgroup]
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.5619532Z Artifact name is valid!
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.5620294Z Root directory input is valid!
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.7405938Z Uploading artifact: pages-roundtrip.zip
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.7446147Z Beginning upload of artifact content to blob storage
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.8033057Z Uploaded bytes 10378
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.8169397Z Finished uploading artifact content to blob storage!
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.8170695Z SHA256 digest of uploaded artifact is 2544251f21e7d1864a681915736f8ea878fc732fd1ee7f09592671d2d624a16f
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:55.8171639Z Finalizing artifact upload
+Artifact Transport Regression	Upload Pages round-trip evidence	2026-11-14T09:12:56.1409517Z Artifact pages-roundtrip successfully finalized. Artifact ID 14107349811
+Artifact Transport Regression	Download Pages archive	﻿2026-11-14T09:12:56.1580717Z ##[group]Run link-foundation/python-ai-driven-development-pipeline-template/.github/actions/artifact@2f28fcd9b29048695c119ab6948e241712b1a004
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.1582004Z with:
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.1582378Z   operation: download
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.1582817Z   pattern: pages-round*
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.1583261Z   merge-multiple: true
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.1583700Z   path: /tmp/pages-downloaded
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.1584175Z   pages: false
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.1584568Z   if-no-files-found: error
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.1584999Z env:
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.1585321Z   GIT_CONFIG_COUNT: 1
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.1585740Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.1586232Z   GIT_CONFIG_VALUE_0: main
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.1586885Z   ZIZMOR_VERSION: 1.32.0
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.1587315Z   NODE_OPTIONS: --throw-deprecation
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.1587964Z ##[endgroup]
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.4248725Z Found 2 artifact(s)
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.5867684Z Redirecting to blob download url: https://productionresultssa10.blob.core.windows.net/actions-results/0a22fbbf-3399-86ef-9c77-2b61bc315c52/workflow-job-run-005f37f3-6bc3-58de-8c15-fae4a5a1abf8/artifacts/77f09653c49bc68e070305f1dcd20a495daa956a35888d2ae70054ebb294d283.zip
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.5870558Z Starting download of artifact to: /tmp/artifact-download-3cTtLo
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.6154452Z Downloading raw file (non-zip) to: /tmp/artifact-download-3cTtLo/pages-roundtrip.zip
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.6182198Z SHA256 digest of downloaded artifact is 2544251f21e7d1864a681915736f8ea878fc732fd1ee7f09592671d2d624a16f
+Artifact Transport Regression	Download Pages archive	2026-11-14T09:12:56.6183293Z Artifact download completed successfully.
+Artifact Transport Regression	Verify Pages tar content	﻿2026-11-14T09:12:56.6664169Z ##[group]Run mkdir -p /tmp/pages-unpacked
+Artifact Transport Regression	Verify Pages tar content	2026-11-14T09:12:56.6664577Z ^[[36;1mmkdir -p /tmp/pages-unpacked^[[0m
+Artifact Transport Regression	Verify Pages tar content	2026-11-14T09:12:56.6665021Z ^[[36;1mtar -xf /tmp/pages-downloaded/artifact.tar -C /tmp/pages-unpacked^[[0m
+Artifact Transport Regression	Verify Pages tar content	2026-11-14T09:12:56.6665507Z ^[[36;1mdiff -r /tmp/pages-evidence /tmp/pages-unpacked^[[0m
+Artifact Transport Regression	Verify Pages tar content	2026-11-14T09:12:56.6713705Z shell: /usr/bin/bash -e {0}
+Artifact Transport Regression	Verify Pages tar content	2026-11-14T09:12:56.6713996Z env:
+Artifact Transport Regression	Verify Pages tar content	2026-11-14T09:12:56.6714212Z   GIT_CONFIG_COUNT: 1
+Artifact Transport Regression	Verify Pages tar content	2026-11-14T09:12:56.6714469Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Artifact Transport Regression	Verify Pages tar content	2026-11-14T09:12:56.6714764Z   GIT_CONFIG_VALUE_0: main
+Artifact Transport Regression	Verify Pages tar content	2026-11-14T09:12:56.6715023Z   ZIZMOR_VERSION: 1.32.0
+Artifact Transport Regression	Verify Pages tar content	2026-11-14T09:12:56.6715259Z ##[endgroup]
+Artifact Transport Regression	Post Run actions/setup-node@v7.1.0	﻿2026-11-14T09:12:56.6931023Z Post job cleanup.
+Artifact Transport Regression	Post Run actions/checkout@v7.0.1	﻿2026-11-14T09:12:56.8242351Z Post job cleanup.
+Artifact Transport Regression	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:56.9139202Z [command]/usr/bin/git version
+Artifact Transport Regression	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:56.9187425Z git version 2.56.1
+Artifact Transport Regression	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:56.9227280Z Temporarily overriding HOME='/home/runner/work/_temp/5a093ace-405f-42cf-a10d-3e84231a4c71' before making global git config changes
+Artifact Transport Regression	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:56.9229402Z Adding repository directory to the temporary git global config as a safe directory
+Artifact Transport Regression	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:56.9235340Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template
+Artifact Transport Regression	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:56.9275062Z Removing SSH command configuration
+Artifact Transport Regression	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:56.9282577Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Artifact Transport Regression	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:56.9324115Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Artifact Transport Regression	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:56.9636282Z Removing HTTP extra header
+Artifact Transport Regression	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:56.9642800Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Artifact Transport Regression	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:56.9694794Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Artifact Transport Regression	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:57.0049253Z Removing includeIf entries pointing to credentials config files
+Artifact Transport Regression	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:57.0068974Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Artifact Transport Regression	Post Run actions/checkout@v7.0.1	2026-11-14T09:12:57.0090378Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Artifact Transport Regression	Complete job	﻿2026-11-14T09:12:57.0527626Z Cleaning up orphan processes
+Pipeline Status	Set up job	﻿2026-11-14T09:13:16.0069773Z Current runner version: '2.338.2'
+Pipeline Status	Set up job	2026-11-14T09:13:16.0091273Z ##[group]Runner Image Provisioner
+Pipeline Status	Set up job	2026-11-14T09:13:16.0092093Z Hosted Compute Agent
+Pipeline Status	Set up job	2026-11-14T09:13:16.0092578Z Version: 20261103.629
+Pipeline Status	Set up job	2026-11-14T09:13:16.0093135Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+Pipeline Status	Set up job	2026-11-14T09:13:16.0093734Z Build Date: 2026-11-03T17:26:59Z
+Pipeline Status	Set up job	2026-11-14T09:13:16.0094274Z Worker ID: {890efe88-09a5-4786-8b0b-021a7c6a6686}
+Pipeline Status	Set up job	2026-11-14T09:13:16.0094903Z Region: westus2
+Pipeline Status	Set up job	2026-11-14T09:13:16.0095355Z Cloud: Azure
+Pipeline Status	Set up job	2026-11-14T09:13:16.0095854Z ##[endgroup]
+Pipeline Status	Set up job	2026-11-14T09:13:16.0096969Z ##[group]Operating System
+Pipeline Status	Set up job	2026-11-14T09:13:16.0097511Z Ubuntu
+Pipeline Status	Set up job	2026-11-14T09:13:16.0097999Z 26.04.1
+Pipeline Status	Set up job	2026-11-14T09:13:16.0098430Z LTS
+Pipeline Status	Set up job	2026-11-14T09:13:16.0098853Z ##[endgroup]
+Pipeline Status	Set up job	2026-11-14T09:13:16.0099388Z ##[group]Runner Image
+Pipeline Status	Set up job	2026-11-14T09:13:16.0099892Z Image: ubuntu-26.04
+Pipeline Status	Set up job	2026-11-14T09:13:16.0100428Z Version: 20261111.196.1
+Pipeline Status	Set up job	2026-11-14T09:13:16.0101513Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261111.196/images/ubuntu/Ubuntu2604-Readme.md
+Pipeline Status	Set up job	2026-11-14T09:13:16.0102938Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261111.196
+Pipeline Status	Set up job	2026-11-14T09:13:16.0103752Z ##[endgroup]
+Pipeline Status	Set up job	2026-11-14T09:13:16.0104709Z ##[group]GITHUB_TOKEN Permissions
+Pipeline Status	Set up job	2026-11-14T09:13:16.0106196Z Contents: read
+Pipeline Status	Set up job	2026-11-14T09:13:16.0106804Z Metadata: read
+Pipeline Status	Set up job	2026-11-14T09:13:16.0107269Z ##[endgroup]
+Pipeline Status	Set up job	2026-11-14T09:13:16.0108943Z Secret source: Actions
+Pipeline Status	Set up job	2026-11-14T09:13:16.0109780Z Cache mode: write
+Pipeline Status	Set up job	2026-11-14T09:13:16.0110346Z Prepare workflow directory
+Pipeline Status	Set up job	2026-11-14T09:13:16.0419896Z Prepare all required actions
+Pipeline Status	Set up job	2026-11-14T09:13:16.0476862Z Getting action download info
+Pipeline Status	Set up job	2026-11-14T09:13:16.3734394Z Download action repository 'actions/checkout@v7.0.1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+Pipeline Status	Set up job	2026-11-14T09:13:16.5853578Z Complete job name: Pipeline Status
+Pipeline Status	Run actions/checkout@v7.0.1	﻿2026-11-14T09:13:16.6527621Z ##[group]Run actions/checkout@v7.0.1
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6528334Z with:
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6528709Z   persist-credentials: false
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6529339Z   repository: link-foundation/python-ai-driven-development-pipeline-template
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6532645Z   token: ***
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6533008Z   ssh-strict: true
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6533370Z   ssh-user: git
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6533723Z   clean: true
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6534094Z   sparse-checkout-cone-mode: true
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6534523Z   fetch-depth: 1
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6534878Z   fetch-tags: false
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6535243Z   show-progress: true
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6535617Z   lfs: false
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6535954Z   submodules: false
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6536330Z   set-safe-directory: true
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6536753Z   allow-unsafe-pr-checkout: false
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6537318Z env:
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6537650Z   GIT_CONFIG_COUNT: 1
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6538047Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6538483Z   GIT_CONFIG_VALUE_0: main
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6539038Z   ZIZMOR_VERSION: 1.32.0
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.6539462Z ##[endgroup]
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9585706Z Syncing repository: link-foundation/python-ai-driven-development-pipeline-template
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9588323Z ##[group]Getting Git version info
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9590104Z Working directory is '/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template'
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9591704Z [command]/usr/bin/git version
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9592445Z git version 2.56.1
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9610314Z ##[endgroup]
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9621719Z Temporarily overriding HOME='/home/runner/work/_temp/db0fca3e-04f5-4e69-b511-f297650d25cf' before making global git config changes
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9623877Z Adding repository directory to the temporary git global config as a safe directory
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9628777Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9677428Z Deleting the contents of '/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template'
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9680566Z ##[group]Determining repository object format
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9682180Z ##[endgroup]
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9702169Z ##[group]Initializing the repository
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9704001Z [command]/usr/bin/git init /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9769064Z Initialized empty Git repository in /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9803436Z [command]/usr/bin/git remote add origin https://github.com/link-foundation/python-ai-driven-development-pipeline-template
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9831990Z ##[endgroup]
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9833181Z ##[group]Disabling automatic garbage collection
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9835562Z [command]/usr/bin/git config --local gc.auto 0
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9885308Z ##[endgroup]
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9886369Z ##[group]Setting up auth
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9887152Z Removing SSH command configuration
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9892824Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:16.9925620Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.0291660Z Removing HTTP extra header
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.0296270Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.0325518Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.0555573Z Removing includeIf entries pointing to credentials config files
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.0559193Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.0591501Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.0846300Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-af760d5e-5fad-4d8e-8684-900f67fbba82.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.0883839Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path /home/runner/work/_temp/git-credentials-af760d5e-5fad-4d8e-8684-900f67fbba82.config
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.0915650Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-af760d5e-5fad-4d8e-8684-900f67fbba82.config
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.1067022Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-af760d5e-5fad-4d8e-8684-900f67fbba82.config
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.1098440Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-af760d5e-5fad-4d8e-8684-900f67fbba82.config
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.1126888Z ##[endgroup]
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.1127657Z ##[group]Fetching the repository
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.1132543Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +2f28fcd9b29048695c119ab6948e241712b1a004:refs/remotes/pull/152/merge
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.4687860Z From https://github.com/link-foundation/python-ai-driven-development-pipeline-template
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.4689668Z  * [new ref]         2f28fcd9b29048695c119ab6948e241712b1a004 -> pull/152/merge
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.4692780Z ##[endgroup]
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.4693875Z ##[group]Determining the checkout info
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.4695355Z ##[endgroup]
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.4696283Z [command]/usr/bin/git sparse-checkout disable
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.4745955Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.4779018Z ##[group]Checking out the ref
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.4783043Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/152/merge
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5045532Z Note: switching to 'refs/remotes/pull/152/merge'.
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5046112Z 
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5046495Z You are in 'detached HEAD' state. You can look around, make experimental
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5047336Z changes and commit them, and you can discard any commits you make in this
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5048140Z state without impacting any branches by switching back to a branch.
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5048583Z 
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5048937Z If you want to create a new branch to retain commits you create, you may
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5049772Z do so (now or later) by using -c with the switch command. Example:
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5050193Z 
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5050475Z   git switch -c <new-branch-name>
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5051104Z 
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5051458Z Or undo this operation with:
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5051907Z 
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5052141Z   git switch -
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5052368Z 
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5052746Z Turn off this advice by setting config variable advice.detachedHead to false
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5053304Z 
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5054141Z HEAD is now at 2f28fcd Merge 3ebb7516c438b6de7066b5e80c6c9c833f438eeb into 78024ea7244c3d94d5b4474106d23f739837c497
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5056171Z ##[endgroup]
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5099505Z [command]/usr/bin/git log -1 --format=%H
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5124114Z 2f28fcd9b29048695c119ab6948e241712b1a004
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5135387Z ##[group]Removing auth
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5136004Z Removing SSH command configuration
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5137981Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5167884Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5408676Z Removing HTTP extra header
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5410995Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5442248Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5679095Z Removing includeIf entries pointing to credentials config files
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5681336Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5705521Z includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5707672Z includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5708873Z includeif.gitdir:/github/workspace/.git.path
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5709475Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5713394Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5734995Z /home/runner/work/_temp/git-credentials-af760d5e-5fad-4d8e-8684-900f67fbba82.config
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5745068Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-af760d5e\-5fad\-4d8e\-8684\-900f67fbba82\.config
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5778522Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5800296Z /home/runner/work/_temp/git-credentials-af760d5e-5fad-4d8e-8684-900f67fbba82.config
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5807268Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-af760d5e\-5fad\-4d8e\-8684\-900f67fbba82\.config
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5837065Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5858931Z /github/runner_temp/git-credentials-af760d5e-5fad-4d8e-8684-900f67fbba82.config
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5867980Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-af760d5e\-5fad\-4d8e\-8684\-900f67fbba82\.config
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5897396Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5918494Z /github/runner_temp/git-credentials-af760d5e-5fad-4d8e-8684-900f67fbba82.config
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5925511Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-af760d5e\-5fad\-4d8e\-8684\-900f67fbba82\.config
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.5954094Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.6189983Z Removing credentials config '/home/runner/work/_temp/git-credentials-af760d5e-5fad-4d8e-8684-900f67fbba82.config'
+Pipeline Status	Run actions/checkout@v7.0.1	2026-11-14T09:13:17.6197550Z ##[endgroup]
+Pipeline Status	Check aggregate pipeline status	﻿2026-11-14T09:13:17.6438475Z ##[group]Run bash scripts/check-pipeline-status.sh
+Pipeline Status	Check aggregate pipeline status	2026-11-14T09:13:17.6439215Z ^[[36;1mbash scripts/check-pipeline-status.sh^[[0m
+Pipeline Status	Check aggregate pipeline status	2026-11-14T09:13:17.6487687Z shell: /usr/bin/bash -e {0}
+Pipeline Status	Check aggregate pipeline status	2026-11-14T09:13:17.6488190Z env:
+Pipeline Status	Check aggregate pipeline status	2026-11-14T09:13:17.6488582Z   GIT_CONFIG_COUNT: 1
+Pipeline Status	Check aggregate pipeline status	2026-11-14T09:13:17.6489006Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Pipeline Status	Check aggregate pipeline status	2026-11-14T09:13:17.6489482Z   GIT_CONFIG_VALUE_0: main
+Pipeline Status	Check aggregate pipeline status	2026-11-14T09:13:17.6489943Z   ZIZMOR_VERSION: 1.32.0
+Pipeline Status	Check aggregate pipeline status	2026-11-14T09:13:17.6491419Z   NEEDS_JSON: {
+Pipeline Status	Check aggregate pipeline status	  "actionlint": {
+Pipeline Status	Check aggregate pipeline status	    "result": "success",
+Pipeline Status	Check aggregate pipeline status	    "outputs": {}
+Pipeline Status	Check aggregate pipeline status	  },
+Pipeline Status	Check aggregate pipeline status	  "zizmor": {
+Pipeline Status	Check aggregate pipeline status	    "result": "failure",
+Pipeline Status	Check aggregate pipeline status	    "outputs": {}
+Pipeline Status	Check aggregate pipeline status	  },
+Pipeline Status	Check aggregate pipeline status	  "shellcheck": {
+Pipeline Status	Check aggregate pipeline status	    "result": "success",
+Pipeline Status	Check aggregate pipeline status	    "outputs": {}
+Pipeline Status	Check aggregate pipeline status	  },
+Pipeline Status	Check aggregate pipeline status	  "artifact-roundtrip": {
+Pipeline Status	Check aggregate pipeline status	    "result": "success",
+Pipeline Status	Check aggregate pipeline status	    "outputs": {}
+Pipeline Status	Check aggregate pipeline status	  }
+Pipeline Status	Check aggregate pipeline status	}
+Pipeline Status	Check aggregate pipeline status	2026-11-14T09:13:17.6492774Z   RUN_SHA: 3ebb7516c438b6de7066b5e80c6c9c833f438eeb
+Pipeline Status	Check aggregate pipeline status	2026-11-14T09:13:17.6493304Z   HEAD_REF: refs/pull/152/head
+Pipeline Status	Check aggregate pipeline status	2026-11-14T09:13:17.6493729Z ##[endgroup]
+Pipeline Status	Check aggregate pipeline status	2026-11-14T09:13:17.7034344Z ##[error]Failed jobs: zizmor
+Pipeline Status	Check aggregate pipeline status	2026-11-14T09:13:17.7045207Z ##[error]Process completed with exit code 1.
+Pipeline Status	Post Run actions/checkout@v7.0.1	﻿2026-11-14T09:13:17.7266755Z Post job cleanup.
+Pipeline Status	Post Run actions/checkout@v7.0.1	2026-11-14T09:13:17.8005987Z [command]/usr/bin/git version
+Pipeline Status	Post Run actions/checkout@v7.0.1	2026-11-14T09:13:17.8043878Z git version 2.56.1
+Pipeline Status	Post Run actions/checkout@v7.0.1	2026-11-14T09:13:17.8077470Z Temporarily overriding HOME='/home/runner/work/_temp/a266186b-3062-4b86-bf2d-17c5abe56330' before making global git config changes
+Pipeline Status	Post Run actions/checkout@v7.0.1	2026-11-14T09:13:17.8079119Z Adding repository directory to the temporary git global config as a safe directory
+Pipeline Status	Post Run actions/checkout@v7.0.1	2026-11-14T09:13:17.8083820Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/python-ai-driven-development-pipeline-template/python-ai-driven-development-pipeline-template
+Pipeline Status	Post Run actions/checkout@v7.0.1	2026-11-14T09:13:17.8116765Z Removing SSH command configuration
+Pipeline Status	Post Run actions/checkout@v7.0.1	2026-11-14T09:13:17.8122909Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Pipeline Status	Post Run actions/checkout@v7.0.1	2026-11-14T09:13:17.8159691Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Pipeline Status	Post Run actions/checkout@v7.0.1	2026-11-14T09:13:17.8423923Z Removing HTTP extra header
+Pipeline Status	Post Run actions/checkout@v7.0.1	2026-11-14T09:13:17.8430475Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Pipeline Status	Post Run actions/checkout@v7.0.1	2026-11-14T09:13:17.8467948Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Pipeline Status	Post Run actions/checkout@v7.0.1	2026-11-14T09:13:17.8731536Z Removing includeIf entries pointing to credentials config files
+Pipeline Status	Post Run actions/checkout@v7.0.1	2026-11-14T09:13:17.8736297Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Pipeline Status	Post Run actions/checkout@v7.0.1	2026-11-14T09:13:17.8765755Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Pipeline Status	Complete job	﻿2026-11-14T09:13:17.9134866Z Cleaning up orphan processes

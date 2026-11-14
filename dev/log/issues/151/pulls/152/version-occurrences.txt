@@ -1,0 +1,215 @@
+tests/test_dependabot_updates.py:32:            workflow = re.sub(r"(uses: [\w/-]+)@v[\d.]+", r"\1@v99.0.0", workflow)
+tests/test_dependabot_updates.py:34:                r"(docker://rhysd/actionlint@sha256:)[0-9a-f]+ # v[\d.]+",
+tests/test_dependabot_updates.py:51:    test_release_workflow.test_release_workflow_builds_docker_images_on_pull_requests()
+tests/test_dependabot_updates.py:64:            f"uses: actions/cache/restore@{ref}", "actions/cache/restore", 1
+tests/test_project_metadata.py:23:    """The dev extra must not install mypy versions that reject Python 3.9."""
+README.md:43:pip install -e ".[dev]"
+README.md:46:pip install pre-commit
+README.md:174:# Create a changelog fragment (similar to `npx changeset`)
+README.md:235:pip install -e ".[docs]"
+README.md:284:it intentionally does not install Playwright or add a screenshot workflow yet.
+CONTRIBUTING.md:24:   pip install -e ".[dev]"
+CONTRIBUTING.md:30:   pip install pre-commit
+CONTRIBUTING.md:81:   pip install -e ".[docs]"
+CONTRIBUTING.md:90:   # Create a new changelog fragment (similar to `npx changeset` in JS)
+CONTRIBUTING.md:125:This project uses:
+CONTRIBUTING.md:231:pip install -e ".[dev]"
+scripts/version_and_commit.py:275:        if local_version != remote_version:
+scripts/version_and_commit.py:325:def normalized_lock(ref: str, path: str, manifest: dict, version: str) -> dict:
+scripts/version_and_commit.py:326:    """Normalize only this project's uv package version, preserving resolution."""
+scripts/version_and_commit.py:343:    if len(own_packages) != 1 or own_packages[0].get("version") != version:
+scripts/version_and_commit.py:406:    if old_version == new_version:
+scripts/version_and_commit.py:464:        print(f"Remote version: {remote_version}")
+scripts/version_and_commit.py:534:        print(f"\nCurrent version: {old_version}")
+scripts/version_and_commit.py:558:        print(f"New version: {new_version}")
+scripts/check_zizmor_compatibility.py:18:    refs = re.findall(r"uses: zizmorcore/zizmor-action@([^\s]+)", workflow)
+scripts/check_zizmor_compatibility.py:20:        r"^  ZIZMOR_VERSION: ['\"]?(\d+\.\d+\.\d+)['\"]?$", workflow, re.M
+scripts/create_manual_changeset.py:201:It's the Python equivalent of 'npx changeset' in JavaScript projects.
+scripts/create_manual_changeset.py:242:                "Install scriv for better fragment management: pip install scriv[toml]"
+scripts/audit_dependencies.py:6:through the running interpreter's pip (issue #68). Auditing a bundled pip
+scripts/audit_dependencies.py:52:    """Build an install target that resolves every declared optional extra."""
+scripts/audit_dependencies.py:75:        # --without-pip keeps pip itself out of the audited environment; the
+scripts/audit_dependencies.py:76:        # running interpreter's pip populates the target through --python.
+scripts/format_release_notes.py:92:    version: str,
+scripts/release_naming.py:47:def normalize_version(version: str) -> str:
+scripts/release_naming.py:49:    if not version:
+scripts/release_naming.py:63:def build_release_tag(version: str, multi_language: bool) -> str:
+scripts/release_naming.py:69:    version: str,
+scripts/release_naming.py:80:def build_pypi_badge(distribution_name: str, version: str) -> str:
+scripts/publish_to_pypi.py:151:                    f"Error: {tool} is not installed. Install with: pip install {tool}",
+.github/dependabot.yml:10:version: 2
+scripts/create_github_release.py:80:def extract_changelog_entry(changelog_path: Path, version: str) -> str:
+scripts/create_github_release.py:114:                if (match[1] or match[2]) == version:
+scripts/create_github_release.py:127:    version: str,
+scripts/create_github_release.py:185:    version: str,
+scripts/check_web_archive.py:130:        "Suggested fix: replace the broken link with the archived version:\n"
+scripts/check_release.py:72:def pypi_url(package_name: str, version: str) -> str:
+scripts/check_release.py:89:def pypi_release_exists(package_name: str, version: str) -> bool:
+scripts/check_release.py:140:    version: str,
+scripts/bump_version.py:48:def update_pyproject(pyproject_path: Path, old_version: str, new_version: str) -> None:
+scripts/bump_version.py:66:    changelog_path: Path, version: str, bump_type: str, description: str
+scripts/bump_version.py:147:        print(f"Current version: {old_version}")
+scripts/bump_version.py:151:        print(f"New version: {new_version}")
+.github/workflows/workflows.yml:33:  ZIZMOR_VERSION: '1.30.1'
+.github/workflows/workflows.yml:46:      - uses: actions/checkout@v7
+.github/workflows/workflows.yml:66:      #   docker pull rhysd/actionlint:<tag> &&
+.github/workflows/workflows.yml:67:      #   docker inspect --format='{{index .RepoDigests 0}}' rhysd/actionlint:<tag>
+.github/workflows/workflows.yml:69:        uses: docker://rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 # v1.7.12
+.github/workflows/workflows.yml:91:      - uses: actions/checkout@v7
+.github/workflows/workflows.yml:105:        uses: zizmorcore/zizmor-action@v0.8.1
+.github/workflows/workflows.yml:111:          version: ${{ env.ZIZMOR_VERSION }}
+.github/workflows/workflows.yml:117:      # .github/zizmor.yml is not enforced against `uses: docker://` or
+.github/workflows/workflows.yml:141:      - uses: actions/checkout@v7
+.github/workflows/workflows.yml:148:          "$RUNNER_TEMP/shellcheck-venv/bin/pip" install --quiet --disable-pip-version-check shellcheck-py==0.11.0.1
+.github/workflows/workflows.yml:159:      - uses: actions/checkout@v7
+.github/workflows/workflows.yml:163:      - uses: actions/setup-node@v7
+.github/workflows/workflows.yml:165:          node-version: '24'
+.github/workflows/workflows.yml:201:        uses: $/.github/actions/artifact
+.github/workflows/workflows.yml:209:        uses: $/.github/actions/artifact
+.github/workflows/workflows.yml:221:        uses: $/.github/actions/artifact
+.github/workflows/workflows.yml:229:        uses: $/.github/actions/artifact
+.github/workflows/workflows.yml:259:      - uses: actions/checkout@v7
+.github/workflows/docs.yml:64:      - uses: actions/checkout@v7
+.github/workflows/docs.yml:69:        uses: actions/setup-python@v7
+.github/workflows/docs.yml:71:          python-version: '3.13'
+.github/workflows/docs.yml:75:          python -m pip install --upgrade pip
+.github/workflows/docs.yml:76:          pip install -e .
+.github/workflows/docs.yml:77:          pip install -r docs/requirements.txt
+.github/workflows/docs.yml:83:        uses: $/.github/actions/artifact
+.github/workflows/docs.yml:96:        uses: $/.github/actions/artifact
+.github/workflows/docs.yml:123:        uses: actions/configure-pages@v6
+.github/workflows/docs.yml:127:        uses: $/.github/actions/deploy-pages
+.github/workflows/docs.yml:144:      - uses: actions/checkout@v7
+.github/workflows/links.yml:55:      - uses: actions/checkout@v7
+.github/workflows/links.yml:69:        uses: actions/cache/restore@v6
+.github/workflows/links.yml:78:          LYCHEE_VERSION: v0.24.2
+.github/workflows/links.yml:150:        uses: actions/cache/save@v6
+.github/workflows/links.yml:157:        uses: $/.github/actions/artifact
+.github/workflows/links.yml:175:      - uses: actions/checkout@v7
+scripts/install-lychee.sh:13:version="${LYCHEE_VERSION:?LYCHEE_VERSION is required, e.g. v0.24.2}"
+scripts/install-lychee.sh:65:install -D -m 0755 "$binary" "$install_dir/lychee"
+scripts/preflight-credentials.sh:8:# endpoint -- proves authentication, not authorisation: auth.docker.io
+scripts/preflight-credentials.sh:37:DOCKER_REGISTRY="${DOCKER_REGISTRY:-https://registry-1.docker.io}"
+scripts/preflight-credentials.sh:38:DOCKER_AUTH="${DOCKER_AUTH:-https://auth.docker.io}"
+scripts/preflight-credentials.sh:218:check_docker_hub() {
+scripts/preflight-credentials.sh:231:    bad "DOCKERHUB_IMAGE is set (${image}) but DOCKERHUB_USERNAME or DOCKERHUB_TOKEN is missing -- docker-publish would fail at login"
+scripts/preflight-credentials.sh:240:    "$DOCKER_AUTH/token?service=registry.docker.io&scope=repository:${image}:pull,push")
+scripts/preflight-credentials.sh:312:check_docker_hub
+.github/workflows/release.yml:55:      - uses: actions/checkout@v7
+.github/workflows/release.yml:61:        uses: actions/setup-python@v7
+.github/workflows/release.yml:63:          python-version: '3.13'
+.github/workflows/release.yml:121:      - uses: actions/checkout@v7
+.github/workflows/release.yml:133:        uses: actions/setup-python@v7
+.github/workflows/release.yml:135:          python-version: '3.13'
+.github/workflows/release.yml:171:              python -m pip install --upgrade pip
+.github/workflows/release.yml:172:              pip install -e ".[dev]"
+.github/workflows/release.yml:201:            npx --yes -p secretlint@13.0.7 -p @secretlint/secretlint-rule-preset-recommend@13.0.7 secretlint "**/*"
+.github/workflows/release.yml:224:      - uses: actions/checkout@v7
+.github/workflows/release.yml:255:      - uses: actions/checkout@v7
+.github/workflows/release.yml:295:      - uses: actions/checkout@v7
+.github/workflows/release.yml:300:        uses: actions/setup-python@v7
+.github/workflows/release.yml:302:          python-version: '3.13'
+.github/workflows/release.yml:338:              python -m pip install --upgrade pip
+.github/workflows/release.yml:339:              pip install -e ".[dev]"
+.github/workflows/release.yml:357:        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5  # v7.0.0 @ 2026-06-07
+.github/workflows/release.yml:384:      - uses: actions/checkout@v7
+.github/workflows/release.yml:389:        uses: actions/setup-python@v7
+.github/workflows/release.yml:391:          python-version: '3.13'
+.github/workflows/release.yml:421:          python -m pip install --upgrade pip
+.github/workflows/release.yml:422:          pip install build twine
+.github/workflows/release.yml:436:        uses: $/.github/actions/artifact
+.github/workflows/release.yml:454:      - uses: actions/checkout@v7
+.github/workflows/release.yml:460:        uses: actions/setup-python@v7
+.github/workflows/release.yml:462:          python-version: "3.13"
+.github/workflows/release.yml:500:  docker-build:
+.github/workflows/release.yml:505:      group: check-${{ github.workflow }}-${{ github.ref }}-docker-build
+.github/workflows/release.yml:510:      - uses: actions/checkout@v7
+.github/workflows/release.yml:515:        id: dockerfile
+.github/workflows/release.yml:525:        if: steps.dockerfile.outputs.exists == 'true'
+.github/workflows/release.yml:526:        uses: docker/setup-buildx-action@v4
+.github/workflows/release.yml:529:        if: steps.dockerfile.outputs.exists == 'true'
+.github/workflows/release.yml:531:        uses: docker/build-push-action@v7
+.github/workflows/release.yml:538:          cache-from: type=gha,scope=docker-pr-check
+.github/workflows/release.yml:545:    needs: [lint, test, build, release-preflight, validate-docs, changelog, docker-build]
+.github/workflows/release.yml:548:      version: ${{ steps.github_release.outputs.version }}
+.github/workflows/release.yml:568:      - uses: actions/checkout@v7
+.github/workflows/release.yml:574:        uses: actions/setup-python@v7
+.github/workflows/release.yml:576:          python-version: '3.13'
+.github/workflows/release.yml:606:          python -m pip install --upgrade pip
+.github/workflows/release.yml:607:          pip install build twine
+.github/workflows/release.yml:617:        uses: $/.github/actions/artifact
+.github/workflows/release.yml:629:        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086  # v1.14.3 @ 2026-10-20
+.github/workflows/release.yml:638:          RELEASE_VERSION: ${{ steps.version_check.outputs.current_version }}
+.github/workflows/release.yml:644:          RELEASE_VERSION: ${{ steps.version_check.outputs.current_version }}
+.github/workflows/release.yml:654:          RELEASE_VERSION: ${{ steps.version_check.outputs.current_version }}
+.github/workflows/release.yml:666:    needs: [lint, test, build, release-preflight, validate-docs, changelog, docker-build]
+.github/workflows/release.yml:669:      version: ${{ steps.github_release.outputs.version }}
+.github/workflows/release.yml:697:      - uses: actions/checkout@v7
+.github/workflows/release.yml:704:        uses: actions/setup-python@v7
+.github/workflows/release.yml:706:          python-version: '3.13'
+.github/workflows/release.yml:737:          python -m pip install --upgrade pip
+.github/workflows/release.yml:738:          pip install build twine "scriv[toml]" uv
+.github/workflows/release.yml:780:        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086  # v1.14.3 @ 2026-10-20
+.github/workflows/release.yml:790:          RELEASE_VERSION: ${{ steps.version_check.outputs.current_version }}
+.github/workflows/release.yml:796:          RELEASE_VERSION: ${{ steps.version_check.outputs.current_version }}
+.github/workflows/release.yml:806:          RELEASE_VERSION: ${{ steps.version_check.outputs.current_version }}
+.github/workflows/release.yml:818:  docker-publish-config:
+.github/workflows/release.yml:837:      image: ${{ steps.config.outputs.image }}
+.github/workflows/release.yml:838:      version: ${{ steps.config.outputs.version }}
+.github/workflows/release.yml:843:      RELEASE_VERSION: ${{ needs.auto-release.outputs.version || needs.manual-release.outputs.version }}
+.github/workflows/release.yml:845:      - uses: actions/checkout@v7
+.github/workflows/release.yml:869:  docker-publish-build:
+.github/workflows/release.yml:875:    needs: [docker-publish-config, release-preflight]
+.github/workflows/release.yml:878:      needs.docker-publish-config.outputs.enabled == 'true'
+.github/workflows/release.yml:892:      - uses: actions/checkout@v7
+.github/workflows/release.yml:897:        uses: docker/setup-buildx-action@v4
+.github/workflows/release.yml:900:        uses: docker/login-action@v4
+.github/workflows/release.yml:906:        id: docker_build
+.github/workflows/release.yml:908:        uses: docker/build-push-action@v7
+.github/workflows/release.yml:914:          outputs: type=image,name=${{ needs.docker-publish-config.outputs.image }},push-by-digest=true,name-canonical=true,push=true
+.github/workflows/release.yml:918:          DIGEST: ${{ steps.docker_build.outputs.digest }}
+.github/workflows/release.yml:924:        uses: $/.github/actions/artifact
+.github/workflows/release.yml:926:          name: docker-digest-${{ strategy.job-index }}
+.github/workflows/release.yml:931:  docker-publish:
+.github/workflows/release.yml:937:    needs: [docker-publish-config, docker-publish-build, release-preflight]
+.github/workflows/release.yml:940:      needs.docker-publish-build.result == 'success'
+.github/workflows/release.yml:947:        uses: docker/setup-buildx-action@v4
+.github/workflows/release.yml:950:        uses: docker/login-action@v4
+.github/workflows/release.yml:956:        uses: $/.github/actions/artifact
+.github/workflows/release.yml:960:          pattern: docker-digest-*
+.github/workflows/release.yml:966:          IMAGE: ${{ needs.docker-publish-config.outputs.image }}
+.github/workflows/release.yml:967:          VERSION: ${{ needs.docker-publish-config.outputs.version }}
+.github/workflows/release.yml:972:          docker buildx imagetools create \
+.github/workflows/release.yml:979:          IMAGE: ${{ needs.docker-publish-config.outputs.image }}
+.github/workflows/release.yml:980:          VERSION: ${{ needs.docker-publish-config.outputs.version }}
+.github/workflows/release.yml:982:          MANIFEST=$(docker buildx imagetools inspect "${IMAGE}:${VERSION}")
+.github/workflows/release.yml:994:            changelog, docker-build, auto-release, manual-release,
+.github/workflows/release.yml:995:            docker-publish-config, docker-publish-build, docker-publish]
+.github/workflows/release.yml:997:      - uses: actions/checkout@v7
+scripts/smoke_test_published_package.py:35:    """Package metadata needed for the published install smoke test."""
+scripts/smoke_test_published_package.py:193:    version: str,
+scripts/smoke_test_published_package.py:225:    message = f"failed to install {package_spec} from the package index"
+scripts/smoke_test_published_package.py:229:def verify_imports(python: Path, metadata: PackageMetadata, version: str) -> None:
+scripts/smoke_test_published_package.py:332:        help="Number of pip install attempts while waiting for index propagation",
+scripts/smoke_test_published_package.py:338:        help="Delay between package install attempts",
+scripts/smoke_test_published_package.py:349:        help="Package index URL override; defaults to pip configuration",
+.github/workflows/security.yml:27:      - uses: actions/checkout@v7
+.github/workflows/security.yml:32:        uses: actions/setup-python@v7
+.github/workflows/security.yml:34:          python-version: '3.13'
+.github/workflows/security.yml:51:      - uses: actions/checkout@v7
+.github/workflows/security.yml:56:        uses: actions/setup-node@v7
+.github/workflows/security.yml:58:          node-version: '24'
+.github/workflows/security.yml:84:      - uses: actions/checkout@v7
+.github/workflows/security.yml:89:        uses: github/codeql-action/init@v4
+.github/workflows/security.yml:95:        uses: github/codeql-action/autobuild@v4
+.github/workflows/security.yml:98:        uses: github/codeql-action/analyze@v4
+.github/workflows/security.yml:107:        uses: $/.github/actions/artifact
+.github/workflows/security.yml:124:      - uses: actions/checkout@v7
+.github/workflows/security.yml:138:        uses: actions/dependency-review-action@v5
+.github/workflows/security.yml:158:      - uses: actions/checkout@v7
+.github/workflows/dependabot-health.yml:36:      - uses: actions/checkout@v7
+.github/workflows/dependabot-health.yml:44:          "$RUNNER_TEMP/health-tests/bin/pip" install --quiet pytest
+.github/workflows/dependabot-health.yml:60:      - uses: actions/checkout@v7
+.github/zizmor.yml:3:  unpinned-uses:
+.github/zizmor.yml:11:        docker/*: ref-pin
+.github/actions/deploy-pages/deploy.mjs:151:          pages_build_version: buildVersion,

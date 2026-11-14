@@ -1,0 +1,1001 @@
+diff --git a/.pre-commit-config.yaml b/.pre-commit-config.yaml
+index efef8ca..efca86f 100644
+--- a/.pre-commit-config.yaml
++++ b/.pre-commit-config.yaml
+@@ -5,7 +5,7 @@ repos:
+       - id: shellcheck
+
+   - repo: https://github.com/pre-commit/pre-commit-hooks
+-    rev: v5.0.0
++    rev: v6.0.0
+     hooks:
+       - id: trailing-whitespace
+         exclude: ^\.github/actions/artifact/dist/.*\.mjs$
+@@ -19,15 +19,16 @@ repos:
+       - id: debug-statements
+
+   - repo: https://github.com/astral-sh/ruff-pre-commit
+-    rev: v0.8.4
++    rev: v0.17.5
+     hooks:
+-      - id: ruff
++      - id: ruff-check
+         args: [--fix, --exit-non-zero-on-fix]
+       - id: ruff-format
+
+   - repo: https://github.com/pre-commit/mirrors-mypy
+-    rev: v1.13.0
++    rev: v2.4.1
+     hooks:
+       - id: mypy
+-        additional_dependencies: [pytest, pytest-asyncio]
++        files: ^src/
++        additional_dependencies: [pytest==9.2.0, pytest-asyncio==1.5.0]
+         args: [--strict, --ignore-missing-imports]
+diff --git a/.ruff.toml b/.ruff.toml
+index e6a459e..1f0296c 100644
+--- a/.ruff.toml
++++ b/.ruff.toml
+@@ -1,5 +1,9 @@
+-# Ruff configuration
+-# This file provides additional settings beyond pyproject.toml
++# Pin the effective lint policy explicitly: newer Ruff defaults enable more
++# rule families. Keep the existing error checks and enforce import sorting.
++target-version = "py315"
++
++[lint]
++select = ["E4", "E7", "E9", "F", "I"]
+
+ [lint.isort]
+ known-first-party = ["my_package"]
+diff --git a/pyproject.toml b/pyproject.toml
+index 176234d..23d2bd9 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,5 +1,5 @@
+ [build-system]
+-requires = ["hatchling"]
++requires = ["hatchling==1.33.0"]
+ build-backend = "hatchling.build"
+
+ [project]
+@@ -7,8 +7,8 @@ name = "my-package"
+ version = "0.1.0"
+ description = "A Python package template for AI-driven development"
+ readme = "README.md"
+-license = {text = "Unlicense"}
+-requires-python = ">=3.9"
++license = "Unlicense"
++requires-python = ">=3.15"
+ authors = [
+     {name = "Your Name", email = "your.email@example.com"},
+ ]
+@@ -16,29 +16,37 @@ keywords = ["template", "python", "ai-driven"]
+ classifiers = [
+     "Development Status :: 3 - Alpha",
+     "Intended Audience :: Developers",
+-    "License :: OSI Approved :: The Unlicense (Unlicense)",
+     "Programming Language :: Python :: 3",
+-    "Programming Language :: Python :: 3.9",
+-    "Programming Language :: Python :: 3.10",
+-    "Programming Language :: Python :: 3.11",
+-    "Programming Language :: Python :: 3.12",
+-    "Programming Language :: Python :: 3.13",
++    "Programming Language :: Python :: 3.15",
+ ]
+
+ [project.optional-dependencies]
+ dev = [
+-    "ruff>=0.8.0,<0.9",
+-    "mypy>=1.13.0,<2.0",
+-    "pytest>=8.3.0",
+-    "pytest-asyncio>=0.24.0",
+-    "pytest-cov>=6.0.0",
+-    "pre-commit>=4.0.0",
+-    "scriv[toml]>=1.7.0",
++    "ruff>=0.17.5",
++    "mypy>=2.4.1",
++    "pytest>=9.2.0",
++    "pytest-asyncio>=1.5.0",
++    "pytest-cov>=7.1.0",
++    "pre-commit>=4.7.0",
++    "scriv>=1.8.1",
++    "packaging>=26.3",
++    "pyyaml>=6.0.3",
+ ]
+ docs = [
+-    "sphinx>=7.4",
+-    "furo>=2024.8.6",
+-    "myst-parser>=3.0",
++    "sphinx>=9.2.0",
++    "furo>=2025.12.19",
++    "myst-parser>=5.2.0",
++]
++
++tools = [
++    "hatchling>=1.33.0",
++    "build>=1.6.1",
++    "twine>=7.0.0",
++    "uv>=0.13.8",
++    "pip>=26.3",
++    "pip-audit>=2.10.1",
++    "shellcheck-py>=0.11.0.1",
++    "zizmor>=1.32.0",
+ ]
+
+ [project.urls]
+@@ -51,7 +59,7 @@ packages = ["src/my_package"]
+
+ [tool.ruff]
+ line-length = 88
+-target-version = "py39"
++target-version = "py315"
+
+ [tool.ruff.lint]
+ select = [
+@@ -102,7 +110,7 @@ line-ending = "lf"
+ skip-magic-trailing-comma = false
+
+ [tool.mypy]
+-python_version = "3.9"
++python_version = "3.15"
+ warn_return_any = true
+ warn_unused_configs = true
+ disallow_untyped_defs = true
+@@ -116,8 +124,10 @@ strict_equality = true
+ extra_checks = true
+
+ [tool.pytest.ini_options]
+-minversion = "7.0"
+-addopts = "-ra -q --strict-markers"
++minversion = "9.2"
++addopts = "-ra -q"
++strict = true
++asyncio_default_fixture_loop_scope = "fixture-scope"
+ testpaths = ["tests"]
+ pythonpath = ["src"]
+
+diff --git a/scripts/audit_dependencies.py b/scripts/audit_dependencies.py
+index 0bf21f9..5b45eee 100644
+--- a/scripts/audit_dependencies.py
++++ b/scripts/audit_dependencies.py
+@@ -1,11 +1,10 @@
+ #!/usr/bin/env python3
+ """Resolve and audit every Python dependency surface supported by the template.
+
+-The audit runs pip-audit over the resolved environment, never over pip
+-itself: the target environment is created ``--without-pip`` and populated
+-through the running interpreter's pip (issue #68). Auditing a bundled pip
+-reports known PYSEC advisories against the tool used to install, which the
+-application cannot fix and which masks advisories in real dependencies.
++The audit uses the committed uv lock as constraints for every dependency surface.
++The target starts without a bundled pip (issue #68); only the explicitly declared,
++locked pip tool is included, so an old virtualenv seed cannot create a false
++positive. Reports stream to the caller even when vulnerabilities cause failure.
+ """
+
+ from __future__ import annotations
+@@ -17,7 +16,7 @@ import tomllib
+ from pathlib import Path
+
+ PIP_AUDIT_VERSION = "2.10.1"
+-DEPENDENCY_SURFACES = ("pyproject.toml", "docs/requirements.txt")
++DEPENDENCY_SURFACES = ("pyproject.toml", "docs/requirements.txt", "uv.lock")
+
+
+ def run(command: list[str], *, cwd: Path, capture: bool = False) -> str:
+@@ -72,14 +71,30 @@ def audit_dependencies(project_root: Path) -> None:
+         temporary_root = Path(temporary)
+         target_venv = temporary_root / "target"
+         audit_venv = temporary_root / "audit"
+-        # --without-pip keeps pip itself out of the audited environment; the
+-        # running interpreter's pip populates the target through --python.
++        # Avoid an untracked bundled pip. The locked tools extra supplies the
++        # current pip explicitly, through the host interpreter's --python.
+         run(
+             [sys.executable, "-m", "venv", "--without-pip", str(target_venv)],
+             cwd=project_root,
+         )
+         run([sys.executable, "-m", "venv", str(audit_venv)], cwd=project_root)
+
++        constraints = temporary_root / "locked-requirements.txt"
++        run(
++            [
++                sys.executable,
++                "-m",
++                "uv",
++                "export",
++                "--locked",
++                "--all-extras",
++                "--no-emit-project",
++                "--no-hashes",
++                "--output-file",
++                str(constraints),
++            ],
++            cwd=project_root,
++        )
+         target_python = python_executable(target_venv)
+         audit_python = python_executable(audit_venv)
+         run(
+@@ -90,6 +105,8 @@ def audit_dependencies(project_root: Path) -> None:
+                 "--python",
+                 str(target_python),
+                 "install",
++                "-c",
++                str(constraints),
+                 project_install_target(project_root),
+             ],
+             cwd=project_root,
+@@ -102,6 +119,8 @@ def audit_dependencies(project_root: Path) -> None:
+                 "--python",
+                 str(target_python),
+                 "install",
++                "-c",
++                str(constraints),
+                 "-r",
+                 "docs/requirements.txt",
+             ],
+@@ -113,6 +132,8 @@ def audit_dependencies(project_root: Path) -> None:
+                 "-m",
+                 "pip",
+                 "install",
++                "-c",
++                str(constraints),
+                 f"pip-audit=={PIP_AUDIT_VERSION}",
+             ],
+             cwd=project_root,
+diff --git a/scripts/check_file_size.py b/scripts/check_file_size.py
+index e6189c7..04e0300 100755
+--- a/scripts/check_file_size.py
++++ b/scripts/check_file_size.py
+@@ -6,10 +6,10 @@ Exits with error code 1 if any files exceed the limit.
+
+ from __future__ import annotations
+
++import sys
+ from dataclasses import dataclass
+ from enum import Enum
+ from fnmatch import fnmatch
+-import sys
+ from pathlib import Path
+
+ MAX_LINES = 1000
+@@ -33,6 +33,8 @@ EXCLUDE_PATTERNS = [
+     "__pycache__",
+     ".git",
+     "build",
++    "_build",
++    "_site",
+     "dist",
+     ".eggs",
+     "*.egg-info",
+@@ -93,11 +95,21 @@ def find_files(directory: Path, exclude_patterns: list[str]) -> list[Path]:
+         List of file paths
+     """
+     files = []
+-    for path in directory.rglob("*"):
+-        if should_exclude(path, exclude_patterns):
+-            continue
+-        if path.is_file() and path.suffix in LIMITS:
+-            files.append(path)
++    for parent, directories, filenames in directory.walk():
++        # Path.walk can prune ignored trees before visiting them, avoiding a
++        # traversal of node_modules, virtual environments and generated output.
++        directories[:] = [
++            name
++            for name in directories
++            if not should_exclude(parent / name, exclude_patterns)
++        ]
++        files.extend(
++            parent / name
++            for name in filenames
++            if (parent / name).suffix in LIMITS
++            and not should_exclude(parent / name, exclude_patterns)
++            and (parent / name).is_file()
++        )
+     return sorted(files)
+
+
+diff --git a/scripts/check_release.py b/scripts/check_release.py
+index bc774f5..69056a1 100644
+--- a/scripts/check_release.py
++++ b/scripts/check_release.py
+@@ -23,7 +23,6 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
+ from read_manifest import read_field
+ from release_naming import build_release_tag, detect_python_layout
+
+-
+ REQUEST_TIMEOUT_SECONDS = 10
+ WAIT_TIMEOUT_SECONDS = 600
+ WAIT_INTERVAL_SECONDS = 15
+diff --git a/scripts/create_github_release.py b/scripts/create_github_release.py
+index 7cb0144..e8c6fe9 100755
+--- a/scripts/create_github_release.py
++++ b/scripts/create_github_release.py
+@@ -37,7 +37,6 @@ from release_naming import (  # noqa: E402
+     normalize_version,
+ )
+
+-
+ MAX_RELEASE_NOTES_BYTES = 60_000
+ ENCODING = "utf-8"
+
+diff --git a/scripts/create_manual_changeset.py b/scripts/create_manual_changeset.py
+index 083a88d..24f4c2b 100644
+--- a/scripts/create_manual_changeset.py
++++ b/scripts/create_manual_changeset.py
+@@ -37,7 +37,7 @@ def get_branch_name() -> str:
+             check=True,
+         )
+         return result.stdout.strip()
+-    except (subprocess.CalledProcessError, FileNotFoundError):
++    except subprocess.CalledProcessError, FileNotFoundError:
+         return "manual"
+
+
+@@ -55,7 +55,7 @@ def get_username() -> str:
+         if username:
+             # Sanitize username for filename
+             return re.sub(r"[^a-zA-Z0-9_-]", "_", username).lower()
+-    except (subprocess.CalledProcessError, FileNotFoundError):
++    except subprocess.CalledProcessError, FileNotFoundError:
+         pass
+
+     # Fall back to environment variable or default
+diff --git a/scripts/detect_code_changes.py b/scripts/detect_code_changes.py
+index 1efea6c..2ee94ad 100755
+--- a/scripts/detect_code_changes.py
++++ b/scripts/detect_code_changes.py
+@@ -112,7 +112,7 @@ def get_changed_files() -> list[str]:
+         output = exec_command("git diff --name-only HEAD^ HEAD")
+         if output:
+             return [f for f in output.split("\n") if f]
+-    except (OSError, subprocess.SubprocessError):
++    except OSError, subprocess.SubprocessError:
+         # If HEAD^ doesn't exist (first commit), list all files in HEAD
+         print("HEAD^ not available, listing all files in HEAD")
+         output = exec_command("git ls-tree --name-only -r HEAD")
+diff --git a/scripts/recheck_broken_links.py b/scripts/recheck_broken_links.py
+index 2fe9970..c28d791 100755
+--- a/scripts/recheck_broken_links.py
++++ b/scripts/recheck_broken_links.py
+@@ -210,7 +210,7 @@ def default_fetch(
+                     return 200
+         except urllib.error.HTTPError as error:
+             error.close()
+-        except (OSError, ValueError):
++        except OSError, ValueError:
+             pass  # A failed fallback never proves the original URL healthy.
+     return status
+
+diff --git a/scripts/release_naming.py b/scripts/release_naming.py
+index 5569f99..e5f7625 100644
+--- a/scripts/release_naming.py
++++ b/scripts/release_naming.py
+@@ -8,7 +8,6 @@ from pathlib import Path
+ from typing import Optional, Union
+ from urllib.parse import quote, urlsplit
+
+-
+ LANGUAGE = "Python"
+ MULTI_LANGUAGE_TAG_PREFIX = "py_v"
+ SINGLE_LANGUAGE_TAG_PREFIX = "v"
+diff --git a/scripts/smoke_test_published_package.py b/scripts/smoke_test_published_package.py
+index 9d4b2f5..5ffa28f 100644
+--- a/scripts/smoke_test_published_package.py
++++ b/scripts/smoke_test_published_package.py
+@@ -10,16 +10,11 @@ import subprocess
+ import sys
+ import tempfile
+ import time
++import tomllib
+ from dataclasses import dataclass
+ from pathlib import Path
+ from typing import Any
+
+-try:
+-    import tomllib
+-except ModuleNotFoundError:  # pragma: no cover - workflow runs on Python 3.13.
+-    tomllib = None  # type: ignore[assignment]
+-
+-
+ DEFAULT_INSTALL_ATTEMPTS = 6
+ DEFAULT_INSTALL_DELAY_SECONDS = 20.0
+ DEFAULT_PREVIEW_LINES = 20
+@@ -85,10 +80,6 @@ def run_command(
+
+ def load_pyproject(pyproject_path: Path) -> dict[str, Any]:
+     """Load pyproject.toml with a structured TOML parser."""
+-    if tomllib is None:
+-        message = "smoke_test_published_package.py requires Python 3.11+"
+-        raise SmokeTestError(message)
+-
+     with pyproject_path.open("rb") as pyproject_file:
+         return tomllib.load(pyproject_file)
+
+diff --git a/tests/artifact.test.mjs b/tests/artifact.test.mjs
+index ffe09e5..d286e6b 100644
+--- a/tests/artifact.test.mjs
++++ b/tests/artifact.test.mjs
+@@ -169,11 +169,12 @@ test('archiver-utils and readdir-glob use patched glob and minimatch without cha
+   const { createRequire } = await import('node:module');
+   const actionDir = new URL('../.github/actions/artifact/', import.meta.url);
+   const lock = JSON.parse(await readFile(new URL('package-lock.json', actionDir), 'utf8'));
++  const manifest = JSON.parse(await readFile(new URL('package.json', actionDir), 'utf8'));
+   const globs = Object.entries(lock.packages).filter(([key]) => key.endsWith('node_modules/glob'));
+   // glob 14.0.2+ and minimatch 11.0.1+ fix GHSA-3g3m-2fjr-6pw4 and GHSA-g3hv-75wg-m249 (issue #132).
+-  assert.deepEqual(globs.map(([key, value]) => [key, value.version]), [['node_modules/glob', '14.0.3']]);
++  assert.deepEqual(globs.map(([key, value]) => [key, value.version]), [['node_modules/glob', manifest.overrides['archiver-utils'].glob]]);
+   const minimatches = Object.entries(lock.packages).filter(([key]) => key.endsWith('node_modules/minimatch'));
+-  assert.deepEqual(minimatches.map(([key, value]) => [key, value.version]), [['node_modules/minimatch', '11.0.4']]);
++  assert.deepEqual(minimatches.map(([key, value]) => [key, value.version]), [['node_modules/minimatch', manifest.dependencies.minimatch]]);
+   assert.ok(Object.values(lock.packages).every(value => !value.deprecated), 'no deprecated packages are locked');
+
+   const require = createRequire(new URL('package.json', actionDir));
+diff --git a/tests/test_audit_dependencies.py b/tests/test_audit_dependencies.py
+index e0812d9..f3fa95e 100644
+--- a/tests/test_audit_dependencies.py
++++ b/tests/test_audit_dependencies.py
+@@ -7,7 +7,6 @@ import subprocess
+ import sys
+ from pathlib import Path
+
+-
+ SCRIPT_PATH = (
+     Path(__file__).resolve().parent.parent / "scripts" / "audit_dependencies.py"
+ )
+@@ -87,3 +86,38 @@ def test_missing_dependency_surface_fails_the_audit(tmp_path: Path) -> None:
+     (tmp_path / "pyproject.toml").write_text("[project]\nname = 'x'\n")
+     with pytest.raises(FileNotFoundError, match="docs/requirements.txt"):
+         module.audit_dependencies(tmp_path)
++
++
++def test_every_install_uses_the_committed_lock(monkeypatch) -> None:
++    """Fresh audits must inspect CI's tree rather than resolving newer versions."""
++    commands = []
++
++    def fake_run(command, *, cwd, capture=False):
++        commands.append(command)
++        return "purelib"
++
++    monkeypatch.setattr(module, "run", fake_run)
++    module.audit_dependencies(Path(__file__).resolve().parents[1])
++    export = next(command for command in commands if "export" in command)
++    assert "--locked" in export
++    assert "--all-extras" in export
++    constraints = export[export.index("--output-file") + 1]
++    installs = [command for command in commands if "install" in command]
++    assert len(installs) == 3
++    for command in installs:
++        assert command[command.index("-c") + 1] == constraints
++
++
++def test_missing_lock_is_rejected_before_any_install(tmp_path, monkeypatch) -> None:
++    import pytest
++
++    (tmp_path / "pyproject.toml").write_text("[project]\nname = 'x'\n")
++    (tmp_path / "docs").mkdir()
++    (tmp_path / "docs/requirements.txt").write_text("")
++    monkeypatch.setattr(
++        module,
++        "run",
++        lambda *args, **kwargs: pytest.fail("installed before checking lock"),
++    )
++    with pytest.raises(FileNotFoundError, match="uv.lock"):
++        module.audit_dependencies(tmp_path)
+diff --git a/tests/test_check_dist_size.py b/tests/test_check_dist_size.py
+index f8a9463..10ae4d9 100644
+--- a/tests/test_check_dist_size.py
++++ b/tests/test_check_dist_size.py
+@@ -9,8 +9,8 @@ import zipfile
+
+ import pytest
+
+-from scripts.check_dist_size import DEFAULT_MAX_BYTES, check_dist_size, largest_members
+ from scripts import publish_to_pypi
++from scripts.check_dist_size import DEFAULT_MAX_BYTES, check_dist_size, largest_members
+ from tests.workflow_helpers import (
+     ROOT,
+     read_workflow,
+diff --git a/tests/test_check_file_size.py b/tests/test_check_file_size.py
+index ef38d4f..b3d3179 100644
+--- a/tests/test_check_file_size.py
++++ b/tests/test_check_file_size.py
+@@ -8,7 +8,6 @@ from pathlib import Path
+
+ import pytest
+
+-
+ SCRIPT_PATH = Path(__file__).resolve().parent.parent / "scripts" / "check_file_size.py"
+ spec = importlib.util.spec_from_file_location("check_file_size", SCRIPT_PATH)
+ module = importlib.util.module_from_spec(spec)
+@@ -187,3 +186,23 @@ def test_exclusions_do_not_hide_github_actions_or_similarly_named_sources(tmp_pa
+         path.write_text("x\n" * 1001)
+     result = module.check_directory(tmp_path)
+     assert {finding.file.as_posix() for finding in result.violations} == set(sources)
++
++
++def test_find_files_prunes_ignored_trees(tmp_path, monkeypatch) -> None:
++    """The size check must not traverse installed dependency trees."""
++    (tmp_path / "node_modules/nested").mkdir(parents=True)
++    (tmp_path / "node_modules/nested/dependency.js").write_text("ignored")
++    (tmp_path / "source.py").write_text("checked")
++    visited = []
++    original_walk = Path.walk
++
++    def traced_walk(path, *args, **kwargs):
++        for entry in original_walk(path, *args, **kwargs):
++            visited.append(entry[0])
++            yield entry
++
++    monkeypatch.setattr(Path, "walk", traced_walk)
++    assert module.find_files(tmp_path, module.EXCLUDE_PATTERNS) == [
++        tmp_path / "source.py"
++    ]
++    assert visited == [tmp_path]
+diff --git a/tests/test_check_pipeline_status.py b/tests/test_check_pipeline_status.py
+index 19f0135..e9e8e36 100644
+--- a/tests/test_check_pipeline_status.py
++++ b/tests/test_check_pipeline_status.py
+@@ -2,14 +2,13 @@
+
+ from __future__ import annotations
+
+-import os
+ import json
++import os
+ import subprocess
+ from pathlib import Path
+
+ import pytest
+
+-
+ ROOT = Path(__file__).resolve().parents[1]
+ GATE = ROOT / "scripts" / "check-pipeline-status.sh"
+ READER = ROOT / "scripts" / "read-job-cancel-in-progress.sh"
+@@ -19,7 +18,7 @@ def write_workflow(tmp_path: Path, jobs: str, workflow_concurrency: str = "") ->
+     """Write a minimal workflow fixture and return its path."""
+     workflow = tmp_path / "fixture.yml"
+     workflow.write_text(
+-        "name: Fixture\non: push\n" f"{workflow_concurrency}" "jobs:\n" f"{jobs}",
++        f"name: Fixture\non: push\n{workflow_concurrency}jobs:\n{jobs}",
+         encoding="utf-8",
+     )
+     return workflow
+diff --git a/tests/test_create_github_release.py b/tests/test_create_github_release.py
+index b6f9f1b..5a3d82a 100644
+--- a/tests/test_create_github_release.py
++++ b/tests/test_create_github_release.py
+@@ -10,7 +10,6 @@ from pathlib import Path
+
+ import pytest
+
+-
+ SCRIPT_PATH = (
+     Path(__file__).resolve().parent.parent / "scripts" / "create_github_release.py"
+ )
+diff --git a/tests/test_dependabot_updates.py b/tests/test_dependabot_updates.py
+index e1e1641..30061b1 100644
+--- a/tests/test_dependabot_updates.py
++++ b/tests/test_dependabot_updates.py
+@@ -7,8 +7,8 @@ import pytest
+ from tests import (
+     test_issue_98,
+     test_issue_118_workflows,
+-    test_issue_147_workflows,
+     test_issue_133_workflows,
++    test_issue_147_workflows,
+     test_release_workflow,
+     test_workflows,
+ )
+diff --git a/tests/test_issue_118_workflows.py b/tests/test_issue_118_workflows.py
+index 2eadbc8..8c382e2 100644
+--- a/tests/test_issue_118_workflows.py
++++ b/tests/test_issue_118_workflows.py
+@@ -7,9 +7,9 @@ import re
+ import pytest
+
+ from tests.workflow_helpers import (
+-    assert_action_reference_count,
+     ROOT,
+     WORKFLOWS,
++    assert_action_reference_count,
+     job_condition,
+     read_workflow,
+     workflow_job_block,
+diff --git a/tests/test_issue_133_workflows.py b/tests/test_issue_133_workflows.py
+index 5bc7cad..81b250a 100644
+--- a/tests/test_issue_133_workflows.py
++++ b/tests/test_issue_133_workflows.py
+@@ -5,9 +5,11 @@ from __future__ import annotations
+ import re
+ import subprocess
+
++import yaml
++
+ from tests.workflow_helpers import (
+-    assert_action_reference_count,
+     ROOT,
++    assert_action_reference_count,
+     read_workflow,
+     workflow_job_block,
+     workflow_step_block,
+@@ -65,9 +67,9 @@ def test_deploy_action_declares_its_interface_and_has_no_dependencies() -> None:
+         imports = re.findall(
+             r"^import .* from '([^']+)';", source.read_text(encoding="utf-8"), re.M
+         )
+-        assert all(
+-            name.startswith(("node:", "./")) for name in imports
+-        ), f"{source.name} imports {imports}"
++        assert all(name.startswith(("node:", "./")) for name in imports), (
++            f"{source.name} imports {imports}"
++        )
+
+
+ def test_deploy_action_is_tested_and_linted() -> None:
+@@ -143,19 +145,21 @@ def test_npm_audit_covers_every_tracked_lockfile() -> None:
+
+
+ def test_dependabot_updates_npm_and_actions_after_a_cooldown() -> None:
+-    config = DEPENDABOT.read_text(encoding="utf-8")
+-    assert re.search(r"^version: 2$", config, re.M)
+-    entries = re.split(r"^  - ", config.split("\nupdates:\n", 1)[1], flags=re.M)[1:]
++    config = yaml.safe_load(DEPENDABOT.read_text(encoding="utf-8"))
++    assert config["version"] == 2
+     by_ecosystem: dict[str, list[str]] = {}
+-    for entry in entries:
+-        ecosystem = re.search(r"package-ecosystem: (\S+)", entry).group(1)
+-        directory = re.search(r"directory: (\S+)", entry).group(1)
+-        assert "interval: weekly" in entry, ecosystem
+-        assert re.search(r"cooldown:\n\s+default-days: 7", entry), ecosystem
+-        by_ecosystem.setdefault(ecosystem, []).append(directory)
++    for entry in config["updates"]:
++        ecosystem = entry["package-ecosystem"]
++        directories = entry.get("directories", [entry.get("directory")])
++        assert entry["schedule"]["interval"] == "weekly", ecosystem
++        assert entry["cooldown"]["default-days"] == 7, ecosystem
++        by_ecosystem.setdefault(ecosystem, []).extend(directories)
+     assert by_ecosystem["github-actions"] == ["/"]
+     assert set(by_ecosystem["npm"]) == _tracked_lockfile_dirs()
+     assert "/.github/actions/artifact" in by_ecosystem["npm"]
++    assert by_ecosystem["pip"] == ["/docs"]
++    assert by_ecosystem["uv"] == ["/"]
++    assert by_ecosystem["pre-commit"] == ["/"]
+
+
+ def test_stale_bundle_failure_tells_dependabot_reviewers_how_to_fix_it() -> None:
+diff --git a/tests/test_issue_91.py b/tests/test_issue_91.py
+index 8d5ddf1..915b474 100644
+--- a/tests/test_issue_91.py
++++ b/tests/test_issue_91.py
+@@ -47,9 +47,10 @@ def test_backoff_sleeps_between_rounds(monkeypatch) -> None:
+
+ def test_final_failure_prevents_releasing_gate(tmp_path: Path) -> None:
+     # The final URL must still block the gate if every transient URL recovers.
+-    from tests.test_recheck_broken_links import _head_handler
+-    from http.server import ThreadingHTTPServer
+     import threading
++    from http.server import ThreadingHTTPServer
++
++    from tests.test_recheck_broken_links import _head_handler
+
+     server = ThreadingHTTPServer(("127.0.0.1", 0), _head_handler({}))
+     thread = threading.Thread(target=server.serve_forever, daemon=True)
+@@ -129,8 +130,8 @@ def test_contents_url_mapping(url, expected) -> None:
+ @pytest.mark.parametrize("api_status", [200, 302, 403, 404, 429, 503])
+ @pytest.mark.parametrize("token", ["test-only-token", ""])
+ def test_api_fallback_only_recovers_success(monkeypatch, api_status, token) -> None:
+-    from unittest.mock import MagicMock
+     import urllib.error
++    from unittest.mock import MagicMock
+
+     monkeypatch.setenv("GITHUB_TOKEN", token)
+     page = "https://github.com/o/r/blob/main/a.py"
+diff --git a/tests/test_issue_98.py b/tests/test_issue_98.py
+index f8cd506..15eaefe 100644
+--- a/tests/test_issue_98.py
++++ b/tests/test_issue_98.py
+@@ -2,6 +2,7 @@
+
+ from __future__ import annotations
+
++import json
+ import os
+ import re
+ import subprocess
+@@ -10,9 +11,9 @@ import tomllib
+ import pytest
+
+ from tests.workflow_helpers import (
+-    assert_action_reference_count,
+     ROOT,
+     WORKFLOWS,
++    assert_action_reference_count,
+     read_workflow,
+     workflow_job_block,
+     workflow_run_blocks,
+@@ -83,10 +84,18 @@ def test_npx_scanners_are_exactly_pinned() -> None:
+                 match = re.fullmatch(r"(.+)@(\d+\.\d+\.\d+)", package)
+                 assert match, f"{path.name}: unpinned npx package {package}"
+                 versions[match[1]] = match[2]
+-    assert (
+-        versions["secretlint"]
+-        == versions["@secretlint/secretlint-rule-preset-recommend"]
+-    )
++    action = ROOT / ".github/actions/artifact"
++    manifest = json.loads((action / "package.json").read_text())
++    lock = json.loads((action / "package-lock.json").read_text())
++    scanners = ("secretlint", "@secretlint/secretlint-rule-preset-recommend")
++    pinned = [manifest["devDependencies"][name] for name in scanners]
++    assert pinned[0] == pinned[1]
++    for name, version in zip(scanners, pinned, strict=True):
++        assert re.fullmatch(r"\d+\.\d+\.\d+", version)
++        assert lock["packages"][f"node_modules/{name}"]["version"] == version
++    lint = workflow_job_block(read_workflow("release.yml"), "lint")
++    assert "npm ci --prefix .github/actions/artifact" in lint
++    assert "npm exec --prefix .github/actions/artifact -- secretlint" in lint
+
+
+ @pytest.mark.parametrize("job_name", ["auto-release", "manual-release"])
+diff --git a/tests/test_lychee_install_and_scan.py b/tests/test_lychee_install_and_scan.py
+index a761c2c..58e7c7f 100644
+--- a/tests/test_lychee_install_and_scan.py
++++ b/tests/test_lychee_install_and_scan.py
+@@ -2,8 +2,8 @@
+
+ from __future__ import annotations
+
+-import hashlib
+ import gzip
++import hashlib
+ import http.server
+ import io
+ import os
+diff --git a/tests/test_preview_regeneration_docs.py b/tests/test_preview_regeneration_docs.py
+index fbd14f0..03a4a0d 100644
+--- a/tests/test_preview_regeneration_docs.py
++++ b/tests/test_preview_regeneration_docs.py
+@@ -4,7 +4,6 @@ from __future__ import annotations
+
+ from pathlib import Path
+
+-
+ ROOT = Path(__file__).resolve().parent.parent
+
+
+diff --git a/tests/test_project_metadata.py b/tests/test_project_metadata.py
+index 1d6dd3f..5ab54af 100644
+--- a/tests/test_project_metadata.py
++++ b/tests/test_project_metadata.py
+@@ -2,8 +2,8 @@
+
+ from __future__ import annotations
+
+-from pathlib import Path
+ import tomllib
++from pathlib import Path
+
+ from packaging.requirements import Requirement
+
+@@ -20,11 +20,12 @@ def dev_requirement(name: str) -> Requirement:
+
+
+ def test_mypy_dependency_supports_configured_python_target() -> None:
+-    """The dev extra must not install mypy versions that reject Python 3.9."""
++    """The dev extra must use the current mypy major without a stale ceiling."""
+     mypy = dev_requirement("mypy")
+
+-    assert "1.13.0" in mypy.specifier
+-    assert "2.0" not in mypy.specifier
++    assert "2.4.1" in mypy.specifier
++    assert "2.4.0" not in mypy.specifier
++    assert "3.0" in mypy.specifier
+
+
+ def test_mypy_uses_extra_checks_without_deprecated_concatenate() -> None:
+@@ -32,3 +33,25 @@ def test_mypy_uses_extra_checks_without_deprecated_concatenate() -> None:
+     config = tomllib.loads((ROOT / "pyproject.toml").read_text())["tool"]["mypy"]
+     assert config["extra_checks"] is True
+     assert "strict_concatenate" not in config
++
++
++def test_documentation_requirements_match_the_locked_project_extra() -> None:
++    """The separate docs manifest must stay covered by the universal lock."""
++    project = tomllib.loads((ROOT / "pyproject.toml").read_text())
++    docs = {
++        str(Requirement(line))
++        for line in (ROOT / "docs/requirements.txt").read_text().splitlines()
++        if line.strip() and not line.startswith("#")
++    }
++    assert docs == {
++        str(Requirement(value))
++        for value in project["project"]["optional-dependencies"]["docs"]
++    }
++    locked = tomllib.loads((ROOT / "uv.lock").read_text())
++    versions = {item["name"]: item["version"] for item in locked["package"]}
++    for value in (
++        project["project"]["optional-dependencies"]["dev"]
++        + project["project"]["optional-dependencies"]["docs"]
++    ):
++        requirement = Requirement(value)
++        assert versions[requirement.name] in requirement.specifier
+diff --git a/tests/test_read_manifest.py b/tests/test_read_manifest.py
+index 63fa48c..d9d4965 100644
+--- a/tests/test_read_manifest.py
++++ b/tests/test_read_manifest.py
+@@ -11,7 +11,6 @@ import subprocess
+ import sys
+ from pathlib import Path
+
+-
+ SCRIPT_PATH = Path(__file__).resolve().parent.parent / "scripts" / "read_manifest.py"
+ spec = importlib.util.spec_from_file_location("read_manifest", SCRIPT_PATH)
+ module = importlib.util.module_from_spec(spec)
+diff --git a/tests/test_release_workflow.py b/tests/test_release_workflow.py
+index 2440938..8a2ddbf 100644
+--- a/tests/test_release_workflow.py
++++ b/tests/test_release_workflow.py
+@@ -50,7 +50,7 @@ def test_release_workflow_separates_check_and_write_concurrency() -> None:
+     ):
+         block = workflow_job_block(workflow, job_name)
+         expected_group = (
+-            "group: check-${{ github.workflow }}-${{ github.ref }}-" f"{job_name}"
++            f"group: check-${{{{ github.workflow }}}}-${{{{ github.ref }}}}-{job_name}"
+         )
+         assert expected_group in block
+         assert "cancel-in-progress: true" in block
+@@ -386,9 +386,9 @@ def test_release_preflight_gates_every_publishing_job() -> None:
+     ):
+         job = workflow_job_block(workflow, job_name)
+         assert "release-preflight" in job, f"{job_name} must need release-preflight"
+-        assert (
+-            "needs.release-preflight.result == 'success'" in job
+-        ), f"{job_name} must gate on the preflight verdict, not just greenness"
++        assert "needs.release-preflight.result == 'success'" in job, (
++            f"{job_name} must gate on the preflight verdict, not just greenness"
++        )
+
+
+ def test_validate_docs_gates_on_docs_changes() -> None:
+@@ -437,9 +437,10 @@ def test_release_workflow_checks_fresh_merge_and_secrets() -> None:
+     assert "run: bash scripts/simulate-fresh-merge.sh" in lint
+     assert "- name: Check for secrets" in lint
+     assert (
+-        "npx --yes -p secretlint@13.0.7 -p "
+-        '@secretlint/secretlint-rule-preset-recommend@13.0.7 secretlint "**/*"' in lint
++        "npm ci --prefix .github/actions/artifact --ignore-scripts --no-audit --no-fund"
++        in lint
+     )
++    assert 'npm exec --prefix .github/actions/artifact -- secretlint "**/*"' in lint
+     secretlint_config = (ROOT / ".secretlintrc.json").read_text(encoding="utf-8")
+     assert '"id": "@secretlint/secretlint-rule-preset-recommend"' in secretlint_config
+
+@@ -478,9 +479,9 @@ def test_release_workflow_publishes_multi_arch_docker_images() -> None:
+
+     assert "fail-fast: false" in build
+     assert "platform: linux/amd64" in build
+-    assert "runner: ubuntu-24.04" in build
++    assert "runner: ubuntu-26.04" in build
+     assert "platform: linux/arm64" in build
+-    assert "runner: ubuntu-24.04-arm" in build
++    assert "runner: ubuntu-26.04-arm" in build
+     assert "runs-on: ${{ matrix.runner }}" in build
+     assert "platforms: ${{ matrix.platform }}" in build
+     assert "cache-from: type=gha,scope=${{ matrix.platform }}" in build
+diff --git a/tests/test_smoke_test_published_package.py b/tests/test_smoke_test_published_package.py
+index 54acfad..37a453c 100644
+--- a/tests/test_smoke_test_published_package.py
++++ b/tests/test_smoke_test_published_package.py
+@@ -7,7 +7,6 @@ import subprocess
+ import sys
+ from pathlib import Path
+
+-
+ SCRIPT_PATH = (
+     Path(__file__).resolve().parent.parent
+     / "scripts"
+diff --git a/tests/test_version_and_commit.py b/tests/test_version_and_commit.py
+index 6d1eb88..66ff3b6 100644
+--- a/tests/test_version_and_commit.py
++++ b/tests/test_version_and_commit.py
+@@ -13,7 +13,6 @@ import pytest
+
+ from scripts.create_github_release import extract_changelog_entry
+
+-
+ SCRIPT_PATH = (
+     Path(__file__).resolve().parent.parent / "scripts" / "version_and_commit.py"
+ )
+diff --git a/tests/test_workflows.py b/tests/test_workflows.py
+index 00054b3..9021d84 100644
+--- a/tests/test_workflows.py
++++ b/tests/test_workflows.py
+@@ -88,9 +88,9 @@ def test_dependency_audit_maps_every_declared_surface() -> None:
+     assert dependency_surfaces
+     for surface in dependency_surfaces:
+         relative_surface = surface.relative_to(ROOT).as_posix()
+-        assert (
+-            relative_surface in script
+-        ), f"Dependency surface {relative_surface!r} has no audit mapping"
++        assert relative_surface in script, (
++            f"Dependency surface {relative_surface!r} has no audit mapping"
++        )
+
+
+ def test_links_workflow_fails_for_every_broken_live_link() -> None:
+@@ -250,9 +250,9 @@ def test_step_deadlines_expire_before_the_job_timeout_they_sit_under() -> None:
+                 continue
+
+             cap_minutes = job_timeout_minutes(block)
+-            assert (
+-                cap_minutes is not None
+-            ), f"{path.name}: job `{job_name}` budgets a step but declares no cap"
++            assert cap_minutes is not None, (
++                f"{path.name}: job `{job_name}` budgets a step but declares no cap"
++            )
+             checked += len(deadlines)
+
+             cap_seconds = cap_minutes * 60
+@@ -384,9 +384,9 @@ def test_zizmor_reproduction_covers_dependabot() -> None:
+     scan_path = PurePosixPath(arguments[-1])
+     dependabot_path = PurePosixPath(".github/dependabot.yml")
+
+-    assert (
+-        scan_path in dependabot_path.parents
+-    ), f"local scan of {scan_path} misses {dependabot_path}, which CI audits"
++    assert scan_path in dependabot_path.parents, (
++        f"local scan of {scan_path} misses {dependabot_path}, which CI audits"
++    )
+
+
+ def test_zizmor_config_requires_hash_pins_by_default() -> None:
+@@ -424,7 +424,7 @@ def test_every_checkout_declares_credential_persistence() -> None:
+             checkouts += 1
+             step = "\n".join(lines[index : index + 6])
+             assert "persist-credentials:" in step, (
+-                f"{path.name}:{index + 1} checkout does not set " "persist-credentials"
++                f"{path.name}:{index + 1} checkout does not set persist-credentials"
+             )
+             if "persist-credentials: true" in step:
+                 persisting.append(f"{path.name}:{index + 1}")
+@@ -432,9 +432,9 @@ def test_every_checkout_declares_credential_persistence() -> None:
+     assert checkouts == 29, f"expected 29 checkouts, found {checkouts}"
+     # Only the job that pushes the version bump commit needs the token wired
+     # into the remote; every other checkout only reads the tree.
+-    assert (
+-        len(persisting) == 1
+-    ), f"only the pushing checkout may persist credentials, saw {persisting}"
++    assert len(persisting) == 1, (
++        f"only the pushing checkout may persist credentials, saw {persisting}"
++    )
+     manual_release = workflow_job_block(read_workflow("release.yml"), "manual-release")
+     assert "persist-credentials: true" in manual_release
+
+diff --git a/tests/workflow_helpers.py b/tests/workflow_helpers.py
+index 1ea6f2a..eb73e44 100644
+--- a/tests/workflow_helpers.py
++++ b/tests/workflow_helpers.py
+@@ -124,9 +124,9 @@ def assert_action_reference_count(workflow: str, action: str, count: int) -> Non
+     refs = re.findall(rf"uses:\s+{re.escape(action)}@([^\s]+)", workflow)
+     assert len(refs) == count, f"expected {count} {action} references, got {refs}"
+     for ref in refs:
+-        assert re.fullmatch(
+-            r"v\d+(?:\.\d+){0,2}|[0-9a-f]{40}", ref
+-        ), f"{action}@{ref} must use a version tag or full commit hash"
++        assert re.fullmatch(r"v\d+(?:\.\d+){0,2}|[0-9a-f]{40}", ref), (
++            f"{action}@{ref} must use a version tag or full commit hash"
++        )
+
+
+ def assert_action_hash_pin(workflow: str, action: str, count: int) -> str:
+@@ -141,9 +141,9 @@ def assert_action_hash_pin(workflow: str, action: str, count: int) -> str:
+         r"\s+#\s+(v[0-9][^\s]*) @ (\d{4}-\d{2}-\d{2})"
+     )
+     matches = re.findall(pattern, workflow)
+-    assert (
+-        len(matches) == count
+-    ), f"expected {count} hash-pinned {action} reference(s), found {len(matches)}"
++    assert len(matches) == count, (
++        f"expected {count} hash-pinned {action} reference(s), found {len(matches)}"
++    )
+     return matches[0][0]

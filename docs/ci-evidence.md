@@ -37,8 +37,8 @@ git add -f .github/actions/artifact/dist
 The Security workflow audits every committed `package-lock.json` with
 `scripts/audit-npm-locks.sh` (`npm audit --package-lock-only
 --audit-level=moderate`) on pushes, pull requests and its weekly schedule.
-Dependabot (`.github/dependabot.yml`) proposes weekly npm and GitHub Actions
-updates after a seven-day cooldown. Dependabot does not rebuild `dist`, so an npm
+Dependabot (`.github/dependabot.yml`) proposes weekly Python, npm, GitHub Actions and
+pre-commit updates after a seven-day cooldown. Dependabot does not rebuild `dist`, so an npm
 update pull request fails "Verify committed action bundle" until someone runs the
 commands above on its branch and pushes the rebuilt bundle.
 
@@ -107,3 +107,20 @@ text. Every failed push response is retained in the log; `RELEASE_DEBUG=1` adds
 attempt/classification details. Lost races validate the remote before recovery
 and attest the resulting commit before any subsequent push. No force push or
 repository rule bypass is used.
+
+## Reproducible development dependencies
+
+Python 3.15.2 and uv 0.13.8 build one universal `uv.lock` for all extras,
+including documentation, build and security tools. Install with
+`uv sync --locked --all-extras` and activate `.venv`. CI uses
+`scripts/install-python-dependencies.sh`; release builds use `--no-isolation`
+so Hatchling comes from the audited lock rather than a second resolution.
+`docs/requirements.txt` mirrors the docs extra for external documentation
+services. The security audit exports the lock as constraints before resolving
+both manifest surfaces, and audits every extra. Update with `uv lock --upgrade`
+and keep floors and pre-commit Ruff/mypy versions aligned.
+
+JavaScript development uses Node 26.13.1 and npm 12.2.2. Local JavaScript actions
+use GitHub's supported `node24` runtime; their filesystem discovery uses its
+stable native glob iterator. They retain explicit ordered minimatch patterns,
+hidden-file exclusions and symlink refusal, verified by filesystem regressions.

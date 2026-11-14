@@ -5,9 +5,11 @@ from __future__ import annotations
 import re
 import subprocess
 
+import yaml
+
 from tests.workflow_helpers import (
-    assert_action_reference_count,
     ROOT,
+    assert_action_reference_count,
     read_workflow,
     workflow_job_block,
     workflow_step_block,
@@ -65,9 +67,9 @@ def test_deploy_action_declares_its_interface_and_has_no_dependencies() -> None:
         imports = re.findall(
             r"^import .* from '([^']+)';", source.read_text(encoding="utf-8"), re.M
         )
-        assert all(
-            name.startswith(("node:", "./")) for name in imports
-        ), f"{source.name} imports {imports}"
+        assert all(name.startswith(("node:", "./")) for name in imports), (
+            f"{source.name} imports {imports}"
+        )
 
 
 def test_deploy_action_is_tested_and_linted() -> None:
@@ -143,19 +145,21 @@ def test_npm_audit_covers_every_tracked_lockfile() -> None:
 
 
 def test_dependabot_updates_npm_and_actions_after_a_cooldown() -> None:
-    config = DEPENDABOT.read_text(encoding="utf-8")
-    assert re.search(r"^version: 2$", config, re.M)
-    entries = re.split(r"^  - ", config.split("\nupdates:\n", 1)[1], flags=re.M)[1:]
+    config = yaml.safe_load(DEPENDABOT.read_text(encoding="utf-8"))
+    assert config["version"] == 2
     by_ecosystem: dict[str, list[str]] = {}
-    for entry in entries:
-        ecosystem = re.search(r"package-ecosystem: (\S+)", entry).group(1)
-        directory = re.search(r"directory: (\S+)", entry).group(1)
-        assert "interval: weekly" in entry, ecosystem
-        assert re.search(r"cooldown:\n\s+default-days: 7", entry), ecosystem
-        by_ecosystem.setdefault(ecosystem, []).append(directory)
+    for entry in config["updates"]:
+        ecosystem = entry["package-ecosystem"]
+        directories = entry.get("directories", [entry.get("directory")])
+        assert entry["schedule"]["interval"] == "weekly", ecosystem
+        assert entry["cooldown"]["default-days"] == 7, ecosystem
+        by_ecosystem.setdefault(ecosystem, []).extend(directories)
     assert by_ecosystem["github-actions"] == ["/"]
     assert set(by_ecosystem["npm"]) == _tracked_lockfile_dirs()
     assert "/.github/actions/artifact" in by_ecosystem["npm"]
+    assert by_ecosystem["pip"] == ["/docs"]
+    assert by_ecosystem["uv"] == ["/"]
+    assert by_ecosystem["pre-commit"] == ["/"]
 
 
 def test_stale_bundle_failure_tells_dependabot_reviewers_how_to_fix_it() -> None:

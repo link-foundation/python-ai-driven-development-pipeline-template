@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Optional, Union
 from urllib.parse import quote, urlsplit
 
-
 LANGUAGE = "Python"
 MULTI_LANGUAGE_TAG_PREFIX = "py_v"
 SINGLE_LANGUAGE_TAG_PREFIX = "v"

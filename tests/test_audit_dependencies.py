@@ -7,7 +7,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 SCRIPT_PATH = (
     Path(__file__).resolve().parent.parent / "scripts" / "audit_dependencies.py"
 )
@@ -86,4 +85,39 @@ def test_missing_dependency_surface_fails_the_audit(tmp_path: Path) -> None:
 
     (tmp_path / "pyproject.toml").write_text("[project]\nname = 'x'\n")
     with pytest.raises(FileNotFoundError, match="docs/requirements.txt"):
+        module.audit_dependencies(tmp_path)
+
+
+def test_every_install_uses_the_committed_lock(monkeypatch) -> None:
+    """Fresh audits must inspect CI's tree rather than resolving newer versions."""
+    commands = []
+
+    def fake_run(command, *, cwd, capture=False):
+        commands.append(command)
+        return "purelib"
+
+    monkeypatch.setattr(module, "run", fake_run)
+    module.audit_dependencies(Path(__file__).resolve().parents[1])
+    export = next(command for command in commands if "export" in command)
+    assert "--locked" in export
+    assert "--all-extras" in export
+    constraints = export[export.index("--output-file") + 1]
+    installs = [command for command in commands if "install" in command]
+    assert len(installs) == 3
+    for command in installs:
+        assert command[command.index("-c") + 1] == constraints
+
+
+def test_missing_lock_is_rejected_before_any_install(tmp_path, monkeypatch) -> None:
+    import pytest
+
+    (tmp_path / "pyproject.toml").write_text("[project]\nname = 'x'\n")
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs/requirements.txt").write_text("")
+    monkeypatch.setattr(
+        module,
+        "run",
+        lambda *args, **kwargs: pytest.fail("installed before checking lock"),
+    )
+    with pytest.raises(FileNotFoundError, match="uv.lock"):
         module.audit_dependencies(tmp_path)

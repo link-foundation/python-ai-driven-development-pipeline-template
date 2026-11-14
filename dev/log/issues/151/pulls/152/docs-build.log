@@ -1,0 +1,42 @@
+Running Sphinx v9.2.0
+loading translations [en]... done
+[autosummary] generating autosummary for: _autosummary/my_package.rst, api.md, ci-evidence.md, index.md, preview-regeneration.md
+myst v5.2.0: MdParserConfig(commonmark_only=False, gfm_only=False, enable_extensions=set(), disable_syntax=[], all_links_external=False, links_external_new_tab=False, url_schemes=('http', 'https', 'mailto', 'ftp'), ref_domains=None, fence_as_directive=set(), number_code_blocks=[], title_to_header=False, heading_anchors=0, heading_slug_func=None, heading_anchors_html_ids=True, html_meta={}, footnote_sort=True, footnote_transition=True, words_per_minute=200, substitutions={}, linkify_fuzzy_links=True, dmath_allow_labels=True, dmath_allow_space=True, dmath_allow_digits=True, dmath_double_inline=False, update_mathjax=True, mathjax_classes='tex2jax_process|mathjax_process|math|output_area', enable_checkboxes=False, strikethrough_single_tilde=False, colon_fence_exact_match=False, suppress_warnings=[], highlight_code_blocks=True)
+building [mo]: targets for 0 po files that are out of date
+writing output... 
+building [html]: targets for 5 source files that are out of date
+updating environment: [new config] 5 added, 0 changed, 0 removed
+reading sources... [ 20%] _autosummary/my_package
+reading sources... [ 40%] api
+reading sources... [ 60%] ci-evidence
+reading sources... [ 80%] index
+reading sources... [100%] preview-regeneration
+
+looking for now-outdated files... none found
+pickling environment... done
+checking consistency... done
+preparing documents... done
+copying assets... 
+copying static files... 
+Writing evaluated template result to /tmp/gh-issue-solver-1794645390528/docs/_build/html/_static/documentation_options.js
+Writing evaluated template result to /tmp/gh-issue-solver-1794645390528/docs/_build/html/_static/language_data.js
+Writing evaluated template result to /tmp/gh-issue-solver-1794645390528/docs/_build/html/_static/basic.css
+copying static files: done
+copying extra files... 
+copying extra files: done
+copying assets: done
+writing output... [ 20%] _autosummary/my_package
+writing output... [ 40%] api
+writing output... [ 60%] ci-evidence
+writing output... [ 80%] index
+writing output... [100%] preview-regeneration
+
+generating indices... genindex py-modindex done
+highlighting module code... [100%] my_package
+
+writing additional pages... search done
+dumping search index in English (code: en)... done
+dumping object inventory... done
+build succeeded.
+
+The HTML pages are in docs/_build/html.

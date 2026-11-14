@@ -21,13 +21,14 @@ Thank you for your interest in contributing! This document provides guidelines a
 3. **Install dependencies**
 
    ```bash
-   pip install -e ".[dev]"
+   python -m pip install uv==0.13.8
+   uv sync --locked --all-extras
+   source .venv/bin/activate
    ```
 
 4. **Install pre-commit hooks**
 
    ```bash
-   pip install pre-commit
    pre-commit install
    ```
 
@@ -78,7 +79,7 @@ Thank you for your interest in contributing! This document provides guidelines a
    make sure Sphinx still renders without warnings:
 
    ```bash
-   pip install -e ".[docs]"
+   uv sync --locked --all-extras
    sphinx-build -W --keep-going -b html docs _site
    ```
 

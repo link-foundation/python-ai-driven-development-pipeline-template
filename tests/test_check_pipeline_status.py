@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import os
 import json
+import os
 import subprocess
 from pathlib import Path
 
 import pytest
-
 
 ROOT = Path(__file__).resolve().parents[1]
 GATE = ROOT / "scripts" / "check-pipeline-status.sh"
@@ -19,7 +18,7 @@ def write_workflow(tmp_path: Path, jobs: str, workflow_concurrency: str = "") ->
     """Write a minimal workflow fixture and return its path."""
     workflow = tmp_path / "fixture.yml"
     workflow.write_text(
-        "name: Fixture\non: push\n" f"{workflow_concurrency}" "jobs:\n" f"{jobs}",
+        f"name: Fixture\non: push\n{workflow_concurrency}jobs:\n{jobs}",
         encoding="utf-8",
     )
     return workflow

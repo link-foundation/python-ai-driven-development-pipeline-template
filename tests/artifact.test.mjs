@@ -169,11 +169,12 @@ test('archiver-utils and readdir-glob use patched glob and minimatch without cha
   const { createRequire } = await import('node:module');
   const actionDir = new URL('../.github/actions/artifact/', import.meta.url);
   const lock = JSON.parse(await readFile(new URL('package-lock.json', actionDir), 'utf8'));
+  const manifest = JSON.parse(await readFile(new URL('package.json', actionDir), 'utf8'));
   const globs = Object.entries(lock.packages).filter(([key]) => key.endsWith('node_modules/glob'));
   // glob 14.0.2+ and minimatch 11.0.1+ fix GHSA-3g3m-2fjr-6pw4 and GHSA-g3hv-75wg-m249 (issue #132).
-  assert.deepEqual(globs.map(([key, value]) => [key, value.version]), [['node_modules/glob', '14.0.3']]);
+  assert.deepEqual(globs.map(([key, value]) => [key, value.version]), [['node_modules/glob', manifest.overrides['archiver-utils'].glob]]);
   const minimatches = Object.entries(lock.packages).filter(([key]) => key.endsWith('node_modules/minimatch'));
-  assert.deepEqual(minimatches.map(([key, value]) => [key, value.version]), [['node_modules/minimatch', '11.0.4']]);
+  assert.deepEqual(minimatches.map(([key, value]) => [key, value.version]), [['node_modules/minimatch', manifest.dependencies.minimatch]]);
   assert.ok(Object.values(lock.packages).every(value => !value.deprecated), 'no deprecated packages are locked');
 
   const require = createRequire(new URL('package.json', actionDir));

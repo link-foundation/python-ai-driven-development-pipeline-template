@@ -1,0 +1,8 @@
+.github/actions/deploy-pages/deploy.mjs:15:// Final states of actions/deploy-pages v5; messages match upstream.
+scripts/check_zizmor_compatibility.py:29:    """Read upstream metadata without executing any upstream code."""
+scripts/check_zizmor_compatibility.py:36:def check_compatibility(workflow: str) -> tuple[str, str]:
+scripts/check_zizmor_compatibility.py:66:    """Fail visibly if upstream lookup or version compatibility fails."""
+scripts/check_zizmor_compatibility.py:73:        ref, version = check_compatibility(args.workflow.read_text())
+scripts/check_zizmor_compatibility.py:81:        print(f"Zizmor compatibility check failed: {exc}", file=sys.stderr)
+scripts/format_release_notes.py:112:        pr_link = f"**Pull Request:** [#{pr_number}](https://github.com/{repository}/pull/{pr_number})"
+scripts/check_dependabot_health.py:118:            url = f"https://github.com/{args.repo}/pull/{number}"

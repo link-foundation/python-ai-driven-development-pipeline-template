@@ -1,0 +1,21 @@
+Traceback (most recent call last):
+  File "/tmp/gh-issue-solver-1794645390528/experiments/issue-151/reproduce_sphinx_options.py", line 22, in <module>
+    result = GoogleDocstring(
+        "Add numbers.\n\nArgs:\n    a: First number\n",
+        Config(),
+        options=_AutoDocumenterOptions(no_index=True),
+    )
+  File "/tmp/gh-issue-solver-1794645390528/.venv/lib/python3.15/site-packages/sphinx/ext/napoleon/docstring.py", line 362, in __init__
+    if options:
+       ^^^^^^^
+  File "/tmp/gh-issue-solver-1794645390528/.venv/lib/python3.15/site-packages/sphinx/ext/autodoc/_directive_options.py", line 139, in __len__
+    warnings.warn(
+    ~~~~~~~~~~~~~^
+        'The mapping interface for autodoc options objects is deprecated, '
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        stacklevel=2,
+        ^^^^^^^^^^^^^
+    )
+    ^
+sphinx.deprecation.RemovedInSphinx11Warning: The mapping interface for autodoc options objects is deprecated, and will be removed in Sphinx 11. Use attribute access instead.

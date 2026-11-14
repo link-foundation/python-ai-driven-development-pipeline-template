@@ -210,7 +210,7 @@ def default_fetch(
                     return 200
         except urllib.error.HTTPError as error:
             error.close()
-        except (OSError, ValueError):
+        except OSError, ValueError:
             pass  # A failed fallback never proves the original URL healthy.
     return status
 

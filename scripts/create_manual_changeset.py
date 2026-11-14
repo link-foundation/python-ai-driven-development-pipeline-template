@@ -37,7 +37,7 @@ def get_branch_name() -> str:
             check=True,
         )
         return result.stdout.strip()
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except subprocess.CalledProcessError, FileNotFoundError:
         return "manual"
 
 
@@ -55,7 +55,7 @@ def get_username() -> str:
         if username:
             # Sanitize username for filename
             return re.sub(r"[^a-zA-Z0-9_-]", "_", username).lower()
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except subprocess.CalledProcessError, FileNotFoundError:
         pass
 
     # Fall back to environment variable or default

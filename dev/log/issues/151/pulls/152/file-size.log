@@ -1,0 +1,9 @@
+
+Checking files for maximum 1000 lines (warning above 900) and 2500 lines for markdown (warning above 2250)...
+
+✗ Found files exceeding the line limit:
+
+  docs/_build/html/_static/english-stemmer.js: 1067 lines (exceeds 1000)
+
+Please refactor these files to be under their hard limit
+

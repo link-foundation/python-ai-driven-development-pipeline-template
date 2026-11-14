@@ -50,7 +50,7 @@ def test_release_workflow_separates_check_and_write_concurrency() -> None:
     ):
         block = workflow_job_block(workflow, job_name)
         expected_group = (
-            "group: check-${{ github.workflow }}-${{ github.ref }}-" f"{job_name}"
+            f"group: check-${{{{ github.workflow }}}}-${{{{ github.ref }}}}-{job_name}"
         )
         assert expected_group in block
         assert "cancel-in-progress: true" in block
@@ -386,9 +386,9 @@ def test_release_preflight_gates_every_publishing_job() -> None:
     ):
         job = workflow_job_block(workflow, job_name)
         assert "release-preflight" in job, f"{job_name} must need release-preflight"
-        assert (
-            "needs.release-preflight.result == 'success'" in job
-        ), f"{job_name} must gate on the preflight verdict, not just greenness"
+        assert "needs.release-preflight.result == 'success'" in job, (
+            f"{job_name} must gate on the preflight verdict, not just greenness"
+        )
 
 
 def test_validate_docs_gates_on_docs_changes() -> None:
@@ -437,9 +437,10 @@ def test_release_workflow_checks_fresh_merge_and_secrets() -> None:
     assert "run: bash scripts/simulate-fresh-merge.sh" in lint
     assert "- name: Check for secrets" in lint
     assert (
-        "npx --yes -p secretlint@13.0.7 -p "
-        '@secretlint/secretlint-rule-preset-recommend@13.0.7 secretlint "**/*"' in lint
+        "npm ci --prefix .github/actions/artifact --ignore-scripts --no-audit --no-fund"
+        in lint
     )
+    assert 'npm exec --prefix .github/actions/artifact -- secretlint "**/*"' in lint
     secretlint_config = (ROOT / ".secretlintrc.json").read_text(encoding="utf-8")
     assert '"id": "@secretlint/secretlint-rule-preset-recommend"' in secretlint_config
 
@@ -478,9 +479,9 @@ def test_release_workflow_publishes_multi_arch_docker_images() -> None:
 
     assert "fail-fast: false" in build
     assert "platform: linux/amd64" in build
-    assert "runner: ubuntu-24.04" in build
+    assert "runner: ubuntu-26.04" in build
     assert "platform: linux/arm64" in build
-    assert "runner: ubuntu-24.04-arm" in build
+    assert "runner: ubuntu-26.04-arm" in build
     assert "runs-on: ${{ matrix.runner }}" in build
     assert "platforms: ${{ matrix.platform }}" in build
     assert "cache-from: type=gha,scope=${{ matrix.platform }}" in build

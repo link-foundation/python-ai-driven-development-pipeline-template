@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import hashlib
 import gzip
+import hashlib
 import http.server
 import io
 import os

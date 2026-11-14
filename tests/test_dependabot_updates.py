@@ -7,8 +7,8 @@ import pytest
 from tests import (
     test_issue_98,
     test_issue_118_workflows,
-    test_issue_147_workflows,
     test_issue_133_workflows,
+    test_issue_147_workflows,
     test_release_workflow,
     test_workflows,
 )

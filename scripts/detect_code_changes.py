@@ -112,7 +112,7 @@ def get_changed_files() -> list[str]:
         output = exec_command("git diff --name-only HEAD^ HEAD")
         if output:
             return [f for f in output.split("\n") if f]
-    except (OSError, subprocess.SubprocessError):
+    except OSError, subprocess.SubprocessError:
         # If HEAD^ doesn't exist (first commit), list all files in HEAD
         print("HEAD^ not available, listing all files in HEAD")
         output = exec_command("git ls-tree --name-only -r HEAD")

@@ -1,3 +1,7 @@
+# Hosted labels introduced after actionlint 1.7.12; remove when its schema catches up.
+self-hosted-runner:
+  labels: [ubuntu-26.04, ubuntu-26.04-arm]
+
 paths:
   .github/workflows/**/*.{yml,yaml}:
     ignore:

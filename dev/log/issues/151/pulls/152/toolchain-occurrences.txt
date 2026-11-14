@@ -1,0 +1,28 @@
+.github/actions/deploy-pages/action.yml:17:  using: node24
+.github/actions/artifact/action.yml:35:  using: node24
+./README.md:6:[![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
+./README.md:11:- **Multi-version Python support**: Works with Python 3.9-3.13
+./README.md:15:- **CI/CD pipeline**: GitHub Actions CI/CD with Python 3.13
+./README.md:187:3. **Testing**: Python 3.13 test suite
+.github/workflows/workflows.yml:165:          node-version: '24'
+.github/workflows/docs.yml:71:          python-version: '3.13'
+.github/workflows/release.yml:63:          python-version: '3.13'
+.github/workflows/release.yml:135:          python-version: '3.13'
+.github/workflows/release.yml:278:    name: Test (Python 3.13)
+.github/workflows/release.yml:302:          python-version: '3.13'
+.github/workflows/release.yml:391:          python-version: '3.13'
+.github/workflows/release.yml:462:          python-version: "3.13"
+.github/workflows/release.yml:576:          python-version: '3.13'
+.github/workflows/release.yml:706:          python-version: '3.13'
+.github/workflows/security.yml:34:          python-version: '3.13'
+.github/workflows/security.yml:58:          node-version: '24'
+./experiments/issue-138/verify_uv_lock.py:18:        '[project]\nname = "Example_Project"\nversion = "1.0.0"\nrequires-python = ">=3.9"\n'
+./pyproject.toml:11:requires-python = ">=3.9"
+./pyproject.toml:21:    "Programming Language :: Python :: 3.9",
+./pyproject.toml:25:    "Programming Language :: Python :: 3.13",
+./pyproject.toml:105:python_version = "3.9"
+./scripts/smoke_test_published_package.py:19:except ModuleNotFoundError:  # pragma: no cover - workflow runs on Python 3.13.
+./scripts/smoke_test_published_package.py:191:    python: Path,
+./scripts/smoke_test_published_package.py:229:def verify_imports(python: Path, metadata: PackageMetadata, version: str) -> None:
+./tests/test_issue_133_workflows.py:58:    assert "using: node24" in action
+./tests/test_project_metadata.py:23:    """The dev extra must not install mypy versions that reject Python 3.9."""

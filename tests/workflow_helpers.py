@@ -124,9 +124,9 @@ def assert_action_reference_count(workflow: str, action: str, count: int) -> Non
     refs = re.findall(rf"uses:\s+{re.escape(action)}@([^\s]+)", workflow)
     assert len(refs) == count, f"expected {count} {action} references, got {refs}"
     for ref in refs:
-        assert re.fullmatch(
-            r"v\d+(?:\.\d+){0,2}|[0-9a-f]{40}", ref
-        ), f"{action}@{ref} must use a version tag or full commit hash"
+        assert re.fullmatch(r"v\d+(?:\.\d+){0,2}|[0-9a-f]{40}", ref), (
+            f"{action}@{ref} must use a version tag or full commit hash"
+        )
 
 
 def assert_action_hash_pin(workflow: str, action: str, count: int) -> str:
@@ -141,9 +141,9 @@ def assert_action_hash_pin(workflow: str, action: str, count: int) -> str:
         r"\s+#\s+(v[0-9][^\s]*) @ (\d{4}-\d{2}-\d{2})"
     )
     matches = re.findall(pattern, workflow)
-    assert (
-        len(matches) == count
-    ), f"expected {count} hash-pinned {action} reference(s), found {len(matches)}"
+    assert len(matches) == count, (
+        f"expected {count} hash-pinned {action} reference(s), found {len(matches)}"
+    )
     return matches[0][0]
 
 
