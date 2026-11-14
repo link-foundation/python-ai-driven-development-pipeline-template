@@ -3,6 +3,7 @@
 import re
 
 from tests.workflow_helpers import (
+    assert_action_reference_count,
     read_workflow,
     workflow_job_block,
     workflow_step_block,
@@ -13,8 +14,8 @@ def test_pr_cache_is_read_only_and_main_saves_only_on_miss():
     job = workflow_job_block(read_workflow("links.yml"), "link-checker")
     restore = workflow_step_block(job, "Restore lychee cache")
     save = workflow_step_block(job, "Save lychee cache on main")
-    assert "actions/cache/restore@v5" in restore
-    assert "actions/cache/save@v5" in save
+    assert_action_reference_count(restore, "actions/cache/restore", 1)
+    assert_action_reference_count(save, "actions/cache/save", 1)
     assert "github.event_name == 'push'" in save
     assert "github.ref == 'refs/heads/main'" in save
     assert "steps.lychee-cache.outputs.cache-hit != 'true'" in save

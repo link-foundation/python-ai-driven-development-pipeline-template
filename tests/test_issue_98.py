@@ -10,6 +10,7 @@ import tomllib
 import pytest
 
 from tests.workflow_helpers import (
+    assert_action_reference_count,
     ROOT,
     WORKFLOWS,
     read_workflow,
@@ -57,9 +58,14 @@ def test_zizmor_has_one_supported_version_and_checks_low_confidence() -> None:
     """The action, pedantic check and reproduction must use the same pin."""
     workflow = read_workflow("workflows.yml")
     job = workflow_job_block(workflow, "zizmor")
-    assert "uses: zizmorcore/zizmor-action@v0.6.4" in job
-    # Verified against v0.6.4's support/versions digest table.
-    assert re.search(r"^  ZIZMOR_VERSION: ['\"]?1\.30\.1['\"]?$", workflow, re.M)
+    assert_action_reference_count(job, "zizmorcore/zizmor-action", 1)
+    assert re.search(r"^  ZIZMOR_VERSION: ['\"]?\d+\.\d+\.\d+['\"]?$", workflow, re.M)
+    guard = workflow_step_block(job, "Check zizmor action/CLI compatibility")
+    assert "python3 scripts/check_zizmor_compatibility.py" in guard
+    assert "GH_TOKEN: ${{ github.token }}" in guard
+    assert job.index("Check zizmor action/CLI compatibility") < job.index(
+        "Audit workflow files"
+    )
     assert "version: ${{ env.ZIZMOR_VERSION }}" in job
     assert workflow.count('pipx run "zizmor==$ZIZMOR_VERSION"') == 2
     assert "min-confidence: low" in job

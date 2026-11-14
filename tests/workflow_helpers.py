@@ -119,18 +119,14 @@ def concurrency_keys(workflow: str) -> list[str]:
     return keys
 
 
-def assert_action_pin_count(
-    workflow: str, action: str, version: str, count: int
-) -> None:
-    """Assert every expected action reference is pinned to the requested version."""
-    pattern = rf"uses:\s+{re.escape(action)}@{re.escape(version)}\b"
-    assert len(re.findall(pattern, workflow)) == count
-
-
-def assert_action_pin_absent(workflow: str, action: str, version: str) -> None:
-    """Assert an outdated action reference is not used."""
-    pattern = rf"uses:\s+{re.escape(action)}@{re.escape(version)}\b"
-    assert not re.search(pattern, workflow)
+def assert_action_reference_count(workflow: str, action: str, count: int) -> None:
+    """Check action identity and pinning while allowing Dependabot updates."""
+    refs = re.findall(rf"uses:\s+{re.escape(action)}@([^\s]+)", workflow)
+    assert len(refs) == count, f"expected {count} {action} references, got {refs}"
+    for ref in refs:
+        assert re.fullmatch(
+            r"v\d+(?:\.\d+){0,2}|[0-9a-f]{40}", ref
+        ), f"{action}@{ref} must use a version tag or full commit hash"
 
 
 def assert_action_hash_pin(workflow: str, action: str, count: int) -> str:

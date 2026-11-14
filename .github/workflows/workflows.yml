@@ -12,6 +12,7 @@ on:
       - '**.sh'
       - '.pre-commit-config.yaml'
       - 'tests/*.test.mjs'
+      - 'scripts/check_zizmor_compatibility.py'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
@@ -19,6 +20,7 @@ on:
       - '**.sh'
       - '.pre-commit-config.yaml'
       - 'tests/*.test.mjs'
+      - 'scripts/check_zizmor_compatibility.py'
   workflow_dispatch:
 
 permissions:
@@ -93,7 +95,12 @@ jobs:
       # Annotations instead of SARIF: forks of this template do not necessarily
       # have code scanning enabled, and the job should fail loudly either way.
       #
-      # The action and CLI share one pin supported by this action's digest table.
+      # Read the selected action's own table; Dependabot owns the action tag.
+      - name: Check zizmor action/CLI compatibility
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/check_zizmor_compatibility.py
+
       - name: Audit workflow files
         uses: zizmorcore/zizmor-action@v0.6.4
         with:

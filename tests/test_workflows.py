@@ -11,8 +11,7 @@ from tests.workflow_helpers import (
     ROOT,
     SUPPORTED_CONCURRENCY_KEYS,
     WORKFLOWS,
-    assert_action_pin_absent,
-    assert_action_pin_count,
+    assert_action_reference_count,
     concurrency_keys,
     job_step_deadline_seconds,
     job_timeout_minutes,
@@ -57,21 +56,21 @@ def test_security_workflow_scans_code_actions_and_dependencies() -> None:
     assert "security-events: write" in codeql_job
     assert "language: [python, actions]" in codeql_job
     assert "languages: ${{ matrix.language }}" in codeql_job
-    assert "uses: github/codeql-action/init@v4" in codeql_job
-    assert "uses: github/codeql-action/autobuild@v4" in codeql_job
-    assert "uses: github/codeql-action/analyze@v4" in codeql_job
+    assert_action_reference_count(codeql_job, "github/codeql-action/init", 1)
+    assert_action_reference_count(codeql_job, "github/codeql-action/autobuild", 1)
+    assert_action_reference_count(codeql_job, "github/codeql-action/analyze", 1)
     assert "cancel-in-progress: true" in codeql_job
 
     assert "if: github.event_name == 'pull_request'" in dependency_job
     assert "timeout-minutes: 10" in dependency_job
     assert "pull-requests: write" in dependency_job
-    assert "uses: actions/dependency-review-action@v5" in dependency_job
+    assert_action_reference_count(dependency_job, "actions/dependency-review-action", 1)
     assert "fail-on-severity: high" in dependency_job
     assert "comment-summary-in-pr: on-failure" in dependency_job
 
     assert "timeout-minutes: 15" in audit_job
-    assert "uses: actions/checkout@v7" in audit_job
-    assert "uses: actions/setup-python@v7" in audit_job
+    assert_action_reference_count(audit_job, "actions/checkout", 1)
+    assert_action_reference_count(audit_job, "actions/setup-python", 1)
     assert "python scripts/audit_dependencies.py" in audit_job
     assert "if: github.event_name == 'pull_request'" not in audit_job
 
@@ -114,7 +113,7 @@ def test_links_workflow_fails_for_every_broken_live_link() -> None:
     assert "permissions:\n  contents: read" in workflow
     assert "timeout-minutes: 10" in link_job
     assert "cancel-in-progress: true" in link_job
-    assert "uses: actions/checkout@v7" in link_job
+    assert_action_reference_count(link_job, "actions/checkout", 1)
     assert "bash scripts/check-links.sh" in lychee_step
     assert "--exclude-path docs/case-studies" in lychee_step
     assert "examples/universal-app/index.html" not in lychee_step
@@ -181,25 +180,20 @@ def test_every_gha_cache_export_carries_a_scope() -> None:
             )
 
 
-def test_docs_workflow_action_versions_are_current() -> None:
-    """Docs workflow actions should stay aligned with the current Pages stack."""
+def test_docs_workflow_uses_expected_pages_actions() -> None:
+    """Docs workflow keeps the expected Pages actions and local artifact transport."""
     docs_workflow = read_workflow("docs.yml")
 
-    assert_action_pin_count(docs_workflow, "actions/checkout", "v7", 2)
-    assert_action_pin_count(docs_workflow, "actions/setup-python", "v7", 1)
+    assert_action_reference_count(docs_workflow, "actions/checkout", 2)
+    assert_action_reference_count(docs_workflow, "actions/setup-python", 1)
     assert docs_workflow.count("uses: $/.github/actions/artifact") == 2
-    assert_action_pin_count(docs_workflow, "actions/configure-pages", "v6", 1)
+    assert_action_reference_count(docs_workflow, "actions/configure-pages", 1)
     assert "pages: true" in docs_workflow
     # Issue #130: the local action replaces actions/deploy-pages@v5.
     assert docs_workflow.count("uses: $/.github/actions/deploy-pages") == 1
     assert "uses: actions/deploy-pages@" not in docs_workflow
-
-    assert_action_pin_absent(docs_workflow, "actions/checkout", "v4")
-    assert_action_pin_absent(docs_workflow, "actions/setup-python", "v5")
-    assert_action_pin_absent(docs_workflow, "actions/upload-artifact", "v4")
-    assert_action_pin_absent(docs_workflow, "actions/configure-pages", "v5")
-    assert_action_pin_absent(docs_workflow, "actions/upload-pages-artifact", "v3")
-    assert_action_pin_absent(docs_workflow, "actions/deploy-pages", "v4")
+    assert "uses: actions/upload-artifact@" not in docs_workflow
+    assert "uses: actions/upload-pages-artifact@" not in docs_workflow
 
 
 def test_docs_workflow_deploys_pages_only_when_opted_in() -> None:
@@ -222,7 +216,7 @@ def test_docs_workflow_deploys_pages_only_when_opted_in() -> None:
         "vars.DEPLOY_GITHUB_PAGES != 'true'"
     )
 
-    assert "uses: actions/configure-pages@v6" in configure_step
+    assert_action_reference_count(configure_step, "actions/configure-pages", 1)
     assert f"if: {deploy_condition}" in upload_step
     assert f"if: {deploy_condition}" in deploy_job
     assert f"if: {skip_condition}" in skip_step
@@ -337,7 +331,6 @@ def test_workflow_lint_job_validates_every_workflow() -> None:
         job,
     )
     assert pin, "actionlint image must be digest-pinned with its tag in a comment"
-    assert pin.group(2) == "v1.7.12"
     assert "docker://rhysd/actionlint:1.7" not in job
 
 
@@ -436,7 +429,7 @@ def test_every_checkout_declares_credential_persistence() -> None:
             if "persist-credentials: true" in step:
                 persisting.append(f"{path.name}:{index + 1}")
 
-    assert checkouts == 27, f"expected 27 checkouts, found {checkouts}"
+    assert checkouts == 29, f"expected 29 checkouts, found {checkouts}"
     # Only the job that pushes the version bump commit needs the token wired
     # into the remote; every other checkout only reads the tree.
     assert (

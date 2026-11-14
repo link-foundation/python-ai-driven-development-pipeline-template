@@ -6,6 +6,7 @@ import re
 import subprocess
 
 from tests.workflow_helpers import (
+    assert_action_reference_count,
     ROOT,
     read_workflow,
     workflow_job_block,
@@ -116,7 +117,7 @@ def test_security_workflow_audits_npm_lockfiles_and_gates_on_it() -> None:
     job = workflow_job_block(workflow, "npm-audit")
     assert "timeout-minutes: 10" in job
     assert "persist-credentials: false" in job
-    assert "uses: actions/setup-node@v7" in job
+    assert_action_reference_count(job, "actions/setup-node", 1)
     step = workflow_step_block(job, "Audit every committed package-lock.json")
     assert "NPM_AUDIT_LEVEL: moderate" in step
     assert "bash scripts/audit-npm-locks.sh" in step
