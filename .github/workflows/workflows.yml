@@ -165,7 +165,8 @@ jobs:
           node-version: '26.13.1'
 
       - name: Install pinned npm
-        run: npm install --global npm@12.2.2
+        # npm's CLI dependencies are bundled in this exact bootstrap release.
+        run: npm install --global npm@12.2.2 # zizmor: ignore[adhoc-packages]
 
       - name: Install pinned artifact dependencies
         working-directory: .github/actions/artifact
