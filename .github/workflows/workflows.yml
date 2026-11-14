@@ -102,7 +102,7 @@ jobs:
         run: python3 scripts/check_zizmor_compatibility.py
 
       - name: Audit workflow files
-        uses: zizmorcore/zizmor-action@v0.6.4
+        uses: zizmorcore/zizmor-action@v0.8.1
         with:
           advanced-security: false
           annotations: true
