@@ -1,0 +1,214 @@
+{
+  "python": {
+    "click": {
+      "locked": "8.5.0",
+      "latest": "8.5.1"
+    },
+    "markdown-it-py": {
+      "locked": "4.2.0",
+      "latest": "4.3.0"
+    }
+  },
+  "npm": {
+    "node_modules/@actions/github/node_modules/@actions/http-client": {
+      "locked": "3.0.2",
+      "latest": "4.0.1"
+    },
+    "node_modules/@azure/core-lro": {
+      "locked": "2.7.2",
+      "latest": "3.4.2"
+    },
+    "node_modules/@babel/code-frame": {
+      "locked": "7.29.7",
+      "latest": "8.0.6"
+    },
+    "node_modules/@babel/helper-validator-identifier": {
+      "locked": "7.29.7",
+      "latest": "8.0.6"
+    },
+    "node_modules/@octokit/plugin-paginate-rest": {
+      "locked": "14.0.0",
+      "latest": "16.0.0"
+    },
+    "node_modules/@octokit/plugin-paginate-rest/node_modules/@octokit/openapi-types": {
+      "locked": "27.0.0",
+      "latest": "29.0.1"
+    },
+    "node_modules/@octokit/plugin-paginate-rest/node_modules/@octokit/types": {
+      "locked": "16.0.0",
+      "latest": "18.0.0"
+    },
+    "node_modules/@octokit/plugin-rest-endpoint-methods": {
+      "locked": "17.0.0",
+      "latest": "18.0.0"
+    },
+    "node_modules/@octokit/plugin-rest-endpoint-methods/node_modules/@octokit/openapi-types": {
+      "locked": "27.0.0",
+      "latest": "29.0.1"
+    },
+    "node_modules/@octokit/plugin-rest-endpoint-methods/node_modules/@octokit/types": {
+      "locked": "16.0.0",
+      "latest": "18.0.0"
+    },
+    "node_modules/@octokit/plugin-retry/node_modules/@octokit/openapi-types": {
+      "locked": "28.0.0",
+      "latest": "29.0.1"
+    },
+    "node_modules/@octokit/plugin-retry/node_modules/@octokit/types": {
+      "locked": "17.0.0",
+      "latest": "18.0.0"
+    },
+    "node_modules/@textlint/linter-formatter/node_modules/pluralize": {
+      "locked": "2.0.0",
+      "latest": "8.0.0"
+    },
+    "node_modules/@types/node": {
+      "locked": "25.9.9",
+      "latest": "26.6.6"
+    },
+    "node_modules/ansi-regex": {
+      "locked": "5.0.1",
+      "latest": "6.6.0"
+    },
+    "node_modules/ansi-styles": {
+      "locked": "4.3.0",
+      "latest": "7.0.0"
+    },
+    "node_modules/archiver": {
+      "locked": "7.0.1",
+      "latest": "8.0.0"
+    },
+    "node_modules/argparse": {
+      "locked": "2.0.1",
+      "latest": "3.0.4"
+    },
+    "node_modules/balanced-match": {
+      "locked": "4.0.4",
+      "latest": "5.0.0"
+    },
+    "node_modules/chalk": {
+      "locked": "5.6.2",
+      "latest": "6.0.1"
+    },
+    "node_modules/color-convert": {
+      "locked": "2.0.1",
+      "latest": "3.1.3"
+    },
+    "node_modules/color-name": {
+      "locked": "1.1.4",
+      "latest": "2.1.1"
+    },
+    "node_modules/compress-commons": {
+      "locked": "6.0.2",
+      "latest": "7.0.1"
+    },
+    "node_modules/crc32-stream": {
+      "locked": "6.0.0",
+      "latest": "7.0.1"
+    },
+    "node_modules/emoji-regex": {
+      "locked": "8.0.0",
+      "latest": "11.0.0"
+    },
+    "node_modules/event-target-shim": {
+      "locked": "5.0.1",
+      "latest": "6.0.2"
+    },
+    "node_modules/fast-uri": {
+      "locked": "3.1.9",
+      "latest": "4.2.3"
+    },
+    "node_modules/hosted-git-info": {
+      "locked": "9.0.3",
+      "latest": "10.1.1"
+    },
+    "node_modules/is-fullwidth-code-point": {
+      "locked": "3.0.0",
+      "latest": "5.1.0"
+    },
+    "node_modules/is-stream": {
+      "locked": "2.0.1",
+      "latest": "4.0.1"
+    },
+    "node_modules/js-tokens": {
+      "locked": "4.0.0",
+      "latest": "10.0.0"
+    },
+    "node_modules/js-yaml": {
+      "locked": "4.3.2",
+      "latest": "5.5.0"
+    },
+    "node_modules/lazystream/node_modules/isarray": {
+      "locked": "1.0.0",
+      "latest": "2.0.5"
+    },
+    "node_modules/lazystream/node_modules/readable-stream": {
+      "locked": "2.3.8",
+      "latest": "4.8.0"
+    },
+    "node_modules/lazystream/node_modules/safe-buffer": {
+      "locked": "5.1.2",
+      "latest": "5.2.1"
+    },
+    "node_modules/lazystream/node_modules/string_decoder": {
+      "locked": "1.1.1",
+      "latest": "1.3.0"
+    },
+    "node_modules/mkdirp": {
+      "locked": "0.5.6",
+      "latest": "3.0.1"
+    },
+    "node_modules/normalize-package-data": {
+      "locked": "8.0.0",
+      "latest": "9.0.0"
+    },
+    "node_modules/parse-json/node_modules/type-fest": {
+      "locked": "4.41.0",
+      "latest": "5.10.0"
+    },
+    "node_modules/readdir-glob": {
+      "locked": "1.1.3",
+      "latest": "4.0.0"
+    },
+    "node_modules/slice-ansi": {
+      "locked": "4.0.0",
+      "latest": "10.0.1"
+    },
+    "node_modules/spdx-expression-parse": {
+      "locked": "3.0.1",
+      "latest": "5.0.0"
+    },
+    "node_modules/string-width": {
+      "locked": "4.2.3",
+      "latest": "9.0.0"
+    },
+    "node_modules/strip-ansi": {
+      "locked": "6.0.1",
+      "latest": "7.2.0"
+    },
+    "node_modules/supports-color": {
+      "locked": "10.2.2",
+      "latest": "11.0.0"
+    },
+    "node_modules/supports-hyperlinks": {
+      "locked": "4.6.0",
+      "latest": "5.0.0"
+    },
+    "node_modules/traverse": {
+      "locked": "0.3.10",
+      "latest": "0.6.14"
+    },
+    "node_modules/undici": {
+      "locked": "6.29.1",
+      "latest": "8.12.4"
+    },
+    "node_modules/undici-types": {
+      "locked": "7.24.6",
+      "latest": "8.12.4"
+    },
+    "node_modules/zip-stream": {
+      "locked": "6.0.1",
+      "latest": "7.0.5"
+    }
+  }
+}

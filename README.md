@@ -45,7 +45,6 @@ uv sync --locked --all-extras
 source .venv/bin/activate
 
 # Install pre-commit hooks
-pip install pre-commit
 pre-commit install
 ```
 

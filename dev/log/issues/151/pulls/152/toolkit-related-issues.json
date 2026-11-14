@@ -1,0 +1,31 @@
+{"html_url":"https://github.com/actions/toolkit/pull/2578","number":2578,"title":"fix(glob): upgrade minimatch 10 to 11 (GHSA-g3hv-75wg-m249)"}
+{"html_url":"https://github.com/actions/toolkit/issues/2575","number":2575,"title":"@actions/artifact: a non-200 blob response is not destroyed before the retry, so the process waits for the 3-min socket timeout"}
+{"html_url":"https://github.com/actions/toolkit/issues/2564","number":2564,"title":"@actions/glob: move to minimatch 11 (GHSA-g3hv-75wg-m249) and stop using Minimatch#matchOne"}
+{"html_url":"https://github.com/actions/toolkit/pull/2560","number":2560,"title":"chore(deps): bump undici from 6.29.0 to 6.29.1 in /packages/glob"}
+{"html_url":"https://github.com/actions/toolkit/issues/2484","number":2484,"title":"@actions/glob 0.6.1 silently fails to match Windows paths when bundled as ESM with Rollup"}
+{"html_url":"https://github.com/actions/toolkit/pull/2483","number":2483,"title":"chore(deps): update archiver to 8.0.0"}
+{"html_url":"https://github.com/actions/toolkit/pull/2460","number":2460,"title":"chore(deps): bump brace-expansion and archiver in /packages/artifact"}
+{"html_url":"https://github.com/actions/toolkit/pull/2452","number":2452,"title":"Retry intermediary 403s in artifact-twirp-client"}
+{"html_url":"https://github.com/actions/toolkit/issues/2408","number":2408,"title":"@actions/glob v0.7.0 breaks ESM actions: Minimatch is not a named export in minimatch v10"}
+{"html_url":"https://github.com/actions/toolkit/pull/2400","number":2400,"title":"chore(deps): bump archiver from 7.0.1 to 8.0.0 in /packages/artifact"}
+{"html_url":"https://github.com/actions/toolkit/pull/2396","number":2396,"title":"Add await to summary buffer methods in README"}
+{"html_url":"https://github.com/actions/toolkit/issues/2392","number":2392,"title":"[@actions/artifact] Transitive dependency `buffers` has no declared license"}
+{"html_url":"https://github.com/actions/toolkit/pull/2204","number":2204,"title":"Fix glob pattern matching on Windows by normalizing path separators"}
+{"html_url":"https://github.com/actions/toolkit/issues/2169","number":2169,"title":"`@action/glob`: expose a public method to test patterns on given paths"}
+{"html_url":"https://github.com/actions/toolkit/pull/2107","number":2107,"title":"improve glob performance by not ignoring negate"}
+{"html_url":"https://github.com/actions/toolkit/pull/1762","number":1762,"title":"Add support for caching and restoring data as `Buffer`s."}
+{"html_url":"https://github.com/actions/toolkit/issues/1760","number":1760,"title":"Support storing and restoring cache entries as buffers."}
+{"html_url":"https://github.com/actions/toolkit/issues/1694","number":1694,"title":"let glob support curly braces like bash"}
+{"html_url":"https://github.com/actions/toolkit/pull/1690","number":1690,"title":"Replacing `archiver` package with direct use of `zip-stream` for fixing macOS upload issues"}
+{"html_url":"https://github.com/actions/toolkit/pull/1669","number":1669,"title":"docs(glob): Fix glob.create call in README example."}
+{"html_url":"https://github.com/actions/toolkit/pull/1570","number":1570,"title":"Added custom retry codes configuration options (#1569)"}
+{"html_url":"https://github.com/actions/toolkit/issues/1569","number":1569,"title":"Custom retry codes for `@actions/http-client`"}
+{"html_url":"https://github.com/actions/toolkit/issues/1545","number":1545,"title":"Calling glob() on a directory of 200k files produces a RangeError: Maximum call stack size exceeded"}
+{"html_url":"https://github.com/actions/toolkit/pull/1440","number":1440,"title":"cache: retry requests on HTTP 500 responses"}
+{"html_url":"https://github.com/actions/toolkit/issues/1167","number":1167,"title":"@actions/glob is too greedy"}
+{"html_url":"https://github.com/actions/toolkit/issues/1134","number":1134,"title":"[problem-matchers] support for glob search the file"}
+{"html_url":"https://github.com/actions/toolkit/pull/975","number":975,"title":"Keep order when hashFiles when globbing multiple files"}
+{"html_url":"https://github.com/actions/toolkit/issues/775","number":775,"title":"[glob] readdir causes EACCES: permission denied, scandir"}
+{"html_url":"https://github.com/actions/toolkit/issues/750","number":750,"title":"Glob from a specific base path"}
+{"html_url":"https://github.com/actions/toolkit/issues/685","number":685,"title":"glob actions need better documentation"}
+{"html_url":"https://github.com/actions/toolkit/issues/657","number":657,"title":"Fail-fast on children of negated glob directory matches like Git does"}

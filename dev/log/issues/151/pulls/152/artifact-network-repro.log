@@ -1,0 +1,2 @@
+::debug::[Request] CreateArtifact https://example.invalid/twirp/github.actions.results.api.v1.ArtifactService/CreateArtifact
+SDK 6.3.1: ECONNRESET fails after 1 call despite maxAttempts=3; no real HTTP used.

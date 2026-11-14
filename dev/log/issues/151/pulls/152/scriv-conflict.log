@@ -1,0 +1,20 @@
+Requirement already satisfied: scriv==1.8.1 in ./.venv/lib/python3.15/site-packages (1.8.1)
+Collecting click==8.5.1
+  Downloading click-8.5.1-py3-none-any.whl.metadata (2.6 kB)
+Requirement already satisfied: attrs==26.1.0 in ./.venv/lib/python3.15/site-packages (from scriv==1.8.1) (26.1.0)
+Requirement already satisfied: certifi==2026.10.23 in ./.venv/lib/python3.15/site-packages (from scriv==1.8.1) (2026.10.23)
+Requirement already satisfied: charset-normalizer==3.5.2 in ./.venv/lib/python3.15/site-packages (from scriv==1.8.1) (3.5.2)
+ERROR: Cannot install click==8.5.1 and scriv==1.8.1 because these package versions have conflicting dependencies.
+
+The conflict is caused by:
+    The user requested click==8.5.1
+    scriv 1.8.1 depends on click==8.5.0
+
+Additionally, some packages in these conflicts have no matching distributions available for your environment:
+    click
+
+To fix this you could try to:
+1. loosen the range of package versions you've specified
+2. remove package versions to allow pip to attempt to solve the dependency conflict
+
+ERROR: ResolutionImpossible: for help visit https://pip.pypa.io/en/latest/topics/dependency-resolution/#dealing-with-dependency-conflicts

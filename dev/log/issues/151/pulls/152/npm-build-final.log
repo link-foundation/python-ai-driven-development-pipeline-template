@@ -1,0 +1,10 @@
+npm notice run build
+npm notice run ncc build index.mjs -o dist --minify --license licenses.txt
+ncc: Version 0.45.0
+ncc: Compiling file index.mjs into ESM
+   0kB  dist/50.index.mjs
+   3kB  dist/extract.py
+  24kB  dist/licenses.txt
+ 667kB  dist/835.index.mjs
+2105kB  dist/index.mjs
+2799kB  [21166ms] - ncc 0.45.0
