@@ -54,9 +54,19 @@ case "$poll_seconds" in
     ;;
 esac
 
+stderr_line_open=false
+say_err() {
+  # Direct output cannot be inspected, so always start a fresh line there.
+  if [ "$stderr_line_open" = true ] || [ "$capture_output" = 0 ]; then
+    printf '\n' >&2
+    stderr_line_open=false
+  fi
+  printf '%s\n' "$*" >&2
+}
+
 trace() {
   { [ "$verbose" = true ] || [ "$verbose" = 1 ]; } &&
-    echo "[budget] $*" >&2 || true
+    say_err "[budget] $*" || true
 }
 
 state_parent="${BUDGET_STATE_PARENT:-${RUNNER_TEMP:-${TMPDIR:-/tmp}}}"
@@ -103,6 +113,12 @@ relay_output() {
   size="$(stream_size "$stderr_file")"
   if [ "$size" -gt "$stderr_offset" ]; then
     emit_range "$stderr_file" "$stderr_offset" "$size" >&2 || true
+    # Read the last byte actually relayed, even if the file has since grown.
+    if [ "$(od -An -tu1 -j "$((size - 1))" -N 1 "$stderr_file" | tr -d '[:space:]')" = 10 ]; then
+      stderr_line_open=false
+    else
+      stderr_line_open=true
+    fi
     stderr_offset="$size"
   fi
 }
@@ -209,13 +225,13 @@ report_survivors() {
   local survivors
   survivors="$(group_members)"
   [ -n "$survivors" ] || return 0
-  echo "::error title=${label} left processes running::${label} could not be terminated. Still running: $(echo "$survivors" | tr '\n' ';')" >&2
-  echo "$survivors" >&2
+  say_err "::error title=${label} left processes running::${label} could not be terminated. Still running: $(echo "$survivors" | tr '\n' ';')"
+  say_err "$survivors"
   return 1
 }
 
 terminate_over_budget() {
-  echo "::error title=${label} exceeded its execution budget::Termination was requested after ${SECONDS}s, its full ${budget_seconds}s execution budget. The budget expires before \`timeout-minutes\` so this reports as a failure instead of a cancelled job." >&2
+  say_err "::error title=${label} exceeded its execution budget::Termination was requested after ${SECONDS}s, its full ${budget_seconds}s execution budget. The budget expires before \`timeout-minutes\` so this reports as a failure instead of a cancelled job."
   signal_command_tree TERM
   wait_while_running "$grace_seconds"
   if group_is_populated; then
@@ -244,12 +260,12 @@ last_heartbeat=0
 while command_is_running; do
   if [ "$warned" = false ] && [ "$SECONDS" -ge "$threshold" ]; then
     warned=true
-    echo "::warning title=${label} is approaching its timeout::The command is still running after ${SECONDS}s (${warn_ratio}% of its ${budget_seconds}s execution budget)." >&2
+    say_err "::warning title=${label} is approaching its timeout::The command is still running after ${SECONDS}s (${warn_ratio}% of its ${budget_seconds}s execution budget)."
   fi
   if { [ "$verbose" = true ] || [ "$verbose" = 1 ]; } &&
     [ $((SECONDS - last_heartbeat)) -ge "$heartbeat_seconds" ]; then
     last_heartbeat="$SECONDS"
-    echo "[budget] ${label} has been running for ${SECONDS}s of its ${budget_seconds}s budget." >&2
+    say_err "[budget] ${label} has been running for ${SECONDS}s of its ${budget_seconds}s budget."
   fi
   if [ "$enforce" = true ] && has_elapsed "$budget_seconds"; then
     terminate_over_budget
