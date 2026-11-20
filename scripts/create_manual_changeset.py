@@ -181,7 +181,12 @@ Delete any sections you don't need.
 -->
 """
 
-    fragment_path.write_text(content)
+    try:
+        with fragment_path.open("x", encoding="utf-8") as fragment:
+            fragment.write(content)
+    except FileExistsError:
+        print(f"Changelog fragment already exists: {fragment_path}", file=sys.stderr)
+        return 1
     print(f"Created changelog fragment: {fragment_path}")
 
     if not description:
@@ -229,7 +234,7 @@ The fragment will be collected into CHANGELOG.md during release.
 
     # Ensure changelog directory exists
     if not changelog_dir.exists():
-        changelog_dir.mkdir(parents=True)
+        changelog_dir.mkdir(parents=True, exist_ok=True)
         print(f"Created directory: {changelog_dir}")
 
     # Use scriv if available, unless --no-scriv is specified
