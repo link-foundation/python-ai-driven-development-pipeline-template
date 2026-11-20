@@ -37,6 +37,12 @@ git add -f .github/actions/artifact/dist
 The Security workflow audits every committed `package-lock.json` with
 `scripts/audit-npm-locks.sh` (`npm audit --package-lock-only
 --audit-level=moderate`) on pushes, pull requests and its weekly schedule.
+The same job checks each locked public npm version against current registry
+metadata. Deprecations warn on pull requests and pushes and fail the weekly
+run. A lookup that cannot be verified fails on every event. Run
+`DEPRECATED_FAIL=true node scripts/check-deprecated-packages.mjs` locally for
+the scheduled policy.
+
 Dependabot (`.github/dependabot.yml`) proposes weekly Python, npm, GitHub Actions and
 pre-commit updates after a seven-day cooldown. Dependabot does not rebuild `dist`, so an npm
 update pull request fails "Verify committed action bundle" until someone runs the

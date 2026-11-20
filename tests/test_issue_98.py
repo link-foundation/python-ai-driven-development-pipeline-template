@@ -87,12 +87,12 @@ def test_npx_scanners_are_exactly_pinned() -> None:
     action = ROOT / ".github/actions/artifact"
     manifest = json.loads((action / "package.json").read_text())
     lock = json.loads((action / "package-lock.json").read_text())
-    scanners = ("secretlint", "@secretlint/secretlint-rule-preset-recommend")
-    pinned = [manifest["devDependencies"][name] for name in scanners]
-    assert pinned[0] == pinned[1]
-    for name, version in zip(scanners, pinned, strict=True):
-        assert re.fullmatch(r"\d+\.\d+\.\d+", version)
-        assert lock["packages"][f"node_modules/{name}"]["version"] == version
+    version = manifest["devDependencies"]["secretlint"]
+    assert re.fullmatch(r"14\.\d+\.\d+", version)
+    assert lock["packages"]["node_modules/secretlint"]["version"] == version
+    preset = "@secretlint/secretlint-rule-preset-recommend"
+    assert preset not in manifest["devDependencies"]
+    assert all(not path.endswith(f"/{preset}") for path in lock["packages"])
     lint = workflow_job_block(read_workflow("release.yml"), "lint")
     assert "npm ci --prefix .github/actions/artifact" in lint
     assert "npm exec --prefix .github/actions/artifact -- secretlint" in lint

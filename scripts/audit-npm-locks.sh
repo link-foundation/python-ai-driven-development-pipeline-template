@@ -9,6 +9,7 @@
 # Usage:
 #   bash scripts/audit-npm-locks.sh            # audit every tracked lockfile
 #   bash scripts/audit-npm-locks.sh --list     # print the lockfiles it audits
+#   bash scripts/audit-npm-locks.sh --list0    # NUL-delimited paths for scripts
 #
 # NPM_AUDIT_LEVEL sets the minimum failing severity (default: moderate). The
 # locks are small and fully under this template's control, so even moderate
@@ -17,10 +18,22 @@
 set -euo pipefail
 
 level="${NPM_AUDIT_LEVEL:-moderate}"
-mapfile -t locks < <(git ls-files -- ':(glob)**/package-lock.json')
+# Capture Git's exit status before reading or acting on its output. NUL-delimited
+# paths preserve spaces, non-ASCII characters and literal newlines.
+inventory="$(mktemp)"
+trap 'rm -f -- "$inventory"' EXIT
+git ls-files -z -- ':(glob)**/package-lock.json' >"$inventory"
+mapfile -d '' -t locks <"$inventory"
+
+if [[ "${1:-}" == "--list0" ]]; then
+  cat -- "$inventory"
+  exit 0
+fi
 
 if [[ "${1:-}" == "--list" ]]; then
-  printf '%s\n' "${locks[@]}"
+  if ((${#locks[@]})); then
+    printf '%s\n' "${locks[@]}"
+  fi
   exit 0
 fi
 
