@@ -124,8 +124,11 @@ jobs:
         timeout-minutes: 5
         env:
           GH_TOKEN: ${{ github.token }}
+          ZIZMOR_BUDGET_SECONDS: 240
         run: |
-          pipx run "zizmor==$ZIZMOR_VERSION" --config .github/zizmor.yml \
+          bash scripts/run-with-budget-warning.sh "$ZIZMOR_BUDGET_SECONDS" \
+            "Audit pedantic workflow findings" \
+            pipx run "zizmor==$ZIZMOR_VERSION" --config .github/zizmor.yml \
             --persona pedantic --min-severity high --min-confidence high \
             .github/workflows
 
@@ -143,9 +146,13 @@ jobs:
           persist-credentials: false
 
       - name: Shellcheck every tracked shell script
+        env:
+          SHELLCHECK_INSTALL_BUDGET_SECONDS: 120
         run: |
           python3 -m venv "$RUNNER_TEMP/shellcheck-venv"
-          "$RUNNER_TEMP/shellcheck-venv/bin/pip" install --quiet --disable-pip-version-check shellcheck-py==0.11.0.1
+          bash scripts/run-with-budget-warning.sh \
+            "$SHELLCHECK_INSTALL_BUDGET_SECONDS" "Install ShellCheck" \
+            "$RUNNER_TEMP/shellcheck-venv/bin/pip" install --quiet --disable-pip-version-check shellcheck-py==0.11.0.1
           git ls-files -z '*.sh' | xargs -0 -r "$RUNNER_TEMP/shellcheck-venv/bin/shellcheck"
 
   artifact-roundtrip:
@@ -166,11 +173,17 @@ jobs:
 
       - name: Install pinned npm
         # npm's CLI dependencies are bundled in this exact bootstrap release.
-        run: npm install --global npm@12.2.2 # zizmor: ignore[adhoc-packages]
+        env:
+          NPM_INSTALL_BUDGET_SECONDS: 120
+        run: bash scripts/run-with-budget-warning.sh "$NPM_INSTALL_BUDGET_SECONDS" "Install pinned npm" npm install --global npm@12.2.2 # zizmor: ignore[adhoc-packages]
 
       - name: Install pinned artifact dependencies
-        working-directory: .github/actions/artifact
-        run: npm ci --ignore-scripts --no-audit --no-fund
+        env:
+          ARTIFACT_INSTALL_BUDGET_SECONDS: 180
+        run: |
+          bash scripts/run-with-budget-warning.sh "$ARTIFACT_INSTALL_BUDGET_SECONDS" \
+            "Install pinned artifact dependencies" \
+            npm ci --prefix .github/actions/artifact --ignore-scripts --no-audit --no-fund
 
       - name: Test transport recovery and refusal
         run: node --throw-deprecation --test tests/artifact.test.mjs

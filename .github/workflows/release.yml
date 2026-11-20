@@ -94,6 +94,7 @@ jobs:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_BEFORE_SHA: ${{ github.event.before }}
         run: python "$PYTHON_ROOT/scripts/detect_code_changes.py"
 
   # REQUIRED CI CHECKS - All must pass before release
@@ -199,7 +200,9 @@ jobs:
       - name: Install pinned npm
         # Bootstrap the package manager before it can install the project lock.
         # npm bundles its own CLI dependencies; the exact release fixes that tree.
-        run: npm install --global npm@12.2.2 # zizmor: ignore[adhoc-packages]
+        env:
+          NPM_INSTALL_BUDGET_SECONDS: 120
+        run: bash "$PYTHON_ROOT/scripts/run-with-budget-warning.sh" "$NPM_INSTALL_BUDGET_SECONDS" "Install pinned npm" npm install --global npm@12.2.2 # zizmor: ignore[adhoc-packages]
 
       - name: Check for secrets
         env:
@@ -429,9 +432,12 @@ jobs:
           echo "Detected Python layout: root=$PYTHON_ROOT, multi_language=$MULTI_LANGUAGE"
 
       - name: Install build dependencies
+        env:
+          INSTALL_BUDGET_SECONDS: 300
         run: |
           cd "$PYTHON_ROOT"
-          bash scripts/install-python-dependencies.sh
+          bash scripts/run-with-budget-warning.sh "$INSTALL_BUDGET_SECONDS" \
+            "Install Python dependencies" bash scripts/install-python-dependencies.sh
 
       - name: Build package
         run: |
@@ -614,9 +620,12 @@ jobs:
           echo "Detected Python layout: root=$PYTHON_ROOT, multi_language=$MULTI_LANGUAGE"
 
       - name: Install dependencies
+        env:
+          INSTALL_BUDGET_SECONDS: 300
         run: |
           cd "$PYTHON_ROOT"
-          bash scripts/install-python-dependencies.sh
+          bash scripts/run-with-budget-warning.sh "$INSTALL_BUDGET_SECONDS" \
+            "Install Python dependencies" bash scripts/install-python-dependencies.sh
 
       - name: Check release artifacts
         id: version_check
@@ -744,9 +753,12 @@ jobs:
           echo "Detected Python layout: root=$PYTHON_ROOT, multi_language=$MULTI_LANGUAGE"
 
       - name: Install dependencies
+        env:
+          INSTALL_BUDGET_SECONDS: 300
         run: |
           cd "$PYTHON_ROOT"
-          bash scripts/install-python-dependencies.sh
+          bash scripts/run-with-budget-warning.sh "$INSTALL_BUDGET_SECONDS" \
+            "Install Python dependencies" bash scripts/install-python-dependencies.sh
 
       - name: Configure git
         run: |

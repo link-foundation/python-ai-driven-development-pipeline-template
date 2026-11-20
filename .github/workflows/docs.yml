@@ -77,8 +77,11 @@ jobs:
           python-version: '3.15.2'
 
       - name: Install package and docs dependencies
+        env:
+          INSTALL_BUDGET_SECONDS: 300
         run: |
-          bash scripts/install-python-dependencies.sh
+          bash scripts/run-with-budget-warning.sh "$INSTALL_BUDGET_SECONDS" \
+            "Install Python dependencies" bash scripts/install-python-dependencies.sh
 
       - name: Build Sphinx documentation
         run: python -W error -m sphinx -W --keep-going -b html docs _site
