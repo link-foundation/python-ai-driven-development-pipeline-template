@@ -64,6 +64,8 @@ def set_output(name: str, value: str) -> None:
 
 def get_changed_files() -> list[str]:
     """Get the complete changed-file set or propagate the Git failure."""
+    # Count both the deletion and addition when a path crosses a gate boundary.
+    diff = ("diff", "--no-renames", "--name-only", "-z")
     if os.environ.get("GITHUB_EVENT_NAME") == "pull_request":
         base = os.environ.get("GITHUB_BASE_SHA")
         head = os.environ.get("GITHUB_HEAD_SHA")
@@ -79,7 +81,7 @@ def get_changed_files() -> list[str]:
             except subprocess.CalledProcessError:
                 git("fetch", "origin", commit)
         print(f"Comparing PR: {base}...{head}")
-        output = git("diff", "--name-only", "-z", f"{base}...{head}", "--")
+        output = git(*diff, f"{base}...{head}", "--")
     else:
         before = os.environ.get("GITHUB_BEFORE_SHA")
         # The raw commit records parent IDs even at a shallow boundary.
@@ -87,13 +89,13 @@ def get_changed_files() -> list[str]:
         has_parent = any(line.startswith(b"parent ") for line in headers.splitlines())
         if before and before != "0" * 40:
             print(f"Comparing push: {before} to HEAD")
-            output = git("diff", "--name-only", "-z", before, "HEAD", "--")
+            output = git(*diff, before, "HEAD", "--")
         elif before or not has_parent:
             print("Listing the initial source tree at HEAD")
             output = git("ls-tree", "--name-only", "-r", "-z", "HEAD")
         else:
             print("Comparing HEAD^ to HEAD")
-            output = git("diff", "--name-only", "-z", "HEAD^", "HEAD", "--")
+            output = git(*diff, "HEAD^", "HEAD", "--")
     return [os.fsdecode(path) for path in output.split(b"\0") if path]
 
 

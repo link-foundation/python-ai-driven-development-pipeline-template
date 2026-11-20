@@ -176,6 +176,27 @@ def test_successful_pr_comparison_can_report_no_code(
     assert output == f"any-code-changed=false\ndocs-changed={str(add_docs).lower()}\n"
 
 
+@pytest.mark.parametrize("event", ["pull_request", "push"])
+def test_renaming_code_into_docs_changes_both_paths(
+    repo: Path, tmp_path: Path, event: str
+) -> None:
+    base = git(repo, "rev-parse", "HEAD")
+    git(repo, "config", "diff.renames", "true")
+    (repo / "docs").mkdir()
+    git(repo, "mv", "src/initial.py", "docs/guide.py")
+    git(repo, "commit", "-qm", "move source into docs")
+    completed, output = run_detector(
+        repo,
+        tmp_path,
+        event,
+        GITHUB_BASE_SHA=base,
+        GITHUB_HEAD_SHA=git(repo, "rev-parse", "HEAD"),
+        GITHUB_BEFORE_SHA=base,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert output == "any-code-changed=true\ndocs-changed=true\n"
+
+
 @pytest.mark.parametrize("event", ["push", "pull_request"])
 def test_failed_comparison_never_emits_outputs(
     repo: Path, tmp_path: Path, event: str
@@ -188,7 +209,9 @@ def test_failed_comparison_never_emits_outputs(
     mock_git = bin_dir / "git"
     mock_git.write_text(
         "#!/bin/sh\n"
-        'if [ "$1" = diff ] && [ "$4" != "HEAD^" ]; then\n'
+        'if [ "$1" = diff ]; then\n'
+        '    for arg do [ "$arg" != "HEAD^" ] || '
+        f'exec "{shutil.which("git")}" "$@"; done\n'
         "    printf 'docs/partial.md\\000'; echo 'comparison failed' >&2; exit 128\n"
         "fi\n"
         f'exec "{shutil.which("git")}" "$@"\n',
