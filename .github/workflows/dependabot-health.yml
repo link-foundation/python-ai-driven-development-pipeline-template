@@ -43,8 +43,11 @@ jobs:
 
       - name: Verify health policy in pull requests
         if: github.event_name == 'pull_request'
+        env:
+          INSTALL_BUDGET_SECONDS: 300
         run: |
-          bash scripts/install-python-dependencies.sh
+          bash scripts/run-with-budget-warning.sh "$INSTALL_BUDGET_SECONDS" \
+            "Install Python dependencies" bash scripts/install-python-dependencies.sh
           .venv/bin/python -m pytest tests/test_dependabot_health.py
 
       - name: Report stuck Dependabot pull requests

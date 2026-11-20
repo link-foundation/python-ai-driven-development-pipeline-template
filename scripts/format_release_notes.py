@@ -116,11 +116,6 @@ def format_release_body(
     # Clean up the existing body
     cleaned_body = body.strip()
 
-    # Fix escaped newlines and special characters
-    cleaned_body = cleaned_body.replace("\\n", "\n")
-    cleaned_body = cleaned_body.replace("\\r", "")
-    cleaned_body = cleaned_body.replace('\\"', '"')
-
     # Remove duplicate version headers if present
     bare_version = normalize_version(version)
     version_pattern = rf"^#+\s*v?{re.escape(bare_version)}\s*$"

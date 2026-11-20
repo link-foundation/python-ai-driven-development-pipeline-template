@@ -73,8 +73,11 @@ jobs:
           restore-keys: cache-lychee-${{ steps.link-cache.outputs.day }}-
 
       - name: Install pinned lychee with retries
-        run: bash scripts/install-lychee.sh
+        run: |
+          bash scripts/run-with-budget-warning.sh "$LYCHEE_INSTALL_BUDGET_SECONDS" \
+            "Install pinned lychee" bash scripts/install-lychee.sh
         env:
+          LYCHEE_INSTALL_BUDGET_SECONDS: 150
           LYCHEE_VERSION: v0.24.2
           # Pin independently of the release's replaceable checksum assets.
           LYCHEE_SHA256_X86_64: 1f4e0ef7f6554a6ed33dd7ac144fb2e1bbed98598e7af973042fc5cd43951c9a

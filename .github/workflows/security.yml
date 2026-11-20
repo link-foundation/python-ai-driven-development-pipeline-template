@@ -34,8 +34,11 @@ jobs:
           python-version: '3.15.2'
 
       - name: Audit pyproject.toml and docs/requirements.txt
+        env:
+          INSTALL_BUDGET_SECONDS: 300
         run: |
-          bash scripts/install-python-dependencies.sh
+          bash scripts/run-with-budget-warning.sh "$INSTALL_BUDGET_SECONDS" \
+            "Install Python dependencies" bash scripts/install-python-dependencies.sh
           .venv/bin/python scripts/audit_dependencies.py
 
   # The Python audit above cannot see npm. The artifact action bundles its
@@ -61,12 +64,26 @@ jobs:
 
       - name: Install pinned npm
         # npm's CLI dependencies are bundled in this exact bootstrap release.
-        run: npm install --global npm@12.2.2 # zizmor: ignore[adhoc-packages]
+        env:
+          NPM_INSTALL_BUDGET_SECONDS: 120
+        run: bash scripts/run-with-budget-warning.sh "$NPM_INSTALL_BUDGET_SECONDS" "Install pinned npm" npm install --global npm@12.2.2 # zizmor: ignore[adhoc-packages]
 
       - name: Audit every committed package-lock.json
         env:
           NPM_AUDIT_LEVEL: moderate
-        run: bash scripts/audit-npm-locks.sh
+          NPM_AUDIT_BUDGET_SECONDS: 90
+        run: |
+          bash scripts/run-with-budget-warning.sh "$NPM_AUDIT_BUDGET_SECONDS" \
+            "Audit npm lockfiles" bash scripts/audit-npm-locks.sh
+
+      - name: Check live npm deprecations
+        env:
+          DEPRECATED_FAIL: ${{ github.event_name == 'schedule' }}
+          NPM_DEPRECATION_BUDGET_SECONDS: 180
+        run: |
+          node --test tests/check-deprecated-packages.test.mjs
+          bash scripts/run-with-budget-warning.sh "$NPM_DEPRECATION_BUDGET_SECONDS" \
+            "Check live npm deprecations" node scripts/check-deprecated-packages.mjs
 
   codeql:
     name: CodeQL (${{ matrix.language }})

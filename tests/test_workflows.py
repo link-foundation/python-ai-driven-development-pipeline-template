@@ -6,6 +6,7 @@ import re
 import shlex
 from pathlib import PurePosixPath
 
+from tests.workflow_budgets import composite_steps, read_yaml, step_budgets
 from tests.workflow_helpers import (
     MAX_BUDGET_SHARE_PERCENT,
     ROOT,
@@ -13,7 +14,6 @@ from tests.workflow_helpers import (
     WORKFLOWS,
     assert_action_reference_count,
     concurrency_keys,
-    job_step_deadline_seconds,
     job_timeout_minutes,
     read_workflow,
     workflow_job_block,
@@ -242,14 +242,15 @@ def test_step_deadlines_expire_before_the_job_timeout_they_sit_under() -> None:
     checked = 0
 
     for path in sorted(WORKFLOWS.glob("*.y*ml")):
-        workflow = path.read_text(encoding="utf-8")
-        for job_name in workflow_job_names(workflow):
-            block = workflow_job_block(workflow, job_name)
-            deadlines = job_step_deadline_seconds(block)
+        workflow = read_yaml(path)
+        for job_name, job in workflow["jobs"].items():
+            context = f"{path.name}: job `{job_name}`"
+            env = workflow.get("env", {}) | job.get("env", {})
+            deadlines = list(step_budgets(job.get("steps", []), env, context))
             if not deadlines:
                 continue
 
-            cap_minutes = job_timeout_minutes(block)
+            cap_minutes = job.get("timeout-minutes")
             assert cap_minutes is not None, (
                 f"{path.name}: job `{job_name}` budgets a step but declares no cap"
             )
@@ -258,16 +259,22 @@ def test_step_deadlines_expire_before_the_job_timeout_they_sit_under() -> None:
             cap_seconds = cap_minutes * 60
             total = sum(seconds for _, seconds in deadlines)
             share = total * 100 // cap_seconds
-            assert share <= MAX_BUDGET_SHARE_PERCENT, (
+            assert total * 100 <= MAX_BUDGET_SHARE_PERCENT * cap_seconds, (
                 f"{path.name}: job `{job_name}` gives its steps {total}s of "
-                f"deadlines ({dict(deadlines)}) under a {cap_minutes}m cap "
+                f"deadlines ({deadlines}) under a {cap_minutes}m cap "
                 f"({share}% of it). Unbudgeted setup has to fit in the remainder, "
                 "or the job clock expires first and the overrun is reported as "
                 "`cancelled` instead of `failure` (issue #60). Keep the total at "
                 f"or below {MAX_BUDGET_SHARE_PERCENT}% of the cap."
             )
 
-    assert checked >= 6, f"expected every budgeted step to be checked, saw {checked}"
+    assert checked >= 10, f"expected every budgeted step to be checked, saw {checked}"
+
+
+def test_local_composite_actions_budget_network_installs() -> None:
+    """Apply the install policy even to actions with no in-repo caller."""
+    for path in (ROOT / ".github" / "actions").rglob("action.y*ml"):
+        list(step_budgets(composite_steps(path), {}, str(path), check_deadlines=False))
 
 
 def test_concurrency_key_parser_reports_unsupported_keys() -> None:

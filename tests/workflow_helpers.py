@@ -159,25 +159,3 @@ def job_timeout_minutes(job_block: str) -> int | None:
     """Return the job-level ``timeout-minutes`` cap, if the job declares one."""
     match = re.search(r"^    timeout-minutes: (\d+)$", job_block, re.MULTILINE)
     return int(match.group(1)) if match else None
-
-
-def job_step_deadline_seconds(job_block: str) -> list[tuple[str, int]]:
-    """Return every step-level deadline in a job, as ``(source, seconds)``.
-
-    A shell step owns its deadline through ``run-with-budget-warning.sh`` and a
-    ``*_BUDGET_SECONDS`` env var; a step that runs a composite action cannot be
-    wrapped, so it owns a step-level ``timeout-minutes`` instead.
-    """
-    budgets = [
-        (name, int(seconds))
-        for name, seconds in re.findall(
-            r"^          ([A-Z0-9_]*BUDGET_SECONDS): (\d+)$", job_block, re.MULTILINE
-        )
-    ]
-    step_timeouts = [
-        (f"step timeout-minutes: {minutes}", int(minutes) * 60)
-        for minutes in re.findall(
-            r"^        timeout-minutes: (\d+)$", job_block, re.MULTILINE
-        )
-    ]
-    return budgets + step_timeouts

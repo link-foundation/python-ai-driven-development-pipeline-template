@@ -13,8 +13,7 @@
   },
   "devDependencies": {
     "@vercel/ncc": "0.45.0",
-    "secretlint": "13.1.0",
-    "@secretlint/secretlint-rule-preset-recommend": "13.1.0"
+    "secretlint": "14.0.1"
   },
   "overrides": {
     "archiver-utils": {

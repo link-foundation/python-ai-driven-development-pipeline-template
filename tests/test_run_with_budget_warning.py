@@ -268,3 +268,31 @@ def test_elapsed_deadlines_require_strictly_greater_seconds(seconds) -> None:
         timeout=5,
     )
     assert result.returncode == 1
+
+
+@pytest.mark.parametrize("suffix", [r"", r"\r", r"\000", r"\n"])
+def test_annotations_start_on_their_own_stderr_line(suffix: str) -> None:
+    """A partial stderr record cannot swallow the warning or deadline error."""
+    completed = subprocess.run(
+        [
+            "bash",
+            str(SCRIPT),
+            "2",
+            "Open line",
+            "bash",
+            "-c",
+            f"printf 'progress{suffix}' >&2; sleep 10",
+        ],
+        capture_output=True,
+        check=False,
+        env=os.environ
+        | {"BUDGET_WARN_RATIO_PERCENT": "50", "BUDGET_POLL_SECONDS": "0.1"},
+        timeout=15,
+    )
+
+    assert completed.returncode == 124
+    lines = completed.stderr.split(b"\n")
+    assert sum(line.startswith(b"::warning title=Open line") for line in lines) == 1
+    assert sum(line.startswith(b"::error title=Open line") for line in lines) == 1
+    if suffix == r"\n":
+        assert lines[1].startswith(b"::warning")
