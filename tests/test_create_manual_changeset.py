@@ -47,6 +47,7 @@ def test_scriv_reports_the_created_path_to_the_cli(tmp_path: Path) -> None:
         timeout=10,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+    assert "Using scriv" in result.stdout
     (fragment,) = (tmp_path / "changelog.d").glob("*.md")
     assert fragment.read_text(encoding="utf-8") == "### Added\n\n- A new feature\n"
 
