@@ -1,5 +1,7 @@
 // Issue #130: the Pages deploy retries transient failures to create the
-// deployment, fails at once on refusals, and never deploys a commit twice.
+// deployment and fails at once on refusals. Issue #163 scopes recovery to
+// the requested artifact.
+import { createHash } from 'node:crypto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile } from 'node:fs/promises';
@@ -19,6 +21,10 @@ import {
 
 const SHA = 'a'.repeat(40);
 const BASE = '/repos/owner/repo/pages';
+const versionFor = (artifactId) => createHash('sha256')
+  .update(JSON.stringify(['owner/repo', String(artifactId), SHA]))
+  .digest('hex');
+const VERSION = versionFor(42);
 
 function httpError(status, requestId = `REQ-${status}`) {
   return new HttpError(status, `status ${status}`, { method: 'POST', path: `${BASE}/deployments`, requestId });
@@ -64,6 +70,42 @@ function run(api, overrides = {}) {
 const created = { id: 7, page_url: 'https://owner.github.io/repo/' };
 const creations = (calls) => calls.filter((c) => c.method === 'POST' && c.url === `${BASE}/deployments`);
 
+for (const createdBeforeDisconnect of [false, true]) {
+  test(`retries the requested artifact when the response is lost ${createdBeforeDisconnect ? 'after' : 'before'} creation`, async () => {
+    const deployments = new Map([[SHA, 41], [versionFor(41), 41]]);
+    const calls = [];
+    const request = async (method, url, body) => {
+      calls.push({ method, url, body });
+      if (method === 'POST' && url === `${BASE}/deployments`) {
+        const first = calls.length === 1;
+        if (!first || createdBeforeDisconnect) deployments.set(body.pages_build_version, body.artifact_id);
+        if (first) throw Object.assign(new Error('socket hang up'), { code: 'ECONNRESET' });
+        return { ...created, id: body.pages_build_version };
+      }
+      if (method === 'GET' && url === BASE) return { html_url: created.page_url };
+      if (method === 'GET' && url.startsWith(`${BASE}/deployments/`)) {
+        const id = url.slice(`${BASE}/deployments/`.length);
+        if (deployments.has(id)) return { status: 'succeed' };
+        throw httpError(404);
+      }
+      throw new Error(`unexpected request ${method} ${url}`);
+    };
+
+    const { id, pageUrl } = await run({ request }).promise;
+    assert.equal(deployments.get(id), 42, 'the deployment must belong to the requested artifact');
+    assert.equal(deployments.get(SHA), 41, 'the legacy deployment remains distinct');
+    assert.equal(deployments.get(versionFor(41)), 41, 'the earlier artifact keeps its deployment');
+    assert.equal(pageUrl, created.page_url);
+    const posts = creations(calls);
+    assert.equal(posts.length, createdBeforeDisconnect ? 1 : 2);
+    for (const { body } of posts) {
+      assert.equal(body.artifact_id, 42);
+      assert.equal(body.pages_build_version, id);
+    }
+    assert.equal(calls[1].url, `${BASE}/deployments/${id}`, 'retry lookup uses the creation key');
+  });
+}
+
 test('creates one deployment of exactly the given artifact and reports its URL', async () => {
   const api = mockApi({
     'POST /deployments': [created],
@@ -72,7 +114,7 @@ test('creates one deployment of exactly the given artifact and reports its URL',
   const { promise } = run(api);
   assert.deepEqual(await promise, { id: 7, pageUrl: created.page_url });
   assert.deepEqual(creations(api.calls).map((c) => c.body), [
-    { artifact_id: 42, pages_build_version: SHA, oidc_token: 'oidc' },
+    { artifact_id: 42, pages_build_version: VERSION, oidc_token: 'oidc' },
   ]);
 });
 
@@ -80,7 +122,7 @@ for (const status of [500, 502, 503, 504, 429]) {
   test(`retries HTTP ${status} from creating the deployment, then succeeds`, async () => {
     const api = mockApi({
       'POST /deployments': [httpError(status), created],
-      [`GET /deployments/${SHA}`]: [httpError(404)],
+      [`GET /deployments/${VERSION}`]: [httpError(404)],
       'GET /deployments/7': [{ status: 'succeed' }],
     });
     const { promise, sleeps, logs } = run(api);
@@ -96,7 +138,7 @@ test('retries a lost connection and a timed-out request', async () => {
   const timeout = Object.assign(new Error('The operation was aborted due to timeout'), { name: 'TimeoutError' });
   const api = mockApi({
     'POST /deployments': [reset, timeout, created],
-    [`GET /deployments/${SHA}`]: [httpError(404)],
+    [`GET /deployments/${VERSION}`]: [httpError(404)],
     'GET /deployments/7': [{ status: 'succeed' }],
   });
   const { promise, sleeps } = run(api);
@@ -133,7 +175,7 @@ test('explains how to fix missing permissions and a disabled Pages site', async 
 test('gives up after a bounded number of transient failures', async () => {
   const api = mockApi({
     'POST /deployments': [httpError(503)],
-    [`GET /deployments/${SHA}`]: [httpError(404)],
+    [`GET /deployments/${VERSION}`]: [httpError(404)],
   });
   const { promise, sleeps } = run(api);
   await assert.rejects(promise, /after 3 attempts: POST \S+ responded HTTP 503.*request ID REQ-503/);
@@ -145,20 +187,20 @@ test('adopts the deployment a lost response created instead of creating another'
   for (const status of ['deployment_queued', 'deployment_in_progress', 'succeed']) {
     const api = mockApi({
       'POST /deployments': [httpError(502)],
-      [`GET /deployments/${SHA}`]: [{ status }, { status: 'succeed' }],
+      [`GET /deployments/${VERSION}`]: [{ status }, { status: 'succeed' }],
     });
     const { promise, logs } = run(api);
-    assert.equal((await promise).id, SHA);
+    assert.equal((await promise).id, VERSION);
     assert.equal(creations(api.calls).length, 1, `no second deployment while ${status}`);
     assert.match(logs.join('\n'), /Adopted the deployment/);
   }
 });
 
-test('replaces an earlier deployment of the commit only when it failed', async () => {
+test('replaces an earlier deployment of the artifact only when it failed', async () => {
   for (const status of Object.keys(FAILED)) {
     const api = mockApi({
       'POST /deployments': [httpError(500), created],
-      [`GET /deployments/${SHA}`]: [{ status }],
+      [`GET /deployments/${VERSION}`]: [{ status }],
       'GET /deployments/7': [{ status: 'succeed' }],
     });
     assert.equal((await run(api).promise).id, 7);
@@ -169,7 +211,7 @@ test('replaces an earlier deployment of the commit only when it failed', async (
 test('a refused lookup before a retry fails without creating anything', async () => {
   const api = mockApi({
     'POST /deployments': [httpError(500)],
-    [`GET /deployments/${SHA}`]: [httpError(403)],
+    [`GET /deployments/${VERSION}`]: [httpError(403)],
   });
   await assert.rejects(run(api).promise, /HTTP 403/);
   assert.equal(creations(api.calls).length, 1);
@@ -232,8 +274,8 @@ test('cancels the deployment when it does not finish in time', async () => {
   assert.match(logs.join('\n'), /Cancelling deployment 7 failed/);
 });
 
-test('refuses a missing or non-numeric artifact ID before calling the API', async () => {
-  for (const artifactId of [undefined, '', 'github-pages', '12a']) {
+test('refuses an invalid artifact ID before calling the API', async () => {
+  for (const artifactId of [undefined, '', 'github-pages', '12a', '0', '9007199254740993']) {
     const api = mockApi({});
     await assert.rejects(run(api, { artifactId }).promise, /artifact ID/);
     assert.equal(api.calls.length, 0);
@@ -310,6 +352,6 @@ test('main publishes the artifact from INPUT_ARTIFACT_ID and writes page_url', a
   });
   const create = seen.find((c) => c.method === 'POST');
   assert.equal(create.url, `https://api.test${BASE}/deployments`);
-  assert.deepEqual(JSON.parse(create.body), { artifact_id: 314, pages_build_version: SHA, oidc_token: 'jwt' });
+  assert.deepEqual(JSON.parse(create.body), { artifact_id: 314, pages_build_version: versionFor(314), oidc_token: 'jwt' });
   assert.equal(await readFile(output, 'utf8'), 'page_url=https://site.test/\n');
 });

@@ -14,9 +14,8 @@ name: Docs
 # The deploy job uses the local .github/actions/deploy-pages action (issue
 # #130): the REST protocol of actions/deploy-pages@v5, plus bounded retries
 # of a transient 5xx/429 from creating the deployment. Before each retry it
-# looks the deployment up by commit SHA and adopts it unless it failed, so a
-# commit is never deployed twice. It publishes exactly the artifact ID that
-# the build job outputs.
+# looks up the deployment version for the artifact ID from the build job and
+# adopts it unless it failed. Each upload has its own deployment version.
 
 on:
   push:
@@ -96,6 +95,10 @@ jobs:
       - name: Report skipped GitHub Pages deployment
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_GITHUB_PAGES != 'true'
         run: echo "::notice::Skipping GitHub Pages deployment. To enable publishing, set Settings -> Pages -> Source = GitHub Actions, then add repository variable DEPLOY_GITHUB_PAGES=true."
+
+      - name: Record GitHub Pages source provenance
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_GITHUB_PAGES == 'true'
+        run: printf '{"source_sha":"%s"}\n' "$GITHUB_SHA" > _site/build-provenance.json
 
       - name: Upload GitHub Pages artifact
         id: pages-artifact
