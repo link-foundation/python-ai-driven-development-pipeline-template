@@ -23,6 +23,18 @@ from tests.workflow_helpers import (
 )
 
 
+def test_workflows_triggers_cover_javascript_helpers() -> None:
+    events = read_yaml(WORKFLOWS / "workflows.yml")[True]  # PyYAML reads "on" as true.
+    for event in ("push", "pull_request"):
+        assert {
+            "scripts/**.js",
+            "scripts/**.mjs",
+            "scripts/**.cjs",
+            ".github/**",
+            "tests/*.test.mjs",
+        } <= set(events[event]["paths"])
+
+
 def test_workflow_run_blocks_do_not_interpolate_untrusted_inputs() -> None:
     """Contributor-controlled inputs must reach shell scripts through env vars."""
     unsafe_expression = re.compile(

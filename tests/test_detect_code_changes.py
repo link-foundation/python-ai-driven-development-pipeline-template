@@ -55,9 +55,22 @@ def test_markdown_changes_activate_the_docs_gate(event_name: str) -> None:
 @pytest.mark.parametrize("event_name", ["pull_request", "push"])
 @pytest.mark.parametrize("prefix", ["", "python/"])
 @pytest.mark.parametrize(
-    "path", ["scripts/simulate-fresh-merge.sh", ".secretlintrc.json", "src/data.json"]
+    "path",
+    [
+        "scripts/simulate-fresh-merge.sh",
+        ".secretlintrc.json",
+        "src/data.json",
+        "pyproject.toml",
+        "config.yml",
+        "config.yaml",
+        "scripts/check-deprecated-packages.mjs",
+        ".github/actions/artifact/index.mjs",
+        ".github/actions/deploy-pages/deploy.mjs",
+        "scripts/helper.js",
+        "scripts/helper.cjs",
+    ],
 )
-def test_shell_and_json_changes_activate_jobs(event_name, prefix, path) -> None:
+def test_code_and_config_changes_activate_jobs(event_name, prefix, path) -> None:
     assert detect_change_types([prefix + path], event_name=event_name) == {
         "any-code-changed": True,
         "docs-changed": False,
@@ -69,14 +82,14 @@ def test_shell_and_json_changes_activate_jobs(event_name, prefix, path) -> None:
 @pytest.mark.parametrize(
     "folder", ["docs", "changelog.d", "dev/log", "examples", "experiments"]
 )
-@pytest.mark.parametrize("extension", ["sh", "json"])
+@pytest.mark.parametrize("extension", ["sh", "json", "js", "mjs", "cjs"])
 def test_excluded_folders_win_over_code_extensions(
     event_name, prefix, folder, extension
 ) -> None:
     changes = detect_change_types(
         [f"{prefix}{folder}/fixture.{extension}"], event_name=event_name
     )
-    assert changes["any-code-changed"] is False
+    assert changes == {"any-code-changed": False, "docs-changed": folder == "docs"}
 
 
 def git(repo: Path, *args: str) -> str:
@@ -161,6 +174,25 @@ def test_complete_comparison_includes_earlier_source_commits(
     )
     assert completed.returncode == 0, completed.stderr
     assert output == "any-code-changed=true\ndocs-changed=true\n"
+
+
+@pytest.mark.parametrize("event", ["pull_request", "push"])
+@pytest.mark.parametrize("extension", ["js", "mjs", "cjs"])
+def test_javascript_only_comparison_activates_code_gates(
+    repo: Path, tmp_path: Path, event: str, extension: str
+) -> None:
+    base = git(repo, "rev-parse", "HEAD")
+    head = commit(repo, f"scripts/helper.{extension}")
+    completed, output = run_detector(
+        repo,
+        tmp_path,
+        event,
+        GITHUB_BASE_SHA=base,
+        GITHUB_HEAD_SHA=head,
+        GITHUB_BEFORE_SHA=base,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert output == "any-code-changed=true\ndocs-changed=false\n"
 
 
 @pytest.mark.parametrize("add_docs", [False, True])
