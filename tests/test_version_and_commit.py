@@ -83,10 +83,24 @@ def test_manual_release_writes_changelog_for_numeric_version(
     for name in ("version_and_commit.py", "bump_version.py"):
         shutil.copy2(source_root / "scripts" / name, repo / "scripts" / name)
     (repo / "pyproject.toml").write_text(
-        source_root.joinpath("pyproject.toml").read_text(), encoding="utf-8"
+        """\
+[project]
+name = "example"
+version = "0.1.0"
+
+[tool.scriv]
+format = "md"
+fragment_directory = "changelog.d"
+md_header_level = 2
+entry_title_template = "[{{ version }}]"
+start_marker = "<!-- scriv-insert-here -->"
+""",
+        encoding="utf-8",
     )
     (repo / "CHANGELOG.md").write_text(
-        source_root.joinpath("CHANGELOG.md").read_text(), encoding="utf-8"
+        "# Changelog\n\n<!-- scriv-insert-here -->\n\n## [0.1.0] - 2026-01-01\n\n"
+        "### Added\n\n- Baseline release.\n",
+        encoding="utf-8",
     )
     (repo / "changelog.d").mkdir()
     if with_fragment:
