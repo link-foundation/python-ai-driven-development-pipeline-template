@@ -1,8 +1,8 @@
 name: Deploy GitHub Pages with bounded retries
 description: >-
   The REST protocol of actions/deploy-pages v5, plus bounded retries of
-  transient failures to create the deployment. Never creates a second
-  deployment of the same commit.
+  transient failures to create the deployment. Recovers the deployment of
+  the requested artifact if GitHub accepted it before the response was lost.
 inputs:
   artifact_id:
     description: ID of the github-pages artifact uploaded earlier in this workflow run

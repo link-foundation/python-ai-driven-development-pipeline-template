@@ -7,6 +7,7 @@
 //
 // Only Node.js built-ins are used, so there is no bundle to rebuild and no
 // bundled punycode module raising DEP0040 (actions/deploy-pages#434).
+import { createHash } from 'node:crypto';
 import { appendFileSync } from 'node:fs';
 import { setTimeout as delay } from 'node:timers/promises';
 
@@ -134,21 +135,25 @@ export async function deployPages({
   log = console.log,
   onCreated = () => {},
 }) {
-  if (!/^\d+$/.test(String(artifactId ?? '')))
+  const numericArtifactId = Number(artifactId);
+  if (!/^\d+$/.test(String(artifactId ?? '')) || !Number.isSafeInteger(numericArtifactId) || numericArtifactId < 1)
     throw new Error(`Missing or invalid Pages artifact ID "${artifactId ?? ''}": pass the build job's artifact-id output.`);
   if (!buildVersion) throw new Error('Missing build version (the commit SHA).');
   const base = `/repos/${repository}/pages`;
+  // The status API returns no artifact ID. Use a unique version for each
+  // upload so a retry can only recover the deployment of the requested artifact.
+  const deploymentVersion = createHash('sha256')
+    .update(JSON.stringify([repository, String(numericArtifactId), buildVersion]))
+    .digest('hex');
   let deployment;
   for (let attempt = 1; !deployment; attempt++) {
     try {
-      // A lost response may hide a deployment that was created. Adopt it unless
-      // it already failed, so a retry never deploys the same commit twice.
-      if (attempt > 1) deployment = await existingDeployment(request, base, buildVersion);
-      if (deployment) log(`Adopted the deployment of ${buildVersion} that attempt ${attempt - 1} created.`);
+      if (attempt > 1) deployment = await existingDeployment(request, base, deploymentVersion);
+      if (deployment) log(`Adopted the deployment of ${buildVersion} from artifact ${artifactId}.`);
       else {
         deployment = await request('POST', `${base}/deployments`, {
-          artifact_id: Number(artifactId),
-          pages_build_version: buildVersion,
+          artifact_id: numericArtifactId,
+          pages_build_version: deploymentVersion,
           oidc_token: await getIdToken(),
         });
         log(`Created the deployment of ${buildVersion} from artifact ${artifactId} (attempt ${attempt}/${attempts}).`);
@@ -166,7 +171,7 @@ export async function deployPages({
       await sleep(wait);
     }
   }
-  const id = deployment.id || deployment.status_url?.split('/').pop() || buildVersion;
+  const id = deployment.id || deployment.status_url?.split('/').pop() || deploymentVersion;
   onCreated(id);
   const pageUrl = deployment.page_url || (await pagesUrl(request, base, log));
   const start = now();

@@ -272,10 +272,12 @@ built-ins. The build job outputs the ID of the `github-pages` artifact it
 uploaded, and the deploy job publishes exactly that artifact. A transient
 HTTP 5xx, HTTP 429 or lost connection while creating the deployment is retried
 up to three times, 10 and 20 seconds apart. Before each retry the action looks
-up the deployment of the commit SHA and adopts it unless it failed, so one
-commit is never deployed twice. A refusal (any other 4xx) fails at once with
-the status and request ID. Status polling, the 10-minute timeout and
-cancellation match `actions/deploy-pages@v5`.
+up a deployment version derived from the repository, artifact ID and source SHA.
+It adopts that deployment if it exists and has not failed, so a lost response
+can be recovered and different uploads of the same commit can deploy separately.
+The Pages artifact records the original source SHA in `build-provenance.json`.
+A refusal (any other 4xx) fails at once with the status and request ID. Status
+polling, the 10-minute timeout and cancellation match `actions/deploy-pages@v5`.
 
 ### Preview regeneration parity
 

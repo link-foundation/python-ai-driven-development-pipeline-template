@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import re
 import subprocess
+from pathlib import Path
 
 import yaml
 
@@ -39,6 +41,29 @@ def test_build_job_outputs_the_pages_artifact_id() -> None:
     upload = workflow_step_block(build, "Upload GitHub Pages artifact")
     assert "id: pages-artifact" in upload
     assert "pages: true" in upload
+
+
+def test_pages_artifact_records_the_source_sha(tmp_path: Path) -> None:
+    build = workflow_job_block(read_workflow("docs.yml"), "build")
+    stamp = workflow_step_block(build, "Record GitHub Pages source provenance")
+    upload = workflow_step_block(build, "Upload GitHub Pages artifact")
+    stamp_step = yaml.safe_load(stamp)[0]
+    upload_step = yaml.safe_load(upload)[0]
+    assert stamp_step["if"] == upload_step["if"]
+    assert build.index(stamp) < build.index(upload)
+    site = tmp_path / upload_step["with"]["path"]
+    site.mkdir()
+    sha = "a" * 40
+    subprocess.run(
+        ["/bin/bash", "-c", stamp_step["run"]],
+        cwd=tmp_path,
+        env={"GITHUB_SHA": sha},
+        timeout=5,
+        check=True,
+    )
+    assert json.loads((site / "build-provenance.json").read_text()) == {
+        "source_sha": sha
+    }
 
 
 def test_deploy_job_publishes_exactly_that_artifact_with_retries() -> None:
