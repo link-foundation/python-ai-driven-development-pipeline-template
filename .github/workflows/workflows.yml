@@ -223,7 +223,8 @@ jobs:
       - name: Upload round-trip evidence
         uses: $/.github/actions/artifact
         with:
-          name: transport-roundtrip
+          # GitHub retains artifacts from earlier attempts of the same run.
+          name: transport-roundtrip-${{ github.run_attempt }}
           path: /tmp/artifact-evidence
           if-no-files-found: error
           retention-days: 1
@@ -234,7 +235,7 @@ jobs:
           NODE_OPTIONS: --throw-deprecation
         with:
           operation: download
-          name: transport-roundtrip
+          name: transport-roundtrip-${{ github.run_attempt }}
           path: /tmp/artifact-downloaded
 
       - name: Verify every downloaded byte
@@ -243,7 +244,7 @@ jobs:
       - name: Upload Pages round-trip evidence
         uses: $/.github/actions/artifact
         with:
-          name: pages-roundtrip
+          name: pages-roundtrip-${{ github.run_attempt }}
           pages: true
           path: /tmp/pages-evidence
           if-no-files-found: error
@@ -254,7 +255,7 @@ jobs:
           NODE_OPTIONS: --throw-deprecation
         with:
           operation: download
-          pattern: pages-round*
+          pattern: pages-round*-${{ github.run_attempt }}
           merge-multiple: true
           path: /tmp/pages-downloaded
 
