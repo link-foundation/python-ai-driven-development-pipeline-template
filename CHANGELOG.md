@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- scriv-insert-here -->
 
+## [0.1.1] - 2026-11-21
+
+### Fixed
+
+- Preserve existing changelog fragments during manual release preparation.
+- Run pipeline checks for JavaScript-only CI helper changes.
+
 ## [0.1.0] - 2025-01-XX
 
 ### Added

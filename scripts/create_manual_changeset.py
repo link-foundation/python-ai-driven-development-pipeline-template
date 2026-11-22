@@ -70,6 +70,8 @@ def has_scriv() -> bool:
 def create_with_scriv(bump_type: str, description: str) -> int:
     """Create fragment using scriv create command."""
     print("Using scriv to create changelog fragment...")
+    changelog_dir = Path("changelog.d")
+    existing_fragments = set(changelog_dir.glob("*.md"))
 
     try:
         result = subprocess.run(
@@ -78,49 +80,46 @@ def create_with_scriv(bump_type: str, description: str) -> int:
             text=True,
             check=False,
         )
-
-        if result.returncode != 0:
-            print(f"Warning: scriv create returned non-zero: {result.stderr}")
-            return result.returncode
-
-        print(result.stdout)
-
-        # Find the created fragment
-        changelog_dir = Path("changelog.d")
-        if changelog_dir.exists():
-            fragments = sorted(
-                [
-                    f
-                    for f in changelog_dir.glob("*.md")
-                    if f.name != "README.md" and not f.name.endswith(".j2")
-                ],
-                key=lambda x: x.stat().st_mtime,
-                reverse=True,
-            )
-
-            if fragments:
-                fragment_path = fragments[0]
-                print(f"\nCreated fragment: {fragment_path}")
-                print("\nPlease edit the fragment file to document your changes.")
-
-                if description:
-                    # Update fragment with provided description
-                    bump_category = {
-                        "major": "Changed",  # Major = breaking changes
-                        "minor": "Added",  # Minor = new features
-                        "patch": "Fixed",  # Patch = bug fixes
-                    }.get(bump_type, "Changed")
-
-                    # Add the description under the appropriate category
-                    new_content = f"### {bump_category}\n\n- {description}\n"
-                    fragment_path.write_text(new_content)
-                    print(f"Updated fragment with {bump_type} change: {description}")
-
-        return 0
-
     except FileNotFoundError:
         print("Error: scriv command not found")
         return 1
+
+    if result.returncode != 0:
+        print(f"Warning: scriv create returned non-zero: {result.stderr}")
+        return result.returncode
+
+    print(result.stdout)
+    new_fragments = set(changelog_dir.glob("*.md")) - existing_fragments
+    if len(new_fragments) == 1:
+        (fragment_path,) = new_fragments
+        # Scriv reports the path before writing, so check that it also exists.
+        # A directory diff alone could pick a concurrent writer's only fragment.
+        if (
+            fragment_path.name != "README.md"
+            and not fragment_path.is_symlink()
+            and fragment_path.is_file()
+            and f"Creating {fragment_path}" in result.stderr.splitlines()
+        ):
+            print(f"\nCreated fragment: {fragment_path}")
+            print("\nPlease edit the fragment file to document your changes.")
+            if description:
+                bump_category = {
+                    "major": "Changed",
+                    "minor": "Added",
+                    "patch": "Fixed",
+                }.get(bump_type, "Changed")
+                fragment_path.write_text(
+                    f"### {bump_category}\n\n- {description}\n", encoding="utf-8"
+                )
+                print(f"Updated fragment with {bump_type} change: {description}")
+            return 0
+
+    print(
+        "Cannot identify the new Scriv fragment in changelog.d. "
+        "Expected exactly one new Markdown file matching Scriv's reported path.",
+        file=sys.stderr,
+    )
+    return 1
 
 
 def create_manual_fragment(

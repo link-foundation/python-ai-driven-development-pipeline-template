@@ -45,7 +45,17 @@ EXCLUDED_FOLDERS = (
     "examples/",
     "experiments/",
 )
-CODE_EXTENSIONS = (".py", ".sh", ".json", ".toml", ".yml", ".yaml")
+CODE_EXTENSIONS = (
+    ".py",
+    ".sh",
+    ".json",
+    ".toml",
+    ".yml",
+    ".yaml",
+    ".js",
+    ".mjs",
+    ".cjs",
+)
 
 
 def git(*args: str) -> bytes:
